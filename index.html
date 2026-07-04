@@ -303,35 +303,19 @@ async function submitAttendance(employeeId) {
 
         console.log("Sending to:", GOOGLE_SCRIPT_URL);
 
-        const response = await fetch(GOOGLE_SCRIPT_URL, {
-
-            method: "POST",
-
-            headers: {
-                "Content-Type": "application/json"
-            },
-
-            body: JSON.stringify({
-                employeeId: employeeId,
-                logType: logType
-            })
-
-        });
-
-        console.log("Status:", response.status);
-        console.log("Status Text:", response.statusText);
-
-        const text = await response.text();
-
-        console.log("Response:", text);
-
-        result.className = "success";
-
-        result.innerHTML =
-            "<b>SUCCESS</b><br><br>" +
-            "Status : " + response.status +
-            "<br><br>" +
-            text;
+      const response = await fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+        "Content-Type": "text/plain"
+    },
+    body: JSON.stringify({
+        employeeId: employeeId,
+        logType: logType
+    })
+});
+result.className = "success";
+result.innerHTML = "Request sent to Apps Script.";
 
     }
     catch(error){
