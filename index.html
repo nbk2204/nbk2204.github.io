@@ -1,40 +1,3 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Supervisor Attendance Scanner</title>
-  <script src="https://unpkg.com"></script>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background-color: #f4f6f9; }
-    .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    select, button { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
-    button { background-color: #007bff; color: white; border: none; font-weight: bold; cursor: pointer; }
-    button:hover { background-color: #0056b3; }
-    #reader { width: 100%; min-height: 250px; background: #eee; border: 1px solid #ddd; border-radius: 5px; margin-top: 15px; display: flex; align-items: center; justify-content: center; }
-    #result { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 16px; display: none; }
-    .success { background-color: #d4edda; color: #155724; }
-    .error { background-color: #f8d7da; color: #721c24; }
-  </style>
-</head>
-<body>
-
-<div class="container">
-  <h2>Supervisor Scanner Station</h2>
-  
-  <label for="logType">Select Attendance Mode:</label>
-  <select id="logType">
-    <option value="Check-In">Check-In</option>
-    <option value="Check-Out">Check-Out</option>
-  </select>
-
-  <!-- Button to manually force start if auto-load stalls -->
-  <button id="startBtn" onclick="requestPermissionAndStart()">📸 Activate Scanner Camera</button>
-  
-  <div id="reader">Camera Status: Standing By...</div>
-  <div id="result"></div>
-</div>
-
 <script>
   // PASTE YOUR COPIED GOOGLE WEB APP DEPLOYMENT URL HERE:
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzO2pELuX5B6l68co-Kxy0nsbMyH962WWLySyecwNfKIlrsLgaFvraABXh-_j80t0nEwA/exec";
@@ -43,54 +6,35 @@
 
   function requestPermissionAndStart() {
     document.getElementById("startBtn").style.display = "none";
-    document.getElementById("reader").innerHTML = "Accessing hardware lenses...";
+    document.getElementById("reader").innerHTML = "Opening Rear Camera...";
     
-    // Request list of available cameras on the mobile device
-    Html5Qrcode.getCameras().then(devices => {
-      if (devices && devices.length) {
-        // Choose the back/rear camera (usually the last index on multi-lens phones)
-        let cameraId = devices[devices.length - 1].id;
-        
-        // Loop backwards to double check if a dedicated "back" label exists
-        for (let i = 0; i < devices.length; i++) {
-          if (devices[i].label.toLowerCase().includes('back') || devices[i].label.toLowerCase().includes('environment')) {
-            cameraId = devices[i].id;
-            break;
-          }
-        }
-        
-        startScanner(cameraId);
-      } else {
-        document.getElementById("reader").innerHTML = "❌ No functional cameras found.";
-      }
-    }).catch(err => {
-      document.getElementById("reader").innerHTML = "❌ Camera access denied or blocked. Check site permissions.";
-      document.getElementById("startBtn").style.display = "block";
-      console.error(err);
-    });
-  }
-
-  function startScanner(cameraId) {
-    html5QrCode = new Html5Qrcode("reader");
+    // Create the scanner instance if it doesn't exist
+    if (!html5QrCode) {
+      html5QrCode = new Html5Qrcode("reader");
+    }
     
+    // Force the browser to natively invoke the standard rear camera directly
     html5QrCode.start(
-      cameraId, 
+      { facingMode: "environment" }, // Standard mobile back-facing camera profile
       {
         fps: 15,
         qrbox: { width: 250, height: 250 }
       },
       (decodedText) => {
-        // Success Logic
+        // Stop scanning upon reading a QR code, then process logs
         html5QrCode.stop().then(() => {
           processAttendance(decodedText);
+        }).catch(err => {
+          processAttendance(decodedText); // Process anyway if stop errors out
         });
       },
       (errorMessage) => {
-        // Scanning in progress...
+        // Tracking frames silently...
       }
     ).catch(err => {
-      document.getElementById("reader").innerHTML = "❌ Failed to initialize video feed stream.";
+      document.getElementById("reader").innerHTML = "❌ Camera Blocked. Check your browser site permissions.";
       document.getElementById("startBtn").style.display = "block";
+      console.error(err);
     });
   }
 
@@ -123,5 +67,3 @@
     });
   }
 </script>
-</body>
-</html>
