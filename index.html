@@ -288,17 +288,19 @@ async function submitAttendance(employeeId){
 
     }
 
-    catch(error){
+  catch(error){
 
-        console.error(error);
+    console.error("ERROR:", error);
+    console.error("NAME:", error.name);
+    console.error("MESSAGE:", error.message);
 
-        result.className="error";
+    result.className="error";
 
-        result.innerHTML=
-            "❌ Failed to send data.<br><br>"+error;
-
-    }
-
+    result.innerHTML =
+        "<b>Error</b><br>" +
+        error.name + "<br>" +
+        error.message;
+}
     setTimeout(function(){
 
         result.style.display="none";
