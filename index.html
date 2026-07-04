@@ -1,69 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Supervisor Attendance Scanner</title>
+
+<!-- Latest Html5 QRCode Library -->
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+<style>
+
+body{
+    font-family:Arial,sans-serif;
+    background:#f4f6f9;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:420px;
+    margin:auto;
+    background:#fff;
+    border-radius:10px;
+    padding:20px;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+}
+
+h2{
+    text-align:center;
+}
+
+label{
+    font-weight:bold;
+}
+
+select,
+button{
+    width:100%;
+    padding:12px;
+    margin-top:12px;
+    border-radius:6px;
+    font-size:16px;
+}
+
+button{
+    background:#007bff;
+    color:#fff;
+    border:none;
+    cursor:pointer;
+}
+
+button:hover{
+    background:#0056b3;
+}
+
+#reader{
+    margin-top:20px;
+    width:100%;
+    min-height:300px;
+    border:2px dashed #ccc;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:8px;
+    background:#fafafa;
+}
+
+#result{
+    display:none;
+    margin-top:20px;
+    padding:12px;
+    border-radius:6px;
+    font-weight:bold;
+    text-align:center;
+}
+
+.success{
+    background:#d4edda;
+    color:#155724;
+}
+
+.error{
+    background:#f8d7da;
+    color:#721c24;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>Supervisor Attendance Scanner</h2>
+
+<label>Attendance Type</label>
+
+<select id="logType">
+    <option value="Check-In">Check-In</option>
+    <option value="Check-Out">Check-Out</option>
+</select>
+
+<button id="startBtn">
+📷 Activate Camera
+</button>
+
+<div id="reader">
+Press the button to start scanning.
+</div>
+
+<div id="result"></div>
+
+</div>
+
 <script>
-  // PASTE YOUR COPIED GOOGLE WEB APP DEPLOYMENT URL HERE:
-  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzO2pELuX5B6l68co-Kxy0nsbMyH962WWLySyecwNfKIlrsLgaFvraABXh-_j80t0nEwA/exec";
-  
-  let html5QrCode;
 
-  function requestPermissionAndStart() {
-    document.getElementById("startBtn").style.display = "none";
-    document.getElementById("reader").innerHTML = "Opening Rear Camera...";
-    
-    // Create the scanner instance if it doesn't exist
-    if (!html5QrCode) {
-      html5QrCode = new Html5Qrcode("reader");
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzO2pELuX5B6l68co-Kxy0nsbMyH962WWLySyecwNfKIlrsLgaFvraABXh-_j80t0nEwA/exec";
+
+let html5QrCode = null;
+let scannerRunning = false;
+
+const reader = document.getElementById("reader");
+const startBtn = document.getElementById("startBtn");
+const result = document.getElementById("result");
+
+startBtn.addEventListener("click", startScanner);
+
+async function startScanner(){
+
+    startBtn.disabled = true;
+
+    result.style.display = "none";
+
+    reader.innerHTML = "Requesting camera permission...";
+
+    try{
+
+        if(html5QrCode){
+
+            try{
+                await html5QrCode.stop();
+            }catch(e){}
+
+            try{
+                await html5QrCode.clear();
+            }catch(e){}
+        }
+
+        const cameras = await Html5Qrcode.getCameras();
+
+        console.log("Available Cameras:", cameras);
+
+        if(cameras.length === 0){
+
+            throw new Error("No camera detected.");
+
+        }
+
+        let selectedCamera = cameras[0];
+
+        for(const cam of cameras){
+
+            const label = (cam.label || "").toLowerCase();
+
+            if(
+                label.includes("back") ||
+                label.includes("rear") ||
+                label.includes("environment")
+            ){
+
+                selectedCamera = cam;
+                break;
+
+            }
+
+        }
+
+        html5QrCode = new Html5Qrcode("reader");
+
+        await html5QrCode.start(
+
+            selectedCamera.id,
+
+            {
+
+                fps:15,
+
+                qrbox:{
+                    width:250,
+                    height:250
+                },
+
+                aspectRatio:1.0,
+
+                disableFlip:false
+
+            },
+
+            onScanSuccess,
+
+            function(){}
+
+        );
+
+        scannerRunning = true;
+
     }
-    
-    // Force the browser to natively invoke the standard rear camera directly
-    html5QrCode.start(
-      { facingMode: "environment" }, // Standard mobile back-facing camera profile
-      {
-        fps: 15,
-        qrbox: { width: 250, height: 250 }
-      },
-      (decodedText) => {
-        // Stop scanning upon reading a QR code, then process logs
-        html5QrCode.stop().then(() => {
-          processAttendance(decodedText);
-        }).catch(err => {
-          processAttendance(decodedText); // Process anyway if stop errors out
-        });
-      },
-      (errorMessage) => {
-        // Tracking frames silently...
-      }
-    ).catch(err => {
-      document.getElementById("reader").innerHTML = "❌ Camera Blocked. Check your browser site permissions.";
-      document.getElementById("startBtn").style.display = "block";
-      console.error(err);
-    });
-  }
 
-  function processAttendance(decodedText) {
+    catch(err){
+
+        console.error(err);
+
+        reader.innerHTML =
+            "<div style='padding:15px'>" +
+            "<b>Camera Error</b><br><br>" +
+            (err.name || "") +
+            "<br>" +
+            (err.message || err) +
+            "</div>";
+
+        startBtn.disabled = false;
+
+    }
+
+}
+
+async function onScanSuccess(decodedText){
+
+    if(!scannerRunning)
+        return;
+
+    scannerRunning = false;
+
+    try{
+
+        await html5QrCode.stop();
+
+    }catch(e){}
+
+    try{
+
+        await html5QrCode.clear();
+
+    }catch(e){}
+
+    submitAttendance(decodedText);
+
+}
+
+async function submitAttendance(employeeId){
+
     const logType = document.getElementById("logType").value;
-    const resultDiv = document.getElementById("result");
-    
-    resultDiv.style.display = "block";
-    resultDiv.className = "";
-    resultDiv.innerHTML = "Sending scan data to Google Sheets...";
 
-    fetch(GOOGLE_SCRIPT_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ employeeId: decodedText, logType: logType })
-    })
-    .then(() => {
-      resultDiv.className = "success";
-      resultDiv.innerHTML = `✅ ${logType} Sent Successfully!<br>ID: ${decodedText}`;
-      setTimeout(() => { 
-        resultDiv.style.display = "none"; 
-        requestPermissionAndStart(); 
-      }, 3000);
-    })
-    .catch(error => {
-      resultDiv.className = "error";
-      resultDiv.innerHTML = "❌ Network error updating logs.";
-      setTimeout(() => { requestPermissionAndStart(); }, 3000);
-    });
-  }
+    result.style.display="block";
+    result.className="";
+    result.innerHTML="Saving attendance...";
+
+    try{
+
+        const response = await fetch(GOOGLE_SCRIPT_URL,{
+
+            method:"POST",
+
+            headers:{
+                "Content-Type":"application/json"
+            },
+
+            body:JSON.stringify({
+
+                employeeId:employeeId,
+
+                logType:logType
+
+            })
+
+        });
+
+        console.log(await response.text());
+
+        result.className="success";
+
+        result.innerHTML=
+            "✅ Attendance Saved<br><br>" +
+            "Employee ID : <b>"+employeeId+"</b>";
+
+    }
+
+    catch(error){
+
+        console.error(error);
+
+        result.className="error";
+
+        result.innerHTML=
+            "❌ Failed to send data.<br><br>"+error;
+
+    }
+
+    setTimeout(function(){
+
+        result.style.display="none";
+
+        startBtn.disabled=false;
+
+        reader.innerHTML="Press 'Activate Camera' to scan again.";
+
+    },2500);
+
+}
+
+if(location.protocol !== "https:"){
+
+    alert("Camera requires HTTPS.");
+
+}
+
 </script>
+
+</body>
+</html>
