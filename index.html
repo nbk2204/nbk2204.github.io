@@ -5,47 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <title>Supervisor Attendance Scanner</title>
-window.onerror = function(message, source, line, column, error){
 
-    const result = document.getElementById("result");
-
-    result.style.display = "block";
-
-    result.className = "error";
-
-    result.innerHTML =
-        "<b>JAVASCRIPT ERROR</b><hr>" +
-
-        "<b>Message</b><br>" +
-        message +
-
-        "<br><br><b>Source</b><br>" +
-        source +
-
-        "<br><br><b>Line</b><br>" +
-        line +
-
-        "<br><br><b>Column</b><br>" +
-        column;
-
-    return true;
-};
-
-window.onunhandledrejection = function(event){
-
-    const result = document.getElementById("result");
-
-    result.style.display = "block";
-
-    result.className = "error";
-
-    result.innerHTML =
-        "<b>PROMISE ERROR</b><hr>" +
-        event.reason;
-
-};
-
-<!-- Latest Html5 QRCode Library -->
+    <!-- Latest Html5 QRCode Library -->
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 
 <style>
@@ -293,56 +254,52 @@ async function submitAttendance(employeeId) {
 
     const logType = document.getElementById("logType").value;
 
-    const result = document.getElementById("result");
-
     result.style.display = "block";
     result.className = "";
-    result.innerHTML = "Connecting to Google Apps Script...";
+    result.innerHTML = "Saving attendance...";
 
     try {
 
-        console.log("Sending to:", GOOGLE_SCRIPT_URL);
+        await fetch(GOOGLE_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors",
+            headers: {
+                "Content-Type": "text/plain"
+            },
+            body: JSON.stringify({
+                employeeId: employeeId,
+                logType: logType
+            })
+        });
 
-      const response = await fetch(GOOGLE_SCRIPT_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: {
-        "Content-Type": "text/plain"
-    },
-    body: JSON.stringify({
-        employeeId: employeeId,
-        logType: logType
-    })
-});
-result.className = "success";
-result.innerHTML = "Request sent to Apps Script.";
+        result.className = "success";
+
+        result.innerHTML =
+            "✅ Attendance Saved Successfully<br><br>" +
+            "Employee ID : <b>" + employeeId + "</b>";
 
     }
     catch(error){
 
-        console.error(error);
-
         result.className = "error";
 
         result.innerHTML =
-            "<b>FETCH FAILED</b><hr>" +
-
-            "<b>Name</b><br>" +
-            error.name + "<br><br>" +
-
-            "<b>Message</b><br>" +
-            error.message + "<br><br>" +
-
-            "<b>URL</b><br>" +
-            GOOGLE_SCRIPT_URL + "<br><br>" +
-
-            "<b>Browser</b><br>" +
-            navigator.userAgent + "<br><br>" +
-
-            "<b>Time</b><br>" +
-            new Date().toString();
+            "❌ Network Error<br><br>" +
+            error.message;
 
     }
+
+    setTimeout(function(){
+
+        result.style.display = "none";
+
+        startBtn.disabled = false;
+
+        reader.innerHTML = "Ready for next scan";
+
+        startScanner();
+
+    },2000);
 
 }
 
