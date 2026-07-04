@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Supervisor Attendance Scanner</title>
+  <script src="https://unpkg.com"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 20px; background-color: #f4f6f9; }
+    .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    select { width: 100%; padding: 12px; margin: 10px 0; font-size: 16px; border-radius: 5px; border: 1px solid #ccc; }
+    #reader { width: 100%; min-height: 250px; background: #eee; border: 1px solid #ddd; border-radius: 5px; margin-top: 15px; }
+    #result { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; font-size: 16px; display: none; }
+    .success { background-color: #d4edda; color: #155724; }
+    .error { background-color: #f8d7da; color: #721c24; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Supervisor Scanner Station</h2>
+  <label for="logType">Select Attendance Mode:</label>
+  <select id="logType">
+    <option value="Check-In">Check-In</option>
+    <option value="Check-Out">Check-Out</option>
+  </select>
+  <div id="reader">Initialising Camera System...</div>
+  <div id="result"></div>
+</div>
+
+<script>
+  // PASTE YOUR COPIED GOOGLE WEB APP DEPLOYMENT URL HERE:
+  const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzO2pELuX5B6l68co-Kxy0nsbMyH962WWLySyecwNfKIlrsLgaFvraABXh-_j80t0nEwA/exec";
+
+  function onScanSuccess(decodedText) {
+    html5QrcodeScanner.clear();
+    const logType = document.getElementById("logType").value;
+    const resultDiv = document.getElementById("result");
+    
+    resultDiv.style.display = "block";
+    resultDiv.className = "";
+    resultDiv.innerHTML = "Sending scan data to Google Sheets...";
+
+    // Send payload directly to sheet without Google Sandbox constraints
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors", // Bypasses browser cross-origin limits safely
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ employeeId: decodedText, logType: logType })
+    })
+    .then(() => {
+      resultDiv.className = "success";
+      resultDiv.innerHTML = `✅ ${logType} Sent Successfully!<br>ID: ${decodedText}`;
+      setTimeout(() => { resultDiv.style.display = "none"; startScanner(); }, 3000);
+    })
+    .catch(error => {
+      resultDiv.className = "error";
+      resultDiv.innerHTML = "❌ Network error updating logs.";
+      setTimeout(() => { startScanner(); }, 3000);
+    });
+  }
+
+  let html5QrcodeScanner;
+  function startScanner() {
+    html5QrcodeScanner = new Html5QrcodeScanner("reader", { 
+      fps: 15, 
+      qrbox: { width: 250, height: 250 },
+      rememberLastUsedCamera: true
+    });
+    html5QrcodeScanner.render(onScanSuccess);
+  }
+
+  window.onload = startScanner;
+</script>
+</body>
+</html>
