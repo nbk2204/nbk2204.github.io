@@ -1,3 +1,42 @@
+window.onerror = function(message, source, line, column, error){
+
+    const result = document.getElementById("result");
+
+    result.style.display = "block";
+
+    result.className = "error";
+
+    result.innerHTML =
+        "<b>JAVASCRIPT ERROR</b><hr>" +
+
+        "<b>Message</b><br>" +
+        message +
+
+        "<br><br><b>Source</b><br>" +
+        source +
+
+        "<br><br><b>Line</b><br>" +
+        line +
+
+        "<br><br><b>Column</b><br>" +
+        column;
+
+    return true;
+};
+
+window.onunhandledrejection = function(event){
+
+    const result = document.getElementById("result");
+
+    result.style.display = "block";
+
+    result.className = "error";
+
+    result.innerHTML =
+        "<b>PROMISE ERROR</b><hr>" +
+        event.reason;
+
+};
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -250,66 +289,76 @@ async function onScanSuccess(decodedText){
 
 }
 
-async function submitAttendance(employeeId){
+async function submitAttendance(employeeId) {
 
     const logType = document.getElementById("logType").value;
 
-    result.style.display="block";
-    result.className="";
-    result.innerHTML="Saving attendance...";
+    const result = document.getElementById("result");
 
-    try{
+    result.style.display = "block";
+    result.className = "";
+    result.innerHTML = "Connecting to Google Apps Script...";
 
-        const response = await fetch(GOOGLE_SCRIPT_URL,{
+    try {
 
-            method:"POST",
+        console.log("Sending to:", GOOGLE_SCRIPT_URL);
 
-            headers:{
-                "Content-Type":"application/json"
+        const response = await fetch(GOOGLE_SCRIPT_URL, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
             },
 
-            body:JSON.stringify({
-
-                employeeId:employeeId,
-
-                logType:logType
-
+            body: JSON.stringify({
+                employeeId: employeeId,
+                logType: logType
             })
 
         });
 
-        console.log(await response.text());
+        console.log("Status:", response.status);
+        console.log("Status Text:", response.statusText);
 
-        result.className="success";
+        const text = await response.text();
 
-        result.innerHTML=
-            "✅ Attendance Saved<br><br>" +
-            "Employee ID : <b>"+employeeId+"</b>";
+        console.log("Response:", text);
+
+        result.className = "success";
+
+        result.innerHTML =
+            "<b>SUCCESS</b><br><br>" +
+            "Status : " + response.status +
+            "<br><br>" +
+            text;
 
     }
+    catch(error){
 
-  catch(error){
+        console.error(error);
 
-    console.error("ERROR:", error);
-    console.error("NAME:", error.name);
-    console.error("MESSAGE:", error.message);
+        result.className = "error";
 
-    result.className="error";
+        result.innerHTML =
+            "<b>FETCH FAILED</b><hr>" +
 
-    result.innerHTML =
-        "<b>Error</b><br>" +
-        error.name + "<br>" +
-        error.message;
-}
-    setTimeout(function(){
+            "<b>Name</b><br>" +
+            error.name + "<br><br>" +
 
-        result.style.display="none";
+            "<b>Message</b><br>" +
+            error.message + "<br><br>" +
 
-        startBtn.disabled=false;
+            "<b>URL</b><br>" +
+            GOOGLE_SCRIPT_URL + "<br><br>" +
 
-        reader.innerHTML="Press 'Activate Camera' to scan again.";
+            "<b>Browser</b><br>" +
+            navigator.userAgent + "<br><br>" +
 
-    },2500);
+            "<b>Time</b><br>" +
+            new Date().toString();
+
+    }
 
 }
 
