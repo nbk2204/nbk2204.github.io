@@ -3,181 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBK NEXUS // Secure Command</title>
-    
-    <!-- 1. ALTERNATIVE "UNPKG" SOURCE (Bypasses most blockers) -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
-
+    <title>NBK NEXUS // Secure Command Bridge</title>
     <style>
-        :root { --bg: #0a051b; --glass: rgba(20, 10, 35, 0.85); --purple: #bc13fe; --cyan: #00f3ff; --red: #ff003c; --text: #e0d5f5; }
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; margin: 0; overflow-x: hidden; min-height: 100vh; }
-        
-        #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 10, 0.98); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
-        .login-box { background: var(--glass); border: 1px solid var(--cyan); padding: 40px; width: 340px; text-align: center; box-shadow: 0 0 40px rgba(0, 243, 255, 0.1); border-radius: 8px; }
-        
-        input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid #333; padding: 12px; color: #fff; margin-bottom: 15px; outline: none; box-sizing: border-box; }
-        input:focus { border-color: var(--purple); }
-        
-        .nexus-btn { width: 100%; padding: 12px; background: var(--purple); border: none; color: white; font-weight: bold; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
-        .nexus-btn:hover { box-shadow: 0 0 20px var(--purple); }
+        :root {
+            --bg-color: #050212;
+            --panel-bg: rgba(15, 8, 28, 0.75);
+            --neon-purple: #bc13fe;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff007f;
+            --neon-red: #ff003c;
+            --text-main: #e2daf0;
+            --text-muted: #a496c3;
+        }
 
-        #dashboard { display: none; padding: 30px; }
-        header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-        .admin-alert { display: none; background: rgba(255, 0, 60, 0.15); border: 1px solid var(--red); color: #ff99ab; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
-        
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
-        .card { background: var(--glass); border: 1px solid rgba(188, 19, 254, 0.3); padding: 25px; border-radius: 10px; position: relative; transition: 0.3s; }
-        .card.locked { filter: grayscale(100%) opacity(0.6); border-style: dashed; pointer-events: none; }
-        .card.locked::after { content: "🔒 RESTRICTED"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; color: #fff; text-shadow: 0 0 10px #000; font-size: 1.2rem; }
-        .card.unlocked:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 243, 255, 0.2); }
-        
-        .link-btn { display: block; text-align: center; margin-top: 20px; padding: 10px; border: 1px solid var(--cyan); color: var(--cyan); text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; transition: 0.3s; }
-        .link-btn:hover { background: var(--cyan); color: #000; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(188, 19, 254, 0.12) 0%, transparent 45%),
+                radial-gradient(circle at 85% 75%, rgba(0, 243, 255, 0.1) 0%, transparent 45%);
+            background-attachment: fixed;
+        }
+
+        #login-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(4, 2, 10, 0.98);
+            z-index: 99999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(15px);
+        }
+
+        .login-box {
+            background: var(--panel-bg);
+            border: 1px solid var(--neon-cyan);
+            padding: 45px 35px;
+            width: 380px;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(0, 243, 255, 0.15);
+            position: relative;
+            border-radius: 12px;
+        }
+
+        .login-box::before {
+            content: "SECURE ENDPOINT VALIDATION";
+            position: absolute;
+            top: -10px; left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-color);
+            padding: 0 15px;
+            color: var(--neon-cyan);
+            font-size: 0.65rem;
+            font-family: monospace;
+            letter-spacing: 3px;
+            white-space: nowrap;
+        }
+
+        .login-box h2 {
+            font-size: 1.6rem;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+        }
+
+        .input-group { position: relative; margin-bottom: 20px; }
+
+        input {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(0, 243, 255, 0.25);
+            padding: 14px 16px;
+            color: #fff;
+            outline: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
+        }
+
+        .nexus-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--neon-purple), #8000ff);
+            border: none;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.95rem;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 6px;
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
+        }
+
+        #error-msg { font-size: 0.85rem; margin-top: 20px; font-weight: bold; font-family: monospace; }
+
+        #dashboard { display: none; max-width: 1250px; margin: 0 auto; padding: 40px 20px; }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(226, 218, 240, 0.1);
+            padding-bottom: 25px;
+            margin-bottom: 35px;
+        }
+
+        header h1 { font-size: 2.2rem; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 0 15px var(--neon-purple); }
+
+        .operator-meta { margin-top: 6px; font-size: 0.85rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+        .operator-meta span { color: #fff; font-weight: bold; }
+
+        .logout-btn {
+            background: rgba(30, 15, 55, 0.6);
+            border: 1px solid rgba(188, 19, 254, 0.4);
+            color: #fff;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        .admin-controls {
+            display: none;
+            background: rgba(255, 0, 60, 0.06);
+            border: 1px solid var(--neon-red);
+            padding: 16px 20px;
+            margin-bottom: 35px;
+            color: #ff99ae;
+            font-size: 0.9rem;
+            border-radius: 8px;
+            font-family: monospace;
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 30px; }
+
+        .card {
+            background: var(--panel-bg);
+            border: 1px solid rgba(188, 19, 254, 0.2);
+            padding: 30px;
+            border-radius: 12px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+            min-height: 240px;
+        }
+
+        .card.unlocked {
+            border-color: rgba(188, 19, 254, 0.5);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.12);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .card.unlocked::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
+        }
+
+        .card.unlocked:hover { transform: translateY(-5px); border-color: var(--neon-cyan); box-shadow: 0 0 25px var(--neon-cyan); }
+        .card.locked { filter: grayscale(100%) brightness(0.32); border: 1px dashed rgba(255, 255, 255, 0.15); cursor: not-allowed; }
+        .card h3 { font-size: 1.25rem; letter-spacing: 1px; margin-bottom: 12px; }
+        .card.unlocked h3 { text-shadow: 0 0 8px rgba(188, 19, 254, 0.4); }
+        .card p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 25px; }
+
+        .lock-indicator { position: absolute; top: 20px; right: 20px; font-size: 1.1rem; font-family: monospace; }
+        .card.unlocked .lock-indicator { color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); }
+        .card.locked .lock-indicator { color: #555; }
+
+        .server-link {
+            display: block; text-align: center; padding: 12px; background: rgba(0, 243, 255, 0.06);
+            color: var(--neon-cyan); text-decoration: none; border: 1px solid var(--neon-cyan);
+            font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 0.85rem; border-radius: 6px;
+        }
+
+        .card.unlocked .server-link:hover { background: var(--neon-cyan); color: #050212; box-shadow: 0 0 15px var(--neon-cyan); }
+        .card.locked .server-link { pointer-events: none; background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.2); }
     </style>
 </head>
 <body>
 
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="margin-bottom: 20px; letter-spacing: 2px;">NBK NEXUS</h2>
-            <input type="email" id="email" placeholder="OPERATOR ID (Email)">
-            <input type="password" id="password" placeholder="ACCESS CODE (Password)">
-            <button class="nexus-btn" onclick="attemptLogin()">INITIATE SEQUENCE</button>
-            <p id="status-msg" style="color: #666; font-size: 0.8rem; margin-top: 15px;">System Standby...</p>
+            <h2>NBK Nexus Terminal</h2>
+            <div class="input-group"><input type="email" id="email" placeholder="OPERATOR IDENTITY (Email)"></div>
+            <div class="input-group"><input type="password" id="password" placeholder="ACCESS CODE (Password)"></div>
+            <button class="nexus-btn" id="login-trigger">Initiate Sequence</button>
+            <p id="error-msg" style="color: #7a6e95;">Syncing with network packages...</p>
         </div>
     </div>
 
     <div id="dashboard">
         <header>
             <div>
-                <h1 style="margin:0; text-shadow: 0 0 15px var(--purple);">NBK NEXUS</h1>
-                <small id="user-display" style="color: var(--cyan); letter-spacing: 1px;">GUEST</small>
+                <h1>NBK NEXUS</h1>
+                <div class="operator-meta">Operator: <span id="user-display">---</span> // Clearance: <span id="user-clearance">---</span></div>
             </div>
-            <button onclick="logout()" style="background: transparent; border: 1px solid #555; color: #fff; padding: 5px 15px; cursor: pointer;">LOGOUT</button>
+            <button class="logout-btn" id="logout-trigger">Abort Session</button>
         </header>
 
-        <div id="admin-panel" class="admin-alert">
-            <strong>⚠️ ROOT ACCESS:</strong> Full system control enabled.
+        <div id="admin-panel" class="admin-controls">
+            <strong>[⚠️ SYSTEM WARNING] ROOT PRIVILEGES DETECTED:</strong> Full core matrix operational visibility bypass established. Administrative terminal pipelines are online.
         </div>
 
         <div class="grid" id="server-grid"></div>
     </div>
 
-    <script>
-        // --- 1. CONFIGURATION ---
+    <!-- INSERT PART 2 BELOW THIS LINE -->
+    <script type="module">
+        import { initializeApp } from "https://gstatic.com";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://gstatic.com";
+
+        // ==========================================
+        // 1. UPDATE YOUR TRUE FIREBASE CONFIG KEYS HERE
+        // ==========================================
         const firebaseConfig = {
-  apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
-  authDomain: "nbk-nexus.firebaseapp.com",
-  projectId: "nbk-nexus",
-  storageBucket: "nbk-nexus.firebasestorage.app",
-  messagingSenderId: "324577021220",
-  appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
-  measurementId: "G-FPVH852M59"
+            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34", 
+            authDomain: "nbk-nexus.firebaseapp.com",
+            projectId: "nbk-nexus",
+            storageBucket: "nbk-nexus.firebasestorage.app",
+            messagingSenderId: "324577021220",
+            appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
+            measurementId: "G-FPVH852M59"
         };
 
+        // Initialize App Connection Instance
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        const errorLabel = document.getElementById('error-msg');
+        errorLabel.innerText = "System Matrix Online. Ready.";
+        errorLabel.style.color = "#00ff00";
+
+        // ==========================================
+        // 2. YOUR INDIVIDUAL INFRASTRUCTURE ROUTING
+        // ==========================================
         const servers = [
-            { id: 1, name: "PUBLIC NODE", desc: "General Access Portal", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "MEDIA CORE", desc: "Plex & Streaming", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL OPS", desc: "Security & Admin Tools", url: "https://amazon.com", minRole: "admin" }
+            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
         ];
 
-        // --- 2. ROBUST INITIALIZER (Retries connection if blocked) ---
-        let auth = null;
-        
-        function initSystem() {
-            try {
-                if (typeof firebase !== 'undefined') {
-                    firebase.initializeApp(firebaseConfig);
-                    auth = firebase.auth();
-                    document.getElementById('status-msg').innerText = "System Online. Ready.";
-                    document.getElementById('status-msg').style.color = "#00ff00";
-                    console.log("Firebase Mounted.");
-                } else {
-                    throw new Error("Library pending...");
-                }
-            } catch (e) {
-                console.log("Waiting for network...");
-                // Retry in 1 second if network is slow
-                setTimeout(initSystem, 1000); 
-            }
-        }
-        
-        // Start trying to connect immediately
-        initSystem();
-
-        // --- 3. LOGIN LOGIC ---
-        function attemptLogin() {
+        // --- 3. HARDWARE USER EVENT ACTION LISTENERS ---
+        document.getElementById('login-trigger').addEventListener('click', () => {
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
-            const status = document.getElementById('status-msg');
-
-            if (!auth) {
-                status.innerText = "NETWORK ERROR: Firebase libraries blocked by browser/extension.";
-                status.style.color = "#ff003c";
-                // Final hail mary: try to load from alternative source if blocked
-                const script = document.createElement('script');
-                script.src = "https://gstatic.com";
-                document.head.appendChild(script);
-                return;
-            }
 
             if (!email || !pass) {
-                status.innerText = "CREDENTIALS REQUIRED";
+                errorLabel.innerText = "CREDENTIALS REQUIRED";
+                errorLabel.style.color = "#ff003c";
                 return;
             }
 
-            status.innerText = "VERIFYING ENCRYPTION...";
-            status.style.color = "#00f3ff";
+            errorLabel.innerText = "TRANSMITTING SECURE PROTOCOLS...";
+            errorLabel.style.color = "#00f3ff";
 
-            auth.signInWithEmailAndPassword(email, pass)
+            signInWithEmailAndPassword(auth, email, pass)
                 .then((userCredential) => {
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    loadDashboard(userCredential.user.email);
+                    transitionToDashboard(userCredential.user.email);
                 })
                 .catch((error) => {
-                    status.innerText = "ACCESS DENIED: " + error.code;
-                    status.style.color = "#ff003c";
+                    console.error("Authentication Fault: ", error);
+                    errorLabel.style.color = "#ff003c";
+                    if (error.code === "auth/invalid-credential") {
+                        errorLabel.innerText = "ACCESS REJECTED: Invalid operator ID or passcode.";
+                    } else {
+                        errorLabel.innerText = "ACCESS REJECTED: " + error.message;
+                    }
                 });
-        }
+        });
 
-        function logout() {
-            if(auth) auth.signOut().then(() => location.reload());
-            else location.reload();
-        }
+        document.getElementById('logout-trigger').addEventListener('click', () => {
+            signOut(auth).then(() => { location.reload(); });
+        });
 
-        function loadDashboard(email) {
-            document.getElementById('user-display').innerText = "OPERATOR: " + email.toUpperCase();
+        // --- 4. DYNAMIC ROLE-BASED GRAPHICS ENGINE ---
+        function transitionToDashboard(email) {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('user-display').innerText = email.toUpperCase();
+            const clearanceLabel = document.getElementById('user-clearance');
             
-            let role = "guest";
-            // UPDATE YOUR ADMIN EMAIL HERE
+            let currentClearance = "guest";
+            
+            // ==========================================
+            // 3. UPDATE YOUR REGISTERED ADMIN EMAIL HERE
+            // ==========================================
             if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
-                role = "admin";
+                currentClearance = "admin";
+                clearanceLabel.innerText = "ROOT ADMIN";
+                clearanceLabel.style.color = "var(--neon-red)";
                 document.getElementById('admin-panel').style.display = "block";
-            } else if (email.toLowerCase().includes("friend")) {
-                role = "friend";
+            } else if (email.toLowerCase().includes("friend") || email.toLowerCase().includes("family")) {
+                currentClearance = "friend";
+                clearanceLabel.innerText = "NEXUS PRIVILEGED MEMBER";
+                clearanceLabel.style.color = "var(--neon-cyan)";
+            } else {
+                currentClearance = "guest";
+                clearanceLabel.innerText = "GUEST USER";
+                clearanceLabel.style.color = "var(--neon-purple)";
             }
 
             const grid = document.getElementById('server-grid');
             grid.innerHTML = ""; 
 
             servers.forEach(server => {
-                let isUnlocked = false;
-                if (role === "admin") isUnlocked = true;
-                else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isUnlocked = true;
-                else if (role === "guest" && server.minRole === "guest") isUnlocked = true;
+                let isAuthorized = false;
+
+                if (currentClearance === "admin") isAuthorized = true;
+                else if (currentClearance === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isAuthorized = true;
+                else if (currentClearance === "guest" && server.minRole === "guest") isAuthorized = true;
 
                 const card = document.createElement('div');
-                card.className = `card ${isUnlocked ? "unlocked" : "locked"}`;
+                card.className = `card ${isAuthorized ? "unlocked" : "locked"}`;
                 card.innerHTML = `
-                    <h3>${server.name}</h3>
-                    <p style="color: #aaa; font-size: 0.9rem;">${server.desc}</p>
-                    <a href="${server.url}" class="link-btn" target="_blank">${isUnlocked ? 'Connect' : 'Locked'}</a>
+                    <div class="lock-indicator">${isAuthorized ? "ONLINE // ⚡" : "RESTRICTED // 🔒"}</div>
+                    <div>
+                        <h3>${server.name}</h3>
+                        <p>${server.desc}</p>
+                    </div>
+                    <a href="${server.url}" class="server-link" target="_blank">
+                        ${isAuthorized ? "Establish Matrix Link" : "Access Denied"}
+                    </a>
                 `;
                 grid.appendChild(card);
             });
         }
     </script>
+
 </body>
 </html>
