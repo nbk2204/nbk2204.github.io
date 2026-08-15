@@ -23,7 +23,6 @@
             background-image: radial-gradient(circle at 50% 50%, rgba(188, 19, 254, 0.1) 0%, transparent 60%);
         }
 
-        /* HARD-LAYERED LOGIN OVERLAY */
         #login-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -89,7 +88,6 @@
 
         .nexus-btn:hover { box-shadow: 0 0 20px var(--neon-purple); background: #cc2efe; }
 
-        /* MAIN HUD DASHBOARD */
         #dashboard { display: none; padding: 25px; }
 
         header {
@@ -112,7 +110,6 @@
             border-radius: 4px;
         }
 
-        /* INFOGRAPHIC CARD STRUCTURE */
         .grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
@@ -128,7 +125,6 @@
             transition: all 0.3s ease;
         }
 
-        /* SYSTEM ACCESS LEVEL GRAPHICS */
         .card.unlocked {
             border-color: var(--neon-purple);
             box-shadow: 0 0 15px rgba(188, 19, 254, 0.15);
@@ -169,25 +165,22 @@
         }
     </style>
 
-    <!-- ROBUST COMPAT LOADERS PLACED SAFELY IN HEAD -->
+    <!-- Load CDN packages stably -->
     <script src="https://cloudflare.com"></script>
     <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
-    <!-- PRIMARY SECURITY LAYER -->
     <div id="login-overlay">
         <div class="login-box">
             <h2 style="margin-bottom: 20px; letter-spacing: 2px;">NBK NEXUS TERMINAL</h2>
             <input type="email" id="email" placeholder="OPERATOR ID (Email)">
             <input type="password" id="password" placeholder="ACCESS CODE (Password)">
-            <!-- UNBLOCKABLE INTERFACE ACCESS LINK -->
             <button class="nexus-btn" onclick="window.handleLogin()">INITIATE SEQUENCE</button>
             <p id="error-msg" style="color:var(--neon-red); font-size: 0.85rem; margin-top: 15px; font-weight: bold;"></p>
         </div>
     </div>
 
-    <!-- MAIN APP SCREEN -->
     <div id="dashboard">
         <header>
             <div>
@@ -205,9 +198,46 @@
     </div>
 
     <script>
-        console.log("Armored logic array online.");
+        // --- STEP 1: DEFINE INTERFACE ACCESS OUTSIDE TO PREVENT BLANK CRASHES ---
+        window.handleLogin = function() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+            const errorLabel = document.getElementById('error-msg');
 
-        // --- 1. CONFIGURATION ---
+            if (!window.authCore) {
+                errorLabel.innerText = "CRITICAL CONFIG ERROR: Please check your API keys for correct quotes/commas.";
+                return;
+            }
+
+            if (!email || !pass) {
+                errorLabel.innerText = "CREDENTIALS REQUIRED";
+                return;
+            }
+
+            errorLabel.innerText = "TRANSMITTING SIGNATURE...";
+
+            window.authCore.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    loadDashboard(userCredential.user.email);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    errorLabel.innerText = "ACCESS REJECTED: " + error.message;
+                });
+        };
+
+        window.logout = function() {
+            if (window.authCore) {
+                window.authCore.signOut().then(() => { location.reload(); });
+            } else {
+                location.reload();
+            }
+        };
+
+        // --- STEP 2: PROTECTED STORAGE CONFIG OBJECT ---
+        // Verify carefully that every string matches your exact Firebase credentials.
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
@@ -218,58 +248,28 @@
             measurementId: "G-FPVH852M59"
         };
 
-        // --- 2. FORCED INITIALIZATION SYSTEM ---
-        let auth;
+        // --- STEP 3: SAFE SECURE BOOT MATRIX ---
         try {
             firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            console.log("Firebase initialized successfully.");
+            window.authCore = firebase.auth();
+            console.log("System core link established.");
         } catch (e) {
-            document.getElementById('error-msg').innerText = "SYSTEM EXCEPTION: " + e.message;
+            console.error("Configuration system fault detected:", e);
+            setTimeout(() => {
+                document.getElementById('error-msg').innerText = "CONFIG FORMAT ERROR: Check syntax rules inside script keys.";
+            }, 500);
         }
 
-        // --- 3. SERVERS SPECIFICATION DATA ---
+        // --- STEP 4: SERVERS RENDER MATRIX ---
         const servers = [
             { id: 1, name: "PUBLIC TERMINAL", desc: "Main landing portal and media storage arrays.", url: "https://google.com", minRole: "guest" },
             { id: 2, name: "NEXUS MEDIA CONTROL", desc: "Plex, streaming services, and audio matrix automation.", url: "https://plex.tv", minRole: "friend" },
             { id: 3, name: "SENTINEL CORE SECURITY", desc: "Administrative diagnostics, server logs, and automation controls.", url: "https://amazon.com", minRole: "admin" }
         ];
 
-        // --- 4. EXPLICIT WINDOW BINDINGS (EXTENSION BYPASS) ---
-        window.handleLogin = function() {
-            const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('password').value;
-            const errorLabel = document.getElementById('error-msg');
-
-            if (!email || !pass) {
-                errorLabel.innerText = "CREDENTIALS REQUIRED";
-                return;
-            }
-
-            errorLabel.innerText = "TRANSMITTING SIGNATURE...";
-
-            auth.signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    loadDashboard(userCredential.user.email);
-                })
-                .catch((error) => {
-                    console.error("Login sequence crash: ", error);
-                    errorLabel.innerText = "ACCESS REJECTED: " + error.message;
-                });
-        };
-
-        window.logout = function() {
-            auth.signOut().then(() => { location.reload(); });
-        };
-
         function loadDashboard(email) {
             document.getElementById('user-display').innerText = "OPERATOR IDENT: " + email.toUpperCase();
             
             let role = "guest";
             // CHOOSE YOUR ADMIN EMAIL MATCH HERE
-            if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
-                role = "admin";
-                document.getElementById('admin-panel').style.display = "block";
-            } else if (email.toLowerCase().includes("friend")) {
+if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {role = "admin";document.getElementById('admin-panel').style.display = "block";} else if (email.toLowerCase().includes("friend")) {role = "friend";}const grid = document.getElementById('server-grid');grid.innerHTML = "";servers.forEach(server => {let isUnlocked = false;if (role === "admin") isUnlocked = true;else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isUnlocked = true;else if (role === "guest" && server.minRole === "guest") isUnlocked = true;const card = document.createElement('div');card.className = card ${isUnlocked ? "unlocked" : "locked"};card.innerHTML = <h3 style="margin-bottom: 10px; font-size: 1.15rem; letter-spacing: 1px;">${server.name}</h3> <p style="color: #a295c0; font-size: 0.85rem; line-height: 1.4;">${server.desc}</p> <a href="${server.url}" class="server-link" target="_blank"> ${isUnlocked ? 'Establish Link' : 'Restricted Node'} </a>;grid.appendChild(card);});}
