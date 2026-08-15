@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBK NEXUS // Secure Access</title>
     <style>
         :root {
@@ -21,7 +22,7 @@
             overflow-x: hidden;
         }
 
-        /* LOGIN MODAL (High Security Look) */
+        /* LOGIN MODAL */
         #login-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -94,7 +95,7 @@
         }
 
         .admin-controls {
-            display: none; /* Hidden by default */
+            display: none;
             background: rgba(255, 0, 60, 0.1);
             border: 1px solid var(--neon-red);
             padding: 10px;
@@ -119,10 +120,9 @@
             position: relative;
         }
 
-        /* UNAUTHORIZED STATE (Grayscale) */
         .card.locked {
             filter: grayscale(100%) brightness(0.4);
-            pointer-events: none; /* Prevents clicking */
+            pointer-events: none;
             border-style: dashed;
         }
 
@@ -134,12 +134,8 @@
             color: #fff;
             font-weight: bold;
             font-size: 1.5rem;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px black;
-            filter: none; /* Attempt to keep text visible, but parent filter overrides */
         }
         
-        /* AUTHORIZED STATE (Neon) */
         .card.unlocked {
             box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
             border-color: var(--neon-cyan);
@@ -184,24 +180,20 @@
             <button onclick="logout()" style="width: auto; background: #333;">ABORT SESSION</button>
         </header>
 
-        <!-- ADMIN ONLY PANEL -->
         <div id="admin-panel" class="admin-controls">
-            <strong>⚠️ ROOT ACCESS GRANTED:</strong> You can see all hidden nodes and server diagnostics.
+            <strong>⚠️ ROOT ACCESS GRANTED:</strong> Full system visibility enabled.
         </div>
 
-        <div class="grid" id="server-grid">
-            <!-- Cards will be injected here by JavaScript -->
-        </div>
+        <div class="grid" id="server-grid"></div>
     </div>
 
-       <!-- UPDATED FIREBASE SDK IMPORTS -->
+    <!-- 1. LOAD FIREBASE LIBRARIES (Must be in this order) -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
 
+    <!-- 2. YOUR CONFIGURATION -->
     <script>
-        console.log("System initializing...");
-
-        // --- 1. CONFIGURATION ---
+        // --- PASTE YOUR API KEYS BELOW CAREFULLY ---
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
@@ -212,66 +204,52 @@
             measurementId: "G-FPVH852M59"
         };
 
-        // --- 2. SAFE INITIALIZATION ---
+        // --- SAFE INITIALIZATION ---
         let auth;
         try {
+            if (typeof firebase === 'undefined') {
+                throw new Error("Firebase library not loaded. Check your internet or AdBlocker.");
+            }
             firebase.initializeApp(firebaseConfig);
             auth = firebase.auth();
-            console.log("Firebase initialized successfully.");
+            console.log("System Initialized.");
         } catch (e) {
-            alert("CRITICAL ERROR: Firebase Config is invalid. Check your API Keys in the code.\n\nError: " + e.message);
+            document.getElementById('error-msg').innerText = "SYSTEM FAILURE: " + e.message;
         }
 
-        // --- 3. LOGIN LOGIC ---
-        function handleLogin() {
-            // DEBUG ALERT: verifies button works
-            console.log("Attempting login...");
-            
-            const emailField = document.getElementById('email');
-            const passField = document.getElementById('password');
-
-            if (!emailField || !passField) {
-                alert("Error: Login fields not found in HTML.");
-                return;
-            }
-
-            const email = emailField.value;
-            const pass = passField.value;
-
-            if (!email || !pass) {
-                alert("Please enter both Email and Password.");
-                return;
-            }
-
-            document.getElementById('error-msg').innerText = "CONNECTING...";
-
-            auth.signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    alert("ACCESS GRANTED: Welcome, " + userCredential.user.email);
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    loadDashboard(userCredential.user.email);
-                })
-                .catch((error) => {
-                    // This catches wrong passwords OR if Email/Auth is disabled in Console
-                    console.error("Login Failed:", error);
-                    alert("LOGIN FAILED: " + error.code + "\n" + error.message);
-                    document.getElementById('error-msg').innerText = "ERROR: " + error.message;
-                });
-        }
-
-        // --- 4. LOGOUT ---
-        function logout() {
-            auth.signOut().then(() => location.reload());
-        }
-
-        // --- 5. DASHBOARD RENDER ---
-        // Your servers list
+        // --- YOUR SERVERS LIST ---
         const servers = [
             { id: 1, name: "PUBLIC NODE", desc: "Family & Friend Access", url: "https://google.com", minRole: "guest" },
             { id: 2, name: "MEDIA CORE", desc: "Plex / Streaming", url: "https://plex.tv", minRole: "friend" },
             { id: 3, name: "SENTINEL OPS", desc: "Security & Logs", url: "https://amazon.com", minRole: "admin" }
         ];
+
+        function handleLogin() {
+            const email = document.getElementById('email').value;
+            const pass = document.getElementById('password').value;
+            
+            if (!email || !pass) {
+                document.getElementById('error-msg').innerText = "CREDENTIALS REQUIRED";
+                return;
+            }
+
+            document.getElementById('error-msg').innerText = "AUTHENTICATING...";
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    loadDashboard(userCredential.user.email);
+                })
+                .catch((error) => {
+                    console.error(error);
+                    document.getElementById('error-msg').innerText = "ACCESS DENIED: " + error.message;
+                });
+        }
+
+        function logout() {
+            auth.signOut().then(() => location.reload());
+        }
 
         function loadDashboard(email) {
             document.getElementById('user-display').innerText = "OPERATOR: " + email;
@@ -296,9 +274,7 @@
                 else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isUnlocked = true;
                 else if (role === "guest" && server.minRole === "guest") isUnlocked = true;
 
-                const statusClass = isUnlocked ? "unlocked" : "locked";
-                
-                card.className = `card ${statusClass}`;
+                card.className = `card ${isUnlocked ? "unlocked" : "locked"}`;
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <p style="color: #aaa; font-size: 0.9rem;">${server.desc}</p>
@@ -308,3 +284,5 @@
             });
         }
     </script>
+</body>
+</html>
