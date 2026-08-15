@@ -384,22 +384,42 @@
         };
 
         const errorLabel = document.getElementById('error-msg');
-        let auth = null;
-        let database = null;
 
-        try {
-            firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            
-            errorLabel.innerText = "System Matrix Online. Ready.";
-            errorLabel.style.color = "#00ff00"; 
-            console.log("Secure Identity Core Fully Operational.");
-            console.log("Realtime Database Core Fully Operational.");
-        } catch (e) {
-            console.error(e);
-            errorLabel.innerText = "CRITICAL BOOT ERROR: " + e.message;
-            errorLabel.style.color = "#ff003c";
-        }
+let auth = null;
+let database = null;
+
+try {
+
+    firebase.initializeApp(firebaseConfig);
+
+    auth = firebase.auth();
+
+    database = firebase.database();
+
+    errorLabel.innerText =
+        "System Matrix Online. Ready.";
+
+    errorLabel.style.color =
+        "#00ff00";
+
+    console.log(
+        "Secure Identity Core Fully Operational."
+    );
+
+    console.log(
+        "Realtime Database Core Fully Operational."
+    );
+
+} catch (e) {
+
+    console.error(e);
+
+    errorLabel.innerText =
+        "CRITICAL BOOT ERROR: " + e.message;
+
+    errorLabel.style.color =
+        "#ff003c";
+}
         document
     .getElementById("signup-open")
     .addEventListener("click", () => {
@@ -638,39 +658,57 @@
         ];
 
         // --- 3. HARDWARE USER EVENT ACTION LISTENERS ---
-        document.getElementById('login-trigger').addEventListener('click', () => {
-            const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('password').value;
+document.getElementById('login-trigger').addEventListener('click', async () => {
 
-            if (!email || !pass) {
-                errorLabel.innerText = "CREDENTIALS REQUIRED";
-                return;
-            }
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value;
 
-            errorLabel.innerText = "TRANSMITTING SECURE TOKENS...";
-            errorLabel.style.color = "#00f3ff";
+    if (!email || !pass) {
+        errorLabel.innerText = "CREDENTIALS REQUIRED";
+        errorLabel.style.color = "#ff003c";
+        return;
+    }
 
-            auth.signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    const user = userCredential.user;
-                    
-                    // ---------------------------------------------------------------
-                    // NO EMAIL STRINGS IN HTML: We extract secure server-side custom token claims.
-                    // ---------------------------------------------------------------
-user.getIdTokenResult(true)
-    .then(async (idTokenResult) => {
+    if (!auth) {
+        errorLabel.innerText = "AUTHENTICATION ENGINE OFFLINE";
+        errorLabel.style.color = "#ff003c";
+        return;
+    }
+
+    errorLabel.innerText = "TRANSMITTING SECURE TOKENS...";
+    errorLabel.style.color = "#00f3ff";
+
+    try {
+
+        // ----------------------------------------
+        // FIREBASE LOGIN
+        // ----------------------------------------
+
+        const userCredential =
+            await auth.signInWithEmailAndPassword(
+                email,
+                pass
+            );
+
+        const user = userCredential.user;
+
+        console.log("Authenticated user:", user.email);
+        console.log("Firebase UID:", user.uid);
+
+
+        // ----------------------------------------
+        // GET FRESH CUSTOM CLAIMS
+        // ----------------------------------------
+
+        const idTokenResult =
+            await user.getIdTokenResult(true);
 
         const assignedRole =
             idTokenResult.claims.role || null;
 
         console.log(
-            "Authenticated user:",
-            user.email
-        );
-
-        console.log(
-            "Firebase UID:",
-            user.uid
+            "Firebase custom claims:",
+            idTokenResult.claims
         );
 
         console.log(
@@ -679,9 +717,9 @@ user.getIdTokenResult(true)
         );
 
 
-        // --------------------------------
+        // ----------------------------------------
         // NO ROLE = PENDING USER
-        // --------------------------------
+        // ----------------------------------------
 
         if (!assignedRole) {
 
@@ -691,9 +729,9 @@ user.getIdTokenResult(true)
         }
 
 
-        // --------------------------------
-        // VALID ROLE
-        // --------------------------------
+        // ----------------------------------------
+        // ONLY ACCEPT KNOWN ROLES
+        // ----------------------------------------
 
         if (
             assignedRole !== "admin" &&
@@ -701,7 +739,7 @@ user.getIdTokenResult(true)
         ) {
 
             console.warn(
-                "Unknown role:",
+                "Unknown Firebase role:",
                 assignedRole
             );
 
@@ -711,35 +749,57 @@ user.getIdTokenResult(true)
         }
 
 
+        // ----------------------------------------
+        // VALID USER
+        // ----------------------------------------
+
         transitionToDashboard(
             user.email,
             assignedRole
         );
 
-    })
-    .catch((tokenError) => {
+    } catch (error) {
 
         console.error(
-            "Failed to retrieve token claims:",
-            tokenError
+            "Authentication exception:",
+            error
         );
 
-        errorLabel.innerText =
-            "SECURITY TOKEN VALIDATION FAILED";
+        errorLabel.style.color = "#ff003c";
 
-        errorLabel.style.color =
-            "#ff003c";
-    });
-                        .catch((tokenError) => {
-                            console.error("Failed to parse token payload: ", tokenError);
-                            transitionToDashboard(user.email, "guest");
-                        });
-                })
-                .catch((error) => {
-                    errorLabel.style.color = "#ff003c";
-                    errorLabel.innerText = "ACCESS REJECTED: " + error.message;
-                });
-        });
+        switch (error.code) {
+
+            case "auth/invalid-credential":
+            case "auth/user-not-found":
+            case "auth/wrong-password":
+
+                errorLabel.innerText =
+                    "ACCESS REJECTED: Invalid operator ID or passcode.";
+
+                break;
+
+            case "auth/user-disabled":
+
+                errorLabel.innerText =
+                    "ACCESS REJECTED: Operator account disabled.";
+
+                break;
+
+            case "auth/too-many-requests":
+
+                errorLabel.innerText =
+                    "ACCESS TEMPORARILY LOCKED: Too many attempts.";
+
+                break;
+
+            default:
+
+                errorLabel.innerText =
+                    "ACCESS REJECTED: " +
+                    (error.message || "Authentication failed.");
+        }
+    }
+});
 
         document.getElementById('logout-trigger').addEventListener('click', () => {
             if (auth) auth.signOut().then(() => { location.reload(); });
