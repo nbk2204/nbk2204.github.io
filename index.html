@@ -169,7 +169,7 @@
             <h2 style="margin-bottom: 20px;">SYSTEM ACCESS</h2>
             <input type="email" id="email" placeholder="OPERATOR ID (Email)">
             <input type="password" id="password" placeholder="ACCESS CODE (Password)">
-            <button id="login-btn">INITIATE SEQUENCE</button>
+            <button id="login-btn" onclick="handleLogin()">INITIATE SEQUENCE</button>
             <p id="error-msg" style="color:red; font-size: 0.8rem; margin-top: 10px;"></p>
         </div>
     </div>
@@ -181,7 +181,7 @@
                 <h1>NBK NEXUS</h1>
                 <small id="user-display">GUEST MODE</small>
             </div>
-            <button id="logout-btn" style="width: auto; background: #333;">ABORT SESSION</button>
+            <button onclick="logout()" style="width: auto; background: #333;">ABORT SESSION</button>
         </header>
 
         <div id="admin-panel" class="admin-controls">
@@ -191,13 +191,13 @@
         <div class="grid" id="server-grid"></div>
     </div>
 
-    <!-- NATIVE BROWSER ES MODULE ENGINE -->
-    <script type="module">
-        // Direct secure imports from standard CDN unhindered by tracking blocks
-        import { initializeApp } from "https://gstatic.com";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://gstatic.com";
+    <!-- 1. LOAD FIREBASE FROM CLOUDFLARE (CORS FRIENDLY) -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
 
-        // --- 1. CONFIGURATION ---
+    <!-- 2. YOUR CONFIGURATION -->
+    <script>
+        // --- PASTE YOUR API KEYS BELOW CAREFULLY ---
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
@@ -208,21 +208,26 @@
             measurementId: "G-FPVH852M59"
         };
 
-        // Initialize Secure Connection
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        console.log("NBK Nexus Module Core Active.");
+        // --- SAFE INITIALIZATION ---
+        let auth;
+        try {
+            if (typeof firebase === 'undefined') {
+                throw new Error("Network Error: Libraries failed to load.");
+            }
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            console.log("System Initialized via Cloudflare.");
+        } catch (e) {
+            document.getElementById('error-msg').innerText = "SYSTEM FAILURE: " + e.message;
+            console.error(e);
+        }
 
-        // --- 2. YOUR SERVERS CORE CONFIG ---
+        // --- YOUR SERVERS LIST ---
         const servers = [
             { id: 1, name: "PUBLIC NODE", desc: "Family & Friend Access", url: "https://google.com", minRole: "guest" },
             { id: 2, name: "MEDIA CORE", desc: "Plex / Streaming", url: "https://plex.tv", minRole: "friend" },
             { id: 3, name: "SENTINEL OPS", desc: "Security & Logs", url: "https://amazon.com", minRole: "admin" }
         ];
-
-        // Attach action handlers to elements securely
-        document.getElementById('login-btn').addEventListener('click', handleLogin);
-        document.getElementById('logout-btn').addEventListener('click', logout);
 
         function handleLogin() {
             const email = document.getElementById('email').value;
@@ -233,9 +238,9 @@
                 return;
             }
 
-            document.getElementById('error-msg').innerText = "AUTHENTICATING NODE...";
+            document.getElementById('error-msg').innerText = "AUTHENTICATING...";
 
-            signInWithEmailAndPassword(auth, email, pass)
+            auth.signInWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
                     document.getElementById('login-overlay').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
@@ -248,14 +253,14 @@
         }
 
         function logout() {
-            signOut(auth).then(() => location.reload());
+            auth.signOut().then(() => location.reload());
         }
 
         function loadDashboard(email) {
             document.getElementById('user-display').innerText = "OPERATOR: " + email;
             
             let role = "guest";
-            // CHOOSE YOUR ADMIN EMAIL HERE
+            // REPLACE THIS EMAIL WITH YOUR EXACT ADMIN EMAIL
             if (email === "crazybuddiescreations@gmail.com") {
                 role = "admin";
                 document.getElementById('admin-panel').style.display = "block";
@@ -278,7 +283,7 @@
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <p style="color: #aaa; font-size: 0.9rem;">${server.desc}</p>
-                    <a href="${server.url}" class="server-link" target="_blank">ACCESS TERMINAL</a>
+                    ${isUnlocked ? `<a href="${server.url}" class="server-link" target="_blank">ACCESS TERMINAL</a>` : ''}
                 `;
                 grid.appendChild(card);
             });
