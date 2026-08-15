@@ -228,15 +228,17 @@
     </div>
 
     <!-- INSERT PART 2 BELOW THIS LINE -->
+       <!-- PART 2: THE SECURE CORE (CORS-Fixed) -->
     <script type="module">
-        import { initializeApp } from "https://gstatic.com";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://gstatic.com";
+        // -----------------------------------------------------------
+        // FIXED IMPORTS: We use 'esm.sh' which allows GitHub Pages access
+        // -----------------------------------------------------------
+        import { initializeApp } from "https://esm.sh";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://esm.sh";
 
-        // ==========================================
-        // 1. UPDATE YOUR TRUE FIREBASE CONFIG KEYS HERE
-        // ==========================================
+        // 1. YOUR CONFIGURATION
         const firebaseConfig = {
-            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34", 
+            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
             projectId: "nbk-nexus",
             storageBucket: "nbk-nexus.firebasestorage.app",
@@ -245,24 +247,31 @@
             measurementId: "G-FPVH852M59"
         };
 
-        // Initialize App Connection Instance
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        
         const errorLabel = document.getElementById('error-msg');
-        errorLabel.innerText = "System Matrix Online. Ready.";
-        errorLabel.style.color = "#00ff00";
 
-        // ==========================================
-        // 2. YOUR INDIVIDUAL INFRASTRUCTURE ROUTING
-        // ==========================================
+        // 2. SAFE INITIALIZATION
+        let app, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            
+            errorLabel.innerText = "System Matrix Online. Ready.";
+            errorLabel.style.color = "#00ff00"; 
+            console.log("Firebase loaded via ESM CDN");
+        } catch (e) {
+            console.error("Init Failed:", e);
+            errorLabel.innerText = "CRITICAL ERROR: " + e.message;
+            errorLabel.style.color = "red";
+        }
+
+        // 3. YOUR SERVERS (ROUTING)
         const servers = [
-            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
+            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays and multimedia pipelines.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends and configuration terminal access.", url: "https://amazon.com", minRole: "admin" }
         ];
 
-        // --- 3. HARDWARE USER EVENT ACTION LISTENERS ---
+        // 4. EVENT LISTENERS
         document.getElementById('login-trigger').addEventListener('click', () => {
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
@@ -281,9 +290,9 @@
                     transitionToDashboard(userCredential.user.email);
                 })
                 .catch((error) => {
-                    console.error("Authentication Fault: ", error);
+                    console.error("Auth Error:", error);
                     errorLabel.style.color = "#ff003c";
-                    if (error.code === "auth/invalid-credential") {
+                    if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found") {
                         errorLabel.innerText = "ACCESS REJECTED: Invalid operator ID or passcode.";
                     } else {
                         errorLabel.innerText = "ACCESS REJECTED: " + error.message;
@@ -292,32 +301,29 @@
         });
 
         document.getElementById('logout-trigger').addEventListener('click', () => {
-            signOut(auth).then(() => { location.reload(); });
+            signOut(auth).then(() => location.reload());
         });
 
-        // --- 4. DYNAMIC ROLE-BASED GRAPHICS ENGINE ---
+        // 5. DASHBOARD LOGIC
         function transitionToDashboard(email) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('user-display').innerText = email.toUpperCase();
-            const clearanceLabel = document.getElementById('user-clearance');
             
+            const clearanceLabel = document.getElementById('user-clearance');
             let currentClearance = "guest";
             
-            // ==========================================
-            // 3. UPDATE YOUR REGISTERED ADMIN EMAIL HERE
-            // ==========================================
+            // *** UPDATE YOUR ADMIN EMAIL HERE ***
             if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
                 currentClearance = "admin";
                 clearanceLabel.innerText = "ROOT ADMIN";
                 clearanceLabel.style.color = "var(--neon-red)";
                 document.getElementById('admin-panel').style.display = "block";
-            } else if (email.toLowerCase().includes("friend") || email.toLowerCase().includes("family")) {
+            } else if (email.toLowerCase().includes("friend")) {
                 currentClearance = "friend";
-                clearanceLabel.innerText = "NEXUS PRIVILEGED MEMBER";
+                clearanceLabel.innerText = "PRIVILEGED MEMBER";
                 clearanceLabel.style.color = "var(--neon-cyan)";
             } else {
-                currentClearance = "guest";
                 clearanceLabel.innerText = "GUEST USER";
                 clearanceLabel.style.color = "var(--neon-purple)";
             }
