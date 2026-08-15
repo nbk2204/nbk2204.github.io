@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBK NEXUS // Secure Access</title>
+    <title>NBK NEXUS // Armored Access</title>
     <style>
         :root {
             --bg-color: #0a051b;
-            --glass-panel: rgba(20, 10, 35, 0.7);
+            --glass-panel: rgba(20, 10, 35, 0.75);
             --neon-purple: #bc13fe;
             --neon-cyan: #00f3ff;
             --neon-red: #ff003c;
@@ -20,184 +20,192 @@
             font-family: 'Segoe UI', monospace;
             margin: 0;
             overflow-x: hidden;
+            background-image: radial-gradient(circle at 50% 50%, rgba(188, 19, 254, 0.1) 0%, transparent 60%);
         }
 
-        /* LOGIN OVERLAY */
+        /* HARD-LAYERED LOGIN OVERLAY */
         #login-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.95);
-            z-index: 9999;
+            background: rgba(4, 2, 10, 0.98);
+            z-index: 99999;
             display: flex;
             justify-content: center;
             align-items: center;
-            backdrop-filter: blur(10px);
+            backdrop-filter: blur(12px);
         }
 
         .login-box {
-            background: rgba(10, 5, 20, 0.9);
+            background: var(--glass-panel);
             border: 1px solid var(--neon-cyan);
             padding: 40px;
             width: 350px;
             text-align: center;
-            box-shadow: 0 0 30px rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 30px rgba(0, 243, 255, 0.15);
             position: relative;
+            border-radius: 8px;
         }
 
         .login-box::before {
-            content: "AUTHENTICATION REQUIRED";
+            content: "AUTHENTICATION ENCRYPTED NODE";
             position: absolute;
             top: -10px; left: 50%;
             transform: translateX(-50%);
             background: var(--bg-color);
             padding: 0 10px;
             color: var(--neon-cyan);
-            font-size: 0.7rem;
+            font-size: 0.65rem;
             letter-spacing: 2px;
+            white-space: nowrap;
         }
 
         input {
             width: 100%;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid #333;
-            padding: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(0, 243, 255, 0.2);
+            padding: 12px;
             color: #fff;
             margin-bottom: 15px;
             outline: none;
+            box-sizing: border-box;
+            border-radius: 4px;
         }
 
-        input:focus { border-color: var(--neon-purple); }
+        input:focus { border-color: var(--neon-purple); box-shadow: 0 0 10px rgba(188, 19, 254, 0.3); }
 
-        button {
+        .nexus-btn {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
             background: var(--neon-purple);
             border: none;
             color: #fff;
             font-weight: bold;
             cursor: pointer;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(188, 19, 254, 0.2);
         }
 
-        button:hover { box-shadow: 0 0 15px var(--neon-purple); }
+        .nexus-btn:hover { box-shadow: 0 0 20px var(--neon-purple); background: #cc2efe; }
 
-        /* DASHBOARD LAYOUT */
-        #dashboard { display: none; padding: 20px; }
+        /* MAIN HUD DASHBOARD */
+        #dashboard { display: none; padding: 25px; }
 
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding-bottom: 20px;
             margin-bottom: 30px;
         }
 
         .admin-controls {
             display: none;
-            background: rgba(255, 0, 60, 0.1);
+            background: rgba(255, 0, 60, 0.08);
             border: 1px solid var(--neon-red);
-            padding: 10px;
-            margin-bottom: 20px;
-            color: var(--neon-red);
-            font-size: 0.8rem;
+            padding: 12px;
+            margin-bottom: 25px;
+            color: #ff99ae;
+            font-size: 0.85rem;
+            border-radius: 4px;
         }
 
-        /* GRID & SERVER CARDS */
+        /* INFOGRAPHIC CARD STRUCTURE */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
         }
 
         .card {
             background: var(--glass-panel);
-            border: 1px solid rgba(188, 19, 254, 0.3);
-            padding: 20px;
-            border-radius: 8px;
-            transition: 0.3s;
+            border: 1px solid rgba(188, 19, 254, 0.2);
+            padding: 25px;
+            border-radius: 12px;
             position: relative;
+            transition: all 0.3s ease;
         }
 
-        .card.locked {
-            filter: grayscale(100%) brightness(0.4);
-            border-style: dashed;
-        }
-
-        .card.locked .server-link {
-            display: none !important;
-        }
-
-        .card.locked::after {
-            content: "🔒 LOCKED";
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            color: #ff0055;
-            font-weight: bold;
-            font-size: 1.3rem;
-            letter-spacing: 1px;
-        }
-        
+        /* SYSTEM ACCESS LEVEL GRAPHICS */
         .card.unlocked {
-            box-shadow: 0 0 15px rgba(188, 19, 254, 0.2);
-            border-color: var(--neon-cyan);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(188, 19, 254, 0.15);
         }
 
         .card.unlocked:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 0 25px var(--neon-cyan);
+            transform: translateY(-4px);
+            border-color: var(--neon-cyan);
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.3);
+        }
+
+        .card.locked {
+            filter: grayscale(100%) brightness(0.3);
+            border-style: dashed;
+            cursor: not-allowed;
+        }
+
+        .card.locked .server-link {
+            pointer-events: none;
+            background: rgba(255,255,255,0.05);
+            color: rgba(255,255,255,0.2);
+            border-color: transparent;
         }
 
         .server-link {
-            display: inline-block;
-            margin-top: 15px;
-            padding: 8px 15px;
-            background: rgba(0, 243, 255, 0.1);
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            padding: 10px;
+            background: rgba(0, 243, 255, 0.08);
             color: var(--neon-cyan);
             text-decoration: none;
             border: 1px solid var(--neon-cyan);
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 4px;
         }
     </style>
+
+    <!-- ROBUST COMPAT LOADERS PLACED SAFELY IN HEAD -->
+    <script src="https://cloudflare.com"></script>
+    <script src="https://cloudflare.com"></script>
 </head>
 <body>
 
-    <!-- SECURE LOGIN OVERLAY -->
+    <!-- PRIMARY SECURITY LAYER -->
     <div id="login-overlay">
         <div class="login-box">
-            <h2 style="margin-bottom: 20px;">SYSTEM ACCESS</h2>
+            <h2 style="margin-bottom: 20px; letter-spacing: 2px;">NBK NEXUS TERMINAL</h2>
             <input type="email" id="email" placeholder="OPERATOR ID (Email)">
             <input type="password" id="password" placeholder="ACCESS CODE (Password)">
-            <button id="login-btn">INITIATE SEQUENCE</button>
-            <p id="error-msg" style="color:red; font-size: 0.8rem; margin-top: 10px;"></p>
+            <!-- UNBLOCKABLE INTERFACE ACCESS LINK -->
+            <button class="nexus-btn" onclick="window.handleLogin()">INITIATE SEQUENCE</button>
+            <p id="error-msg" style="color:var(--neon-red); font-size: 0.85rem; margin-top: 15px; font-weight: bold;"></p>
         </div>
     </div>
 
-    <!-- MAIN DASHBOARD -->
+    <!-- MAIN APP SCREEN -->
     <div id="dashboard">
         <header>
             <div>
-                <h1>NBK NEXUS</h1>
-                <small id="user-display">GUEST MODE</small>
+                <h1 style="letter-spacing: 3px; text-shadow: 0 0 10px var(--neon-purple);">NBK NEXUS</h1>
+                <small id="user-display" style="color: var(--neon-cyan); font-weight: bold; letter-spacing: 1px;"></small>
             </div>
-            <button id="logout-btn" style="width: auto; background: #333;">ABORT SESSION</button>
+            <button onclick="window.logout()" style="width: auto; background: #221035; border: 1px solid var(--neon-purple); padding: 8px 15px; color: white; cursor: pointer;">ABORT SESSION</button>
         </header>
 
         <div id="admin-panel" class="admin-controls">
-            <strong>⚠️ ROOT ACCESS GRANTED:</strong> Full system visibility enabled.
+            <strong>⚠️ ROOT ACCESS GRANTED:</strong> Administrative configuration bypass fully established.
         </div>
 
         <div class="grid" id="server-grid"></div>
     </div>
 
-    <!-- MODERN MODULE SYSTEM (BYPASSES BLOCKERS) -->
-    <script type="module">
-        // Import directly from Google's Module Server
-        import { initializeApp } from "https://gstatic.com";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://gstatic.com";
-
-        console.log("Modules loaded. Initializing...");
+    <script>
+        console.log("Armored logic array online.");
 
         // --- 1. CONFIGURATION ---
         const firebaseConfig = {
@@ -210,31 +218,26 @@
             measurementId: "G-FPVH852M59"
         };
 
-        // --- 2. INITIALIZE ---
+        // --- 2. FORCED INITIALIZATION SYSTEM ---
         let auth;
         try {
-            const app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            console.log("Firebase Active");
-        } catch (error) {
-            console.error("Critical Init Error:", error);
-            document.getElementById('error-msg').innerText = "SYSTEM ERROR: " + error.message;
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            console.log("Firebase initialized successfully.");
+        } catch (e) {
+            document.getElementById('error-msg').innerText = "SYSTEM EXCEPTION: " + e.message;
         }
 
-        // --- 3. SERVERS DATA ---
+        // --- 3. SERVERS SPECIFICATION DATA ---
         const servers = [
-            { id: 1, name: "PUBLIC NODE", desc: "Family & Friend Access", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "MEDIA CORE", desc: "Plex / Streaming", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL OPS", desc: "Security & Logs", url: "https://amazon.com", minRole: "admin" }
+            { id: 1, name: "PUBLIC TERMINAL", desc: "Main landing portal and media storage arrays.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA CONTROL", desc: "Plex, streaming services, and audio matrix automation.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL CORE SECURITY", desc: "Administrative diagnostics, server logs, and automation controls.", url: "https://amazon.com", minRole: "admin" }
         ];
 
-        // --- 4. EVENT LISTENERS ---
-        // We attach these via JS because 'onclick' in HTML cannot see modules
-        document.getElementById('login-btn').addEventListener('click', handleLogin);
-        document.getElementById('logout-btn').addEventListener('click', logout);
-
-        function handleLogin() {
-            const email = document.getElementById('email').value;
+        // --- 4. EXPLICIT WINDOW BINDINGS (EXTENSION BYPASS) ---
+        window.handleLogin = function() {
+            const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
             const errorLabel = document.getElementById('error-msg');
 
@@ -243,51 +246,30 @@
                 return;
             }
 
-            errorLabel.innerText = "VERIFYING IDENTITY...";
+            errorLabel.innerText = "TRANSMITTING SIGNATURE...";
 
-            signInWithEmailAndPassword(auth, email, pass)
+            auth.signInWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
                     document.getElementById('login-overlay').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
                     loadDashboard(userCredential.user.email);
                 })
                 .catch((error) => {
-                    console.error("Login Error:", error);
-                    errorLabel.innerText = "ACCESS DENIED: " + error.code;
+                    console.error("Login sequence crash: ", error);
+                    errorLabel.innerText = "ACCESS REJECTED: " + error.message;
                 });
-        }
+        };
 
-        function logout() {
-            signOut(auth).then(() => location.reload());
-        }
+        window.logout = function() {
+            auth.signOut().then(() => { location.reload(); });
+        };
 
         function loadDashboard(email) {
-            document.getElementById('user-display').innerText = "OPERATOR: " + email;
+            document.getElementById('user-display').innerText = "OPERATOR IDENT: " + email.toUpperCase();
             
             let role = "guest";
-            // UPDATE YOUR ADMIN EMAIL HERE
-            if (email === "crazybuddiescreations@gmail.com") {
+            // CHOOSE YOUR ADMIN EMAIL MATCH HERE
+            if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
                 role = "admin";
                 document.getElementById('admin-panel').style.display = "block";
             } else if (email.toLowerCase().includes("friend")) {
-                role = "friend";
-            }
-
-            const grid = document.getElementById('server-grid');
-            grid.innerHTML = ""; 
-
-            servers.forEach(server => {
-                const card = document.createElement('div');
-                let isUnlocked = false;
-
-                if (role === "admin") isUnlocked = true;
-                else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isUnlocked = true;
-                else if (role === "guest" && server.minRole === "guest") isUnlocked = true;
-
-                card.className = `card ${isUnlocked ? "unlocked" : "locked"}`;
-                card.innerHTML = `
-                    <h3>${server.name}</h3>
-                    <p style="color: #aaa; font-size: 0.9rem;">${server.desc}</p>
-                    <a href="${server.url}" class="server-link" target="_blank">ACCESS TERMINAL</a>
-                `;
-                grid.appendChild(card);
