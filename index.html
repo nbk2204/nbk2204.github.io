@@ -5,15 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>NBK NEXUS // Secure Command</title>
     
-    <!-- 1. LOAD STABLE LIBRARIES FIRST -->
-    <script src="https://cloudflare.com"></script>
-    <script src="https://cloudflare.com"></script>
+    <!-- 1. ALTERNATIVE "UNPKG" SOURCE (Bypasses most blockers) -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
 
     <style>
         :root { --bg: #0a051b; --glass: rgba(20, 10, 35, 0.85); --purple: #bc13fe; --cyan: #00f3ff; --red: #ff003c; --text: #e0d5f5; }
         body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', monospace; margin: 0; overflow-x: hidden; min-height: 100vh; }
         
-        /* LOGIN OVERLAY */
         #login-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 2, 10, 0.98); z-index: 9999; display: flex; justify-content: center; align-items: center; backdrop-filter: blur(10px); }
         .login-box { background: var(--glass); border: 1px solid var(--cyan); padding: 40px; width: 340px; text-align: center; box-shadow: 0 0 40px rgba(0, 243, 255, 0.1); border-radius: 8px; }
         
@@ -23,64 +22,19 @@
         .nexus-btn { width: 100%; padding: 12px; background: var(--purple); border: none; color: white; font-weight: bold; cursor: pointer; letter-spacing: 2px; transition: 0.3s; }
         .nexus-btn:hover { box-shadow: 0 0 20px var(--purple); }
 
-        /* DASHBOARD */
         #dashboard { display: none; padding: 30px; }
         header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
-        
         .admin-alert { display: none; background: rgba(255, 0, 60, 0.15); border: 1px solid var(--red); color: #ff99ab; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
         
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; }
         .card { background: var(--glass); border: 1px solid rgba(188, 19, 254, 0.3); padding: 25px; border-radius: 10px; position: relative; transition: 0.3s; }
-        
         .card.locked { filter: grayscale(100%) opacity(0.6); border-style: dashed; pointer-events: none; }
         .card.locked::after { content: "🔒 RESTRICTED"; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-weight: bold; color: #fff; text-shadow: 0 0 10px #000; font-size: 1.2rem; }
-        
         .card.unlocked:hover { transform: translateY(-5px); border-color: var(--cyan); box-shadow: 0 0 30px rgba(0, 243, 255, 0.2); }
         
         .link-btn { display: block; text-align: center; margin-top: 20px; padding: 10px; border: 1px solid var(--cyan); color: var(--cyan); text-decoration: none; text-transform: uppercase; letter-spacing: 1px; font-size: 0.8rem; transition: 0.3s; }
         .link-btn:hover { background: var(--cyan); color: #000; }
     </style>
-
-    <!-- 2. DEFINE FUNCTIONS EARLY (This prevents the "Not a function" error) -->
-    <script>
-        window.handleLogin = function() {
-            const email = document.getElementById('email').value.trim();
-            const pass = document.getElementById('password').value;
-            const errorLabel = document.getElementById('error-msg');
-
-            // Safety Check: Did Firebase load?
-            if (!window.auth) {
-                errorLabel.innerText = "SYSTEM ERROR: API Keys Invalid. Check your config syntax.";
-                errorLabel.style.color = "#ff003c";
-                return;
-            }
-
-            if (!email || !pass) {
-                errorLabel.innerText = "CREDENTIALS REQUIRED";
-                return;
-            }
-
-            errorLabel.innerText = "VERIFYING ENCRYPTION...";
-            errorLabel.style.color = "#00f3ff";
-
-            window.auth.signInWithEmailAndPassword(email, pass)
-                .then((userCredential) => {
-                    document.getElementById('login-overlay').style.display = 'none';
-                    document.getElementById('dashboard').style.display = 'block';
-                    loadDashboard(userCredential.user.email);
-                })
-                .catch((error) => {
-                    console.error("Login Error:", error);
-                    errorLabel.innerText = "ACCESS DENIED: " + error.code;
-                    errorLabel.style.color = "#ff003c";
-                });
-        };
-
-        window.logout = function() {
-            if(window.auth) window.auth.signOut().then(() => location.reload());
-            else location.reload();
-        };
-    </script>
 </head>
 <body>
 
@@ -89,8 +43,8 @@
             <h2 style="margin-bottom: 20px; letter-spacing: 2px;">NBK NEXUS</h2>
             <input type="email" id="email" placeholder="OPERATOR ID (Email)">
             <input type="password" id="password" placeholder="ACCESS CODE (Password)">
-            <button class="nexus-btn" onclick="window.handleLogin()">INITIATE SEQUENCE</button>
-            <p id="error-msg" style="color: #666; font-size: 0.8rem; margin-top: 15px; min-height: 20px;">System Standby...</p>
+            <button class="nexus-btn" onclick="attemptLogin()">INITIATE SEQUENCE</button>
+            <p id="status-msg" style="color: #666; font-size: 0.8rem; margin-top: 15px;">System Standby...</p>
         </div>
     </div>
 
@@ -100,7 +54,7 @@
                 <h1 style="margin:0; text-shadow: 0 0 15px var(--purple);">NBK NEXUS</h1>
                 <small id="user-display" style="color: var(--cyan); letter-spacing: 1px;">GUEST</small>
             </div>
-            <button onclick="window.logout()" style="background: transparent; border: 1px solid #555; color: #fff; padding: 5px 15px; cursor: pointer;">LOGOUT</button>
+            <button onclick="logout()" style="background: transparent; border: 1px solid #555; color: #fff; padding: 5px 15px; cursor: pointer;">LOGOUT</button>
         </header>
 
         <div id="admin-panel" class="admin-alert">
@@ -110,18 +64,9 @@
         <div class="grid" id="server-grid"></div>
     </div>
 
-    <!-- 3. CONFIGURATION (The place where errors happen) -->
     <script>
-        // --- SERVERS LIST ---
-        const servers = [
-            { id: 1, name: "PUBLIC NODE", desc: "General Access Portal", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "MEDIA CORE", desc: "Plex & Streaming", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL OPS", desc: "Security & Admin Tools", url: "https://amazon.com", minRole: "admin" }
-        ];
-
-        // --- FIREBASE CONFIGURATION ---
-        try {
-            const firebaseConfig = {
+        // --- 1. CONFIGURATION ---
+        const firebaseConfig = {
   apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
   authDomain: "nbk-nexus.firebaseapp.com",
   projectId: "nbk-nexus",
@@ -129,27 +74,84 @@
   messagingSenderId: "324577021220",
   appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
   measurementId: "G-FPVH852M59"
-            };
+        };
 
-            // Initialize
-            firebase.initializeApp(firebaseConfig);
-            window.auth = firebase.auth();
-            console.log("Firebase Active");
-            document.getElementById('error-msg').innerText = "System Online. Ready.";
-            document.getElementById('error-msg').style.color = "#00ff00";
+        const servers = [
+            { id: 1, name: "PUBLIC NODE", desc: "General Access Portal", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "MEDIA CORE", desc: "Plex & Streaming", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL OPS", desc: "Security & Admin Tools", url: "https://amazon.com", minRole: "admin" }
+        ];
 
-        } catch (e) {
-            console.error("CONFIG ERROR:", e);
-            document.getElementById('error-msg').innerText = "CONFIG SYNTAX ERROR: Check Console (F12)";
-            document.getElementById('error-msg').style.color = "#ff003c";
+        // --- 2. ROBUST INITIALIZER (Retries connection if blocked) ---
+        let auth = null;
+        
+        function initSystem() {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    firebase.initializeApp(firebaseConfig);
+                    auth = firebase.auth();
+                    document.getElementById('status-msg').innerText = "System Online. Ready.";
+                    document.getElementById('status-msg').style.color = "#00ff00";
+                    console.log("Firebase Mounted.");
+                } else {
+                    throw new Error("Library pending...");
+                }
+            } catch (e) {
+                console.log("Waiting for network...");
+                // Retry in 1 second if network is slow
+                setTimeout(initSystem, 1000); 
+            }
+        }
+        
+        // Start trying to connect immediately
+        initSystem();
+
+        // --- 3. LOGIN LOGIC ---
+        function attemptLogin() {
+            const email = document.getElementById('email').value.trim();
+            const pass = document.getElementById('password').value;
+            const status = document.getElementById('status-msg');
+
+            if (!auth) {
+                status.innerText = "NETWORK ERROR: Firebase libraries blocked by browser/extension.";
+                status.style.color = "#ff003c";
+                // Final hail mary: try to load from alternative source if blocked
+                const script = document.createElement('script');
+                script.src = "https://gstatic.com";
+                document.head.appendChild(script);
+                return;
+            }
+
+            if (!email || !pass) {
+                status.innerText = "CREDENTIALS REQUIRED";
+                return;
+            }
+
+            status.innerText = "VERIFYING ENCRYPTION...";
+            status.style.color = "#00f3ff";
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    document.getElementById('login-overlay').style.display = 'none';
+                    document.getElementById('dashboard').style.display = 'block';
+                    loadDashboard(userCredential.user.email);
+                })
+                .catch((error) => {
+                    status.innerText = "ACCESS DENIED: " + error.code;
+                    status.style.color = "#ff003c";
+                });
         }
 
-        // --- DASHBOARD RENDERER ---
+        function logout() {
+            if(auth) auth.signOut().then(() => location.reload());
+            else location.reload();
+        }
+
         function loadDashboard(email) {
             document.getElementById('user-display').innerText = "OPERATOR: " + email.toUpperCase();
             
             let role = "guest";
-            // *** UPDATE YOUR ADMIN EMAIL BELOW ***
+            // UPDATE YOUR ADMIN EMAIL HERE
             if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
                 role = "admin";
                 document.getElementById('admin-panel').style.display = "block";
