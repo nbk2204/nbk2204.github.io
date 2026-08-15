@@ -228,15 +228,14 @@
     </div>
 
     <!-- INSERT PART 2 BELOW THIS LINE -->
-       <!-- PART 2: THE SECURE CORE (CORS-Fixed) -->
-    <script type="module">
-        // -----------------------------------------------------------
-        // FIXED IMPORTS: We use 'esm.sh' which allows GitHub Pages access
-        // -----------------------------------------------------------
-        import { initializeApp } from "https://esm.sh";
-        import { getAuth, signInWithEmailAndPassword, signOut } from "https://esm.sh";
+    <!-- 1. IMPORT COMPAT WRAPPERS VIA GLOBAL DELIVER NETWORKS -->
+    <script src="https://jsdelivr.net"></script>
+    <script src="https://jsdelivr.net"></script>
 
-        // 1. YOUR CONFIGURATION
+    <!-- 2. SYSTEM CONTROLLER PLATFORM -->
+    <script>
+        // --- 1. CONFIGURATION MATRIX ---
+        // Make sure to double-check the physical label matches your Firebase settings exactly
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
@@ -249,32 +248,41 @@
 
         const errorLabel = document.getElementById('error-msg');
 
-        // 2. SAFE INITIALIZATION
-        let app, auth;
+        // --- 2. SAFE BOOT CONNECTION ---
+        let auth = null;
         try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
+            if (typeof firebase === 'undefined') {
+                throw new Error("Network Pipeline Error: Package arrays are missing.");
+            }
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
             
             errorLabel.innerText = "System Matrix Online. Ready.";
             errorLabel.style.color = "#00ff00"; 
-            console.log("Firebase loaded via ESM CDN");
+            console.log("NBK Nexus Secure Connection Established.");
         } catch (e) {
-            console.error("Init Failed:", e);
-            errorLabel.innerText = "CRITICAL ERROR: " + e.message;
-            errorLabel.style.color = "red";
+            console.error(e);
+            errorLabel.innerText = "CRITICAL BOOT ERROR: " + e.message;
+            errorLabel.style.color = "#ff003c";
         }
 
-        // 3. YOUR SERVERS (ROUTING)
+        // --- 3. SERVERS INFRASTRUCTURE ARCHIVE ---
         const servers = [
-            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts.", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays and multimedia pipelines.", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends and configuration terminal access.", url: "https://amazon.com", minRole: "admin" }
+            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
         ];
 
-        // 4. EVENT LISTENERS
+        // --- 4. HARDWARE LOGIC EXECUTIONS ---
         document.getElementById('login-trigger').addEventListener('click', () => {
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
+
+            if (!auth) {
+                errorLabel.innerText = "AUTHENTICATION ENGINE OFFLINE";
+                errorLabel.style.color = "#ff003c";
+                return;
+            }
 
             if (!email || !pass) {
                 errorLabel.innerText = "CREDENTIALS REQUIRED";
@@ -285,12 +293,12 @@
             errorLabel.innerText = "TRANSMITTING SECURE PROTOCOLS...";
             errorLabel.style.color = "#00f3ff";
 
-            signInWithEmailAndPassword(auth, email, pass)
+            auth.signInWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
                     transitionToDashboard(userCredential.user.email);
                 })
                 .catch((error) => {
-                    console.error("Auth Error:", error);
+                    console.error("Auth Exception:", error);
                     errorLabel.style.color = "#ff003c";
                     if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found") {
                         errorLabel.innerText = "ACCESS REJECTED: Invalid operator ID or passcode.";
@@ -301,10 +309,14 @@
         });
 
         document.getElementById('logout-trigger').addEventListener('click', () => {
-            signOut(auth).then(() => location.reload());
+            if (auth) {
+                auth.signOut().then(() => { location.reload(); });
+            } else {
+                location.reload();
+            }
         });
 
-        // 5. DASHBOARD LOGIC
+        // --- 5. VISUAL GRAPHICS ENGINE CONTROLLER ---
         function transitionToDashboard(email) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
@@ -313,13 +325,15 @@
             const clearanceLabel = document.getElementById('user-clearance');
             let currentClearance = "guest";
             
-            // *** UPDATE YOUR ADMIN EMAIL HERE ***
+            // ==========================================
+            // *** UPDATE YOUR REGISTERED ADMIN EMAIL HERE ***
+            // ==========================================
             if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
                 currentClearance = "admin";
                 clearanceLabel.innerText = "ROOT ADMIN";
                 clearanceLabel.style.color = "var(--neon-red)";
                 document.getElementById('admin-panel').style.display = "block";
-            } else if (email.toLowerCase().includes("friend")) {
+            } else if (email.toLowerCase().includes("friend") || email.toLowerCase().includes("family")) {
                 currentClearance = "friend";
                 clearanceLabel.innerText = "PRIVILEGED MEMBER";
                 clearanceLabel.style.color = "var(--neon-cyan)";
