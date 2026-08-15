@@ -194,108 +194,117 @@
         </div>
     </div>
 
-    <!-- FIREBASE SDK (Versions 9+ compat for simplicity) -->
+       <!-- UPDATED FIREBASE SDK IMPORTS -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
 
     <script>
-        // --- 1. PASTE YOUR FIREBASE CONFIG HERE ---
+        console.log("System initializing...");
+
+        // --- 1. CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
             projectId: "nbk-nexus",
             storageBucket: "nbk-nexus.firebasestorage.app",
             messagingSenderId: "324577021220",
-            appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1"
+            appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
+            measurementId: "G-FPVH852M59"
         };
-        
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
 
-        // --- 2. CONFIGURATION: YOUR SERVERS ---
-        // Define which roles can see which servers
-        const servers = [
-            {
-                id: 1,
-                name: "PUBLIC NODE",
-                desc: "Family & Friend Access",
-                url: "http://public-server.com",
-                minRole: "guest" // Everyone sees this
-            },
-            {
-                id: 2,
-                name: "MEDIA CORE",
-                desc: "Plex / Jellyfin Streaming",
-                url: "http://media-server.com",
-                minRole: "friend" // Only friends and admins
-            },
-            {
-                id: 3,
-                name: "SENTINEL OPS",
-                desc: "Security Cameras & Logs",
-                url: "http://secure-server.com",
-                minRole: "admin" // Only you
-            }
-        ];
+        // --- 2. SAFE INITIALIZATION ---
+        let auth;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            console.log("Firebase initialized successfully.");
+        } catch (e) {
+            alert("CRITICAL ERROR: Firebase Config is invalid. Check your API Keys in the code.\n\nError: " + e.message);
+        }
 
-        // --- 3. LOGIC ---
-        
+        // --- 3. LOGIN LOGIC ---
         function handleLogin() {
-            const email = document.getElementById('email').value;
-            const pass = document.getElementById('password').value;
+            // DEBUG ALERT: verifies button works
+            console.log("Attempting login...");
             
+            const emailField = document.getElementById('email');
+            const passField = document.getElementById('password');
+
+            if (!emailField || !passField) {
+                alert("Error: Login fields not found in HTML.");
+                return;
+            }
+
+            const email = emailField.value;
+            const pass = passField.value;
+
+            if (!email || !pass) {
+                alert("Please enter both Email and Password.");
+                return;
+            }
+
+            document.getElementById('error-msg').innerText = "CONNECTING...";
+
             auth.signInWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
-                    // Login successful
+                    alert("ACCESS GRANTED: Welcome, " + userCredential.user.email);
                     document.getElementById('login-overlay').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
                     loadDashboard(userCredential.user.email);
                 })
                 .catch((error) => {
-                    document.getElementById('error-msg').innerText = "ACCESS DENIED: " + error.message;
+                    // This catches wrong passwords OR if Email/Auth is disabled in Console
+                    console.error("Login Failed:", error);
+                    alert("LOGIN FAILED: " + error.code + "\n" + error.message);
+                    document.getElementById('error-msg').innerText = "ERROR: " + error.message;
                 });
         }
 
+        // --- 4. LOGOUT ---
         function logout() {
-            auth.signOut().then(() => {
-                location.reload(); // Reset page
-            });
+            auth.signOut().then(() => location.reload());
         }
+
+        // --- 5. DASHBOARD RENDER ---
+        // Your servers list
+        const servers = [
+            { id: 1, name: "PUBLIC NODE", desc: "Family & Friend Access", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "MEDIA CORE", desc: "Plex / Streaming", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL OPS", desc: "Security & Logs", url: "https://amazon.com", minRole: "admin" }
+        ];
 
         function loadDashboard(email) {
             document.getElementById('user-display').innerText = "OPERATOR: " + email;
-
-            // Determine Role (Simple email check for now)
-            // In a real app, you'd use Firebase Custom Claims
+            
             let role = "guest";
-            if (email === "crazybuddiescreations@gmail.com") {
+            // REPLACE THIS EMAIL WITH YOUR EXACT ADMIN EMAIL
+            if (email === "YOUR_ADMIN_EMAIL@gmail.com") {
                 role = "admin";
                 document.getElementById('admin-panel').style.display = "block";
-            } else if (email.includes("friend")) {
+            } else if (email.toLowerCase().includes("friend")) {
                 role = "friend";
             }
 
-            renderGrid(role);
-        }
-
-        function renderGrid(userRole) {
             const grid = document.getElementById('server-grid');
-            grid.innerHTML = ""; // Clear existing
+            grid.innerHTML = ""; 
 
             servers.forEach(server => {
                 const card = document.createElement('div');
                 let isUnlocked = false;
 
-                // Authorization Logic hierarchy
-                if (userRole === "admin") isUnlocked = true;
-                else if (userRole === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isUnlocked = true;
-                else if (userRole === "guest" && server.minRole === "guest") isUnlocked = true;
+                if (role === "admin") isUnlocked = true;
+                else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isUnlocked = true;
+                else if (role === "guest" && server.minRole === "guest") isUnlocked = true;
 
-                // Apply CSS Classes
                 const statusClass = isUnlocked ? "unlocked" : "locked";
                 
                 card.className = `card ${statusClass}`;
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <p style="color: #aaa; font-size: 0.9rem;">${server.desc}</p>
+                    ${isUnlocked ? `<a href="${server.url}" class="server-link" target="_blank">ACCESS TERMINAL</a>` : ''}
+                `;
+                grid.appendChild(card);
+            });
+        }
+    </script>
