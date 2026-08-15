@@ -247,51 +247,34 @@
         };
 
         const errorLabel = document.getElementById('error-msg');
-
-        // --- 2. RETRY-BASED MOUNT ENGINE ---
         let auth = null;
-        function initializeSecurePipeline() {
-            try {
-                if (typeof firebase !== 'undefined') {
-                    firebase.initializeApp(firebaseConfig);
-                    auth = firebase.auth();
-                    
-                    errorLabel.innerText = "System Matrix Online. Ready.";
-                    errorLabel.style.color = "#00ff00"; 
-                    console.log("NBK Nexus Secure Connection Established via Unpkg.");
-                } else {
-                    throw new Error("Awaiting library streams...");
-                }
-            } catch (e) {
-                console.log("Re-indexing unpkg paths...");
-                setTimeout(initializeSecurePipeline, 1000); // Dynamic fallback sync loop
-            }
-        }
-        
-        // Execute bootstrap sequence
-        initializeSecurePipeline();
+        let database = null;
 
-        // --- 3. SERVERS ROUTING STORAGE ---
+        try {
+            firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            database = firebase.database(); // Mount secure data pipeline
+            
+            errorLabel.innerText = "System Matrix Online. Ready.";
+            errorLabel.style.color = "#00ff00"; 
+        } catch (e) {
+            console.error(e);
+            errorLabel.innerText = "CRITICAL BOOT ERROR: " + e.message;
+            errorLabel.style.color = "#ff003c";
+        }
+
         const servers = [
-            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
+            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays and multimedia pipelines.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends and configuration terminal access.", url: "https://amazon.com", minRole: "admin" }
         ];
 
-        // --- 4. HARDWARE LOGIC EXECUTIONS ---
         document.getElementById('login-trigger').addEventListener('click', () => {
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
 
-            if (!auth) {
-                errorLabel.innerText = "AUTHENTICATION ENGINE OFFLINE - CORES SYNCING";
-                errorLabel.style.color = "#ff003c";
-                return;
-            }
-
             if (!email || !pass) {
                 errorLabel.innerText = "CREDENTIALS REQUIRED";
-                errorLabel.style.color = "#ff003c";
                 return;
             }
 
@@ -300,46 +283,48 @@
 
             auth.signInWithEmailAndPassword(email, pass)
                 .then((userCredential) => {
-                    transitionToDashboard(userCredential.user.email);
+                    const user = userCredential.user;
+                    
+                    // ---------------------------------------------------------------
+                    // SECURE ROLE FETCH: No email hardcoding. Pulls role dynamically from Firebase.
+                    // ---------------------------------------------------------------
+                    database.ref('users/' + user.uid).once('value')
+                        .then((snapshot) => {
+                            const userData = snapshot.val();
+                            const assignedRole = (userData && userData.role) ? userData.role : "guest";
+                            
+                            // Transition dashboard based on the secure server response
+                            transitionToDashboard(user.email, assignedRole);
+                        })
+                        .catch((dbError) => {
+                            console.error("Database clearance fetch failed: ", dbError);
+                            // Fallback to guest clearance if database read fails
+                            transitionToDashboard(user.email, "guest");
+                        });
                 })
                 .catch((error) => {
-                    console.error("Auth Exception:", error);
                     errorLabel.style.color = "#ff003c";
-                    if (error.code === "auth/invalid-credential" || error.code === "auth/user-not-found") {
-                        errorLabel.innerText = "ACCESS REJECTED: Invalid operator ID or passcode.";
-                    } else {
-                        errorLabel.innerText = "ACCESS REJECTED: " + error.message;
-                    }
+                    errorLabel.innerText = "ACCESS REJECTED: " + error.message;
                 });
         });
 
         document.getElementById('logout-trigger').addEventListener('click', () => {
-            if (auth) {
-                auth.signOut().then(() => { location.reload(); });
-            } else {
-                location.reload();
-            }
+            if (auth) auth.signOut().then(() => { location.reload(); });
         });
 
-        // --- 5. VISUAL ADAPTIVE DESIGN ENGINE ---
-        function transitionToDashboard(email) {
+        function transitionToDashboard(email, role) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
             document.getElementById('user-display').innerText = email.toUpperCase();
             
             const clearanceLabel = document.getElementById('user-clearance');
-            let currentClearance = "guest";
             
-            // ==========================================
-            // *** UPDATE YOUR REGISTERED ADMIN EMAIL HERE ***
-            // ==========================================
-            if (email.toLowerCase() === "crazybuddiescreations@gmail.com".toLowerCase()) {
-                currentClearance = "admin";
+            // UI reacts gracefully to the authenticated server role variable
+            if (role === "admin") {
                 clearanceLabel.innerText = "ROOT ADMIN";
                 clearanceLabel.style.color = "var(--neon-red)";
                 document.getElementById('admin-panel').style.display = "block";
-            } else if (email.toLowerCase().includes("friend") || email.toLowerCase().includes("family")) {
-                currentClearance = "friend";
+            } else if (role === "friend" || role === "family") {
                 clearanceLabel.innerText = "PRIVILEGED MEMBER";
                 clearanceLabel.style.color = "var(--neon-cyan)";
             } else {
@@ -353,9 +338,9 @@
             servers.forEach(server => {
                 let isAuthorized = false;
 
-                if (currentClearance === "admin") isAuthorized = true;
-                else if (currentClearance === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isAuthorized = true;
-                else if (currentClearance === "guest" && server.minRole === "guest") isAuthorized = true;
+                if (role === "admin") isAuthorized = true;
+                else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isAuthorized = true;
+                else if (role === "guest" && server.minRole === "guest") isAuthorized = true;
 
                 const card = document.createElement('div');
                 card.className = `card ${isAuthorized ? "unlocked" : "locked"}`;
