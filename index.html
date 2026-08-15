@@ -160,10 +160,6 @@
             border: 1px solid var(--neon-cyan);
         }
     </style>
-
-    <!-- UNBLOCKED HIGH-PRIORITY CDN LINKS -->
-    <script src="https://gstatic.com"></script>
-    <script src="https://gstatic.com"></script>
 </head>
 <body>
 
@@ -173,7 +169,7 @@
             <h2 style="margin-bottom: 20px;">SYSTEM ACCESS</h2>
             <input type="email" id="email" placeholder="OPERATOR ID (Email)">
             <input type="password" id="password" placeholder="ACCESS CODE (Password)">
-            <button id="login-btn" onclick="handleLogin()">INITIATE SEQUENCE</button>
+            <button id="login-btn">INITIATE SEQUENCE</button>
             <p id="error-msg" style="color:red; font-size: 0.8rem; margin-top: 10px;"></p>
         </div>
     </div>
@@ -185,7 +181,7 @@
                 <h1>NBK NEXUS</h1>
                 <small id="user-display">GUEST MODE</small>
             </div>
-            <button onclick="logout()" style="width: auto; background: #333;">ABORT SESSION</button>
+            <button id="logout-btn" style="width: auto; background: #333;">ABORT SESSION</button>
         </header>
 
         <div id="admin-panel" class="admin-controls">
@@ -195,8 +191,15 @@
         <div class="grid" id="server-grid"></div>
     </div>
 
-    <script>
-        // --- PASTE YOUR API KEYS BELOW CAREFULLY ---
+    <!-- MODERN MODULE SYSTEM (BYPASSES BLOCKERS) -->
+    <script type="module">
+        // Import directly from Google's Module Server
+        import { initializeApp } from "https://gstatic.com";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://gstatic.com";
+
+        console.log("Modules loaded. Initializing...");
+
+        // --- 1. CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
@@ -207,59 +210,62 @@
             measurementId: "G-FPVH852M59"
         };
 
-        // --- SAFE INITIALIZATION ---
+        // --- 2. INITIALIZE ---
         let auth;
         try {
-            if (typeof firebase === 'undefined') {
-                throw new Error("Initialization blocked. Trying fallback script attachment...");
-            }
-            firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            console.log("System Initialized Successfully.");
-        } catch (e) {
-            document.getElementById('error-msg').innerText = "SYSTEM REBOOT: Refreshing paths...";
-            console.error(e);
+            const app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            console.log("Firebase Active");
+        } catch (error) {
+            console.error("Critical Init Error:", error);
+            document.getElementById('error-msg').innerText = "SYSTEM ERROR: " + error.message;
         }
 
-        // --- YOUR SERVERS LIST ---
+        // --- 3. SERVERS DATA ---
         const servers = [
             { id: 1, name: "PUBLIC NODE", desc: "Family & Friend Access", url: "https://google.com", minRole: "guest" },
             { id: 2, name: "MEDIA CORE", desc: "Plex / Streaming", url: "https://plex.tv", minRole: "friend" },
             { id: 3, name: "SENTINEL OPS", desc: "Security & Logs", url: "https://amazon.com", minRole: "admin" }
         ];
 
+        // --- 4. EVENT LISTENERS ---
+        // We attach these via JS because 'onclick' in HTML cannot see modules
+        document.getElementById('login-btn').addEventListener('click', handleLogin);
+        document.getElementById('logout-btn').addEventListener('click', logout);
+
         function handleLogin() {
             const email = document.getElementById('email').value;
             const pass = document.getElementById('password').value;
-            
+            const errorLabel = document.getElementById('error-msg');
+
             if (!email || !pass) {
-                document.getElementById('error-msg').innerText = "CREDENTIALS REQUIRED";
+                errorLabel.innerText = "CREDENTIALS REQUIRED";
                 return;
             }
 
-            document.getElementById('error-msg').innerText = "AUTHENTICATING...";
+            errorLabel.innerText = "VERIFYING IDENTITY...";
 
-            auth.signInWithEmailAndPassword(email, pass)
+            signInWithEmailAndPassword(auth, email, pass)
                 .then((userCredential) => {
                     document.getElementById('login-overlay').style.display = 'none';
                     document.getElementById('dashboard').style.display = 'block';
                     loadDashboard(userCredential.user.email);
                 })
                 .catch((error) => {
-                    console.error(error);
-                    document.getElementById('error-msg').innerText = "ACCESS DENIED: " + error.message;
+                    console.error("Login Error:", error);
+                    errorLabel.innerText = "ACCESS DENIED: " + error.code;
                 });
         }
 
         function logout() {
-            auth.signOut().then(() => location.reload());
+            signOut(auth).then(() => location.reload());
         }
 
         function loadDashboard(email) {
             document.getElementById('user-display').innerText = "OPERATOR: " + email;
             
             let role = "guest";
-            // REPLACE THIS EMAIL WITH YOUR EXACT ADMIN EMAIL
+            // UPDATE YOUR ADMIN EMAIL HERE
             if (email === "crazybuddiescreations@gmail.com") {
                 role = "admin";
                 document.getElementById('admin-panel').style.display = "block";
@@ -282,11 +288,6 @@
                 card.innerHTML = `
                     <h3>${server.name}</h3>
                     <p style="color: #aaa; font-size: 0.9rem;">${server.desc}</p>
-                    ${isUnlocked ? `<a href="${server.url}" class="server-link" target="_blank">ACCESS TERMINAL</a>` : ''}
+                    <a href="${server.url}" class="server-link" target="_blank">ACCESS TERMINAL</a>
                 `;
                 grid.appendChild(card);
-            });
-        }
-    </script>
-</body>
-</html>
