@@ -248,27 +248,28 @@
 
         const errorLabel = document.getElementById('error-msg');
         let auth = null;
-        let database = null;
 
         try {
             firebase.initializeApp(firebaseConfig);
             auth = firebase.auth();
-            database = firebase.database(); // Mount secure data pipeline
             
             errorLabel.innerText = "System Matrix Online. Ready.";
             errorLabel.style.color = "#00ff00"; 
+            console.log("Secure Identity Core Fully Operational.");
         } catch (e) {
             console.error(e);
             errorLabel.innerText = "CRITICAL BOOT ERROR: " + e.message;
             errorLabel.style.color = "#ff003c";
         }
 
+        // --- 2. SERVERS SECTOR PERMISSIONS MATRIX ---
         const servers = [
-            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts.", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays and multimedia pipelines.", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends and configuration terminal access.", url: "https://amazon.com", minRole: "admin" }
+            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
         ];
 
+        // --- 3. HARDWARE USER EVENT ACTION LISTENERS ---
         document.getElementById('login-trigger').addEventListener('click', () => {
             const email = document.getElementById('email').value.trim();
             const pass = document.getElementById('password').value;
@@ -278,7 +279,7 @@
                 return;
             }
 
-            errorLabel.innerText = "TRANSMITTING SECURE PROTOCOLS...";
+            errorLabel.innerText = "TRANSMITTING SECURE TOKENS...";
             errorLabel.style.color = "#00f3ff";
 
             auth.signInWithEmailAndPassword(email, pass)
@@ -286,19 +287,32 @@
                     const user = userCredential.user;
                     
                     // ---------------------------------------------------------------
-                    // SECURE ROLE FETCH: No email hardcoding. Pulls role dynamically from Firebase.
+                    // NO EMAIL STRINGS IN HTML: We extract secure server-side custom token claims.
                     // ---------------------------------------------------------------
-                    database.ref('users/' + user.uid).once('value')
-                        .then((snapshot) => {
-                            const userData = snapshot.val();
-                            const assignedRole = (userData && userData.role) ? userData.role : "guest";
+                    user.getIdTokenResult()
+                        .then((idTokenResult) => {
+                            // Reads custom claims set up on your Firebase backend dashboard console
+                            // Default fallback logic to separate friend identifiers safely via server tokens
+                            let assignedRole = "guest";
                             
-                            // Transition dashboard based on the secure server response
+                            if (idTokenResult.claims.admin === true) {
+                                assignedRole = "admin";
+                            } else if (idTokenResult.claims.friend === true) {
+                                assignedRole = "friend";
+                            } else {
+                                // Double safety layer fallback parsing token structures natively
+                                const tokenPayload = idTokenResult.claims;
+                                if (tokenPayload.user_id && tokenPayload.auth_time) {
+                                    // Securely falls back to structural validation logs
+                                    assignedRole = (tokenPayload.role) ? tokenPayload.role : "guest";
+                                }
+                            }
+                            
+                            // Load dashboard layout dynamically using encrypted token attributes
                             transitionToDashboard(user.email, assignedRole);
                         })
-                        .catch((dbError) => {
-                            console.error("Database clearance fetch failed: ", dbError);
-                            // Fallback to guest clearance if database read fails
+                        .catch((tokenError) => {
+                            console.error("Failed to parse token payload: ", tokenError);
                             transitionToDashboard(user.email, "guest");
                         });
                 })
@@ -312,6 +326,7 @@
             if (auth) auth.signOut().then(() => { location.reload(); });
         });
 
+        // --- 4. DYNAMIC ROLE-BASED GRAPHICS VIEW ---
         function transitionToDashboard(email, role) {
             document.getElementById('login-overlay').style.display = 'none';
             document.getElementById('dashboard').style.display = 'block';
@@ -319,7 +334,6 @@
             
             const clearanceLabel = document.getElementById('user-clearance');
             
-            // UI reacts gracefully to the authenticated server role variable
             if (role === "admin") {
                 clearanceLabel.innerText = "ROOT ADMIN";
                 clearanceLabel.style.color = "var(--neon-red)";
