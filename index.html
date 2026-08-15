@@ -207,10 +207,145 @@
             <div class="input-group"><input type="email" id="email" placeholder="OPERATOR IDENTITY (Email)"></div>
             <div class="input-group"><input type="password" id="password" placeholder="ACCESS CODE (Password)"></div>
             <button class="nexus-btn" id="login-trigger">Initiate Sequence</button>
+            <button
+    class="nexus-btn"
+    id="signup-open"
+    style="
+        margin-top: 12px;
+        background: transparent;
+        border: 1px solid var(--neon-cyan);
+        color: var(--neon-cyan);
+        box-shadow: none;
+    ">
+    Request Access
+</button>
             <p id="error-msg" style="color: #7a6e95;">Syncing with unpkg package matrices...</p>
         </div>
     </div>
+<div id="signup-overlay" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 2, 10, 0.98);
+    z-index: 99998;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(15px);
+">
+    <div class="login-box">
 
+        <h2>Request Access</h2>
+
+        <div class="input-group">
+            <input
+                type="text"
+                id="signup-name"
+                placeholder="OPERATOR NAME">
+        </div>
+
+        <div class="input-group">
+            <input
+                type="email"
+                id="signup-email"
+                placeholder="EMAIL ADDRESS">
+        </div>
+
+        <div class="input-group">
+            <input
+                type="password"
+                id="signup-password"
+                placeholder="ACCESS CODE">
+        </div>
+
+        <div class="input-group">
+            <input
+                type="password"
+                id="signup-confirm"
+                placeholder="CONFIRM ACCESS CODE">
+        </div>
+
+        <button
+            class="nexus-btn"
+            id="signup-submit">
+            Submit Access Request
+        </button>
+
+        <button
+            class="nexus-btn"
+            id="signup-cancel"
+            style="
+                margin-top: 12px;
+                background: transparent;
+                border: 1px solid rgba(255,255,255,0.25);
+                box-shadow: none;
+            ">
+            Return to Login
+        </button>
+
+        <p
+            id="signup-msg"
+            style="
+                color: #7a6e95;
+                font-size: 0.85rem;
+                margin-top: 20px;
+                font-weight: bold;
+                font-family: monospace;
+            ">
+            Awaiting registration input...
+        </p>
+
+    </div>
+</div>
+
+    <div id="pending-overlay" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 2, 10, 0.98);
+    z-index: 99997;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(15px);
+">
+    <div class="login-box">
+
+        <h2>Access Pending</h2>
+
+        <p style="
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin: 25px 0;
+        ">
+            Your registration request has been received.
+            <br><br>
+
+            Email verification and administrator approval
+            are required before NEXUS access is granted.
+        </p>
+
+        <div style="
+            color: var(--neon-cyan);
+            font-family: monospace;
+            letter-spacing: 2px;
+            margin-bottom: 25px;
+        ">
+            STATUS: PENDING APPROVAL
+        </div>
+
+        <button
+            class="nexus-btn"
+            id="pending-logout">
+            Return to Login
+        </button>
+
+    </div>
+</div>
     <div id="dashboard">
         <header>
             <div>
@@ -231,6 +366,7 @@
     <!-- 1. LOADING CORE PACKAGES DIRECTLY FROM WHITELISTED UNPKG CDN ASSETS -->
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
 
     <!-- 2. VANILLA SYSTEM ENGINE PIPELINE (NO MIME SPECS) -->
     <script>
@@ -243,11 +379,13 @@
             storageBucket: "nbk-nexus.firebasestorage.app",
             messagingSenderId: "324577021220",
             appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
-            measurementId: "G-FPVH852M59"
+            measurementId: "G-FPVH852M59",
+            databaseURL: "https://nbk-nexus-default-rtdb.firebaseio.com"
         };
 
         const errorLabel = document.getElementById('error-msg');
         let auth = null;
+        let database = null;
 
         try {
             firebase.initializeApp(firebaseConfig);
@@ -256,11 +394,241 @@
             errorLabel.innerText = "System Matrix Online. Ready.";
             errorLabel.style.color = "#00ff00"; 
             console.log("Secure Identity Core Fully Operational.");
+            console.log("Realtime Database Core Fully Operational.");
         } catch (e) {
             console.error(e);
             errorLabel.innerText = "CRITICAL BOOT ERROR: " + e.message;
             errorLabel.style.color = "#ff003c";
         }
+        document
+    .getElementById("signup-open")
+    .addEventListener("click", () => {
+
+        document.getElementById("login-overlay")
+            .style.display = "none";
+
+        document.getElementById("signup-overlay")
+            .style.display = "flex";
+
+        document.getElementById("signup-msg").innerText =
+            "Awaiting registration input...";
+
+        document.getElementById("signup-msg").style.color =
+            "#7a6e95";
+    });
+        document
+    .getElementById("signup-cancel")
+    .addEventListener("click", () => {
+
+        document.getElementById("signup-overlay")
+            .style.display = "none";
+
+        document.getElementById("login-overlay")
+            .style.display = "flex";
+    });
+        document
+    .getElementById("signup-submit")
+    .addEventListener("click", async () => {
+
+        const name =
+            document.getElementById("signup-name")
+                .value.trim();
+
+        const email =
+            document.getElementById("signup-email")
+                .value.trim()
+                .toLowerCase();
+
+        const password =
+            document.getElementById("signup-password")
+                .value;
+
+        const confirm =
+            document.getElementById("signup-confirm")
+                .value;
+
+        const msg =
+            document.getElementById("signup-msg");
+
+
+        // -------------------------------
+        // VALIDATION
+        // -------------------------------
+
+        if (!name || !email || !password || !confirm) {
+
+            msg.innerText =
+                "ALL REGISTRATION FIELDS REQUIRED";
+
+            msg.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        if (password !== confirm) {
+
+            msg.innerText =
+                "ACCESS CODES DO NOT MATCH";
+
+            msg.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        if (password.length < 6) {
+
+            msg.innerText =
+                "ACCESS CODE MUST BE AT LEAST 6 CHARACTERS";
+
+            msg.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        msg.innerText =
+            "CREATING SECURE IDENTITY...";
+
+        msg.style.color =
+            "#00f3ff";
+
+
+        try {
+
+            // ------------------------------------
+            // CREATE FIREBASE AUTH ACCOUNT
+            // ------------------------------------
+
+            const credential =
+                await auth.createUserWithEmailAndPassword(
+                    email,
+                    password
+                );
+
+            const user =
+                credential.user;
+
+
+            // ------------------------------------
+            // UPDATE DISPLAY NAME
+            // ------------------------------------
+
+            await user.updateProfile({
+                displayName: name
+            });
+
+
+            // ------------------------------------
+            // SEND EMAIL VERIFICATION
+            // ------------------------------------
+
+            await user.sendEmailVerification();
+
+
+            // ------------------------------------
+            // CREATE SIGNUP REQUEST
+            // ------------------------------------
+
+            await database
+                .ref("signupRequests/" + user.uid)
+                .set({
+
+                    name: name,
+
+                    email: email,
+
+                    status: "pending",
+
+                    requestedAt:
+                        firebase.database.ServerValue.TIMESTAMP
+
+                });
+
+
+            console.log(
+                "Signup request created:",
+                user.uid
+            );
+
+
+            // ------------------------------------
+            // SIGN OUT IMMEDIATELY
+            // ------------------------------------
+
+            await auth.signOut();
+
+
+            // ------------------------------------
+            // SHOW PENDING SCREEN
+            // ------------------------------------
+
+            document.getElementById("signup-overlay")
+                .style.display = "none";
+
+            document.getElementById("pending-overlay")
+                .style.display = "flex";
+
+
+        } catch (error) {
+
+            console.error(
+                "Signup error:",
+                error
+            );
+
+            msg.style.color =
+                "#ff003c";
+
+
+            switch (error.code) {
+
+                case "auth/email-already-in-use":
+
+                    msg.innerText =
+                        "IDENTITY ALREADY REGISTERED";
+
+                    break;
+
+
+                case "auth/invalid-email":
+
+                    msg.innerText =
+                        "INVALID EMAIL ADDRESS";
+
+                    break;
+
+
+                case "auth/weak-password":
+
+                    msg.innerText =
+                        "ACCESS CODE IS TOO WEAK";
+
+                    break;
+
+
+                default:
+
+                    msg.innerText =
+                        "REGISTRATION FAILED: " +
+                        error.message;
+            }
+        }
+    });
+        document
+    .getElementById("pending-logout")
+    .addEventListener("click", async () => {
+
+        if (auth.currentUser) {
+            await auth.signOut();
+        }
+
+        location.reload();
+    });
 
         // --- 2. SERVERS SECTOR PERMISSIONS MATRIX ---
         const servers = [
@@ -289,28 +657,79 @@
                     // ---------------------------------------------------------------
                     // NO EMAIL STRINGS IN HTML: We extract secure server-side custom token claims.
                     // ---------------------------------------------------------------
-                    user.getIdTokenResult()
-                        .then((idTokenResult) => {
-                            // Reads custom claims set up on your Firebase backend dashboard console
-                            // Default fallback logic to separate friend identifiers safely via server tokens
-                            let assignedRole = "guest";
-                            
-                            if (idTokenResult.claims.admin === true) {
-                                assignedRole = "admin";
-                            } else if (idTokenResult.claims.friend === true) {
-                                assignedRole = "friend";
-                            } else {
-                                // Double safety layer fallback parsing token structures natively
-                                const tokenPayload = idTokenResult.claims;
-                                if (tokenPayload.user_id && tokenPayload.auth_time) {
-                                    // Securely falls back to structural validation logs
-                                    assignedRole = (tokenPayload.role) ? tokenPayload.role : "guest";
-                                }
-                            }
-                            
-                            // Load dashboard layout dynamically using encrypted token attributes
-                            transitionToDashboard(user.email, assignedRole);
-                        })
+user.getIdTokenResult(true)
+    .then(async (idTokenResult) => {
+
+        const assignedRole =
+            idTokenResult.claims.role || null;
+
+        console.log(
+            "Authenticated user:",
+            user.email
+        );
+
+        console.log(
+            "Firebase UID:",
+            user.uid
+        );
+
+        console.log(
+            "Assigned role:",
+            assignedRole
+        );
+
+
+        // --------------------------------
+        // NO ROLE = PENDING USER
+        // --------------------------------
+
+        if (!assignedRole) {
+
+            await handlePendingUser(user);
+
+            return;
+        }
+
+
+        // --------------------------------
+        // VALID ROLE
+        // --------------------------------
+
+        if (
+            assignedRole !== "admin" &&
+            assignedRole !== "friend"
+        ) {
+
+            console.warn(
+                "Unknown role:",
+                assignedRole
+            );
+
+            await handlePendingUser(user);
+
+            return;
+        }
+
+
+        transitionToDashboard(
+            user.email,
+            assignedRole
+        );
+
+    })
+    .catch((tokenError) => {
+
+        console.error(
+            "Failed to retrieve token claims:",
+            tokenError
+        );
+
+        errorLabel.innerText =
+            "SECURITY TOKEN VALIDATION FAILED";
+
+        errorLabel.style.color =
+            "#ff003c";
+    });
                         .catch((tokenError) => {
                             console.error("Failed to parse token payload: ", tokenError);
                             transitionToDashboard(user.email, "guest");
@@ -326,6 +745,106 @@
             if (auth) auth.signOut().then(() => { location.reload(); });
         });
 
+        async function handlePendingUser(user) {
+
+    try {
+
+        const snapshot =
+            await database
+                .ref("signupRequests/" + user.uid)
+                .once("value");
+
+        const request =
+            snapshot.val();
+
+
+        // ------------------------------------
+        // NO REQUEST RECORD
+        // ------------------------------------
+
+        if (!request) {
+
+            console.warn(
+                "Authenticated user has no signup request."
+            );
+
+            await auth.signOut();
+
+            errorLabel.innerText =
+                "ACCESS REQUEST NOT FOUND";
+
+            errorLabel.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        // ------------------------------------
+        // REJECTED
+        // ------------------------------------
+
+        if (request.status === "rejected") {
+
+            await auth.signOut();
+
+            document.getElementById("login-overlay")
+                .style.display = "flex";
+
+            errorLabel.innerText =
+                "ACCESS REQUEST REJECTED";
+
+            errorLabel.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        // ------------------------------------
+        // APPROVED BUT CLAIM NOT YET UPDATED
+        // ------------------------------------
+
+        if (request.status === "approved") {
+
+            document.getElementById("login-overlay")
+                .style.display = "flex";
+
+            errorLabel.innerText =
+                "ACCESS APPROVED — ROLE ACTIVATION PENDING";
+
+            errorLabel.style.color =
+                "#00f3ff";
+
+            return;
+        }
+
+
+        // ------------------------------------
+        // PENDING
+        // ------------------------------------
+
+        document.getElementById("login-overlay")
+            .style.display = "none";
+
+        document.getElementById("pending-overlay")
+            .style.display = "flex";
+
+
+    } catch (error) {
+
+        console.error(
+            "Pending user check failed:",
+            error
+        );
+
+        errorLabel.innerText =
+            "SECURITY STATUS CHECK FAILED";
+
+        errorLabel.style.color =
+            "#ff003c";
+    }
+}
         // --- 4. DYNAMIC ROLE-BASED GRAPHICS VIEW ---
         function transitionToDashboard(email, role) {
             document.getElementById('login-overlay').style.display = 'none';
