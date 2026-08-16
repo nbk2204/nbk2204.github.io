@@ -3870,8 +3870,6 @@ function loadSecurityUsers() {
                     snapshot.val() ||
                     {};
 
-                securityUserMap = users;
-
                 const rows =
                     Object.entries(
                         users
@@ -4304,19 +4302,15 @@ function loadAccessRequests() {
                         })
                     )
                     .sort(
-                        (a, b) => {
-                            const aPending =
-                                String(a.status || "pending").toLowerCase() === "pending";
-                            const bPending =
-                                String(b.status || "pending").toLowerCase() === "pending";
-
-                            if (aPending !== bPending) {
-                                return aPending ? -1 : 1;
-                            }
-
-                            return Number(b.requestedAt || 0) -
-                                Number(a.requestedAt || 0);
-                        }
+                        (a, b) =>
+                            Number(
+                                b.requestedAt ||
+                                0
+                            ) -
+                            Number(
+                                a.requestedAt ||
+                                0
+                            )
                     );
 
 
@@ -4582,23 +4576,6 @@ function renderRequestCard(
                 <div>
                     EMAIL:
                     VERIFIED
-                </div>
-
-                <div>
-                    CURRENT ROLE:
-                    ${escapeHtml(
-                        String(
-                            (securityUserMap[request.uid] || {}).role ||
-                            "NONE"
-                        ).toUpperCase()
-                    )}
-                </div>
-
-                <div>
-                    REQUESTED ROLE:
-                    ${escapeHtml(
-                        selectedRole.toUpperCase()
-                    )}
                 </div>
 
             </div>
@@ -4874,9 +4851,6 @@ let roleChangeRequestListenerStarted =
 let roleChangeRequestMap =
     {};
 
-let securityUserMap =
-    {};
-
 function loadRoleChangeRequests() {
 
     if (
@@ -4916,31 +4890,173 @@ function loadRoleChangeRequests() {
                     snapshot.val() ||
                     {};
 
-                const entries =
-                    Object.entries(
-                        roleChangeRequestMap
-                    )
-                    .map(
-                        ([uid, request]) => ({
-                            uid,
-                            ...(request || {})
-                        })
-                    )
-                    .sort(
-                        (a, b) => {
-                            const aPending =
-                                String(a.status || "pending").toLowerCase() === "pending";
-                            const bPending =
-                                String(b.status || "pending").toLowerCase() === "pending";
+                /*
+                 * Resolve requester + target identities from /users.
+                 *
+                 * roleChangeRequests intentionally stores UIDs rather than
+                 * duplicating user profile data. The UI resolves those UIDs
+                 * against the existing /users records.
+                 */
+                database
+                    .ref("users")
+                    .once("value")
+                    .then(usersSnapshot => {
 
-                            if (aPending !== bPending) {
-                                return aPending ? -1 : 1;
-                            }
+                        const users =
+                            usersSnapshot.val() || {};
 
-                            return Number(b.requestedAt || 0) -
-                                Number(a.requestedAt || 0);
+                        const entries =
+                            Object.entries(
+                                roleChangeRequestMap
+                            )
+                            .map(
+                                ([uid, request]) => {
+
+                                    const record =
+                                        request || {};
+
+                                    const targetUser =
+                                        users[uid] || {};
+
+                                    const requesterUid =
+                                        record.requestedBy || "";
+
+                                    const requesterUser =
+                                        users[requesterUid] || {};
+
+                                    return {
+                                        uid,
+                                        ...record,
+
+                                        targetName:
+                                            targetUser.name ||
+                                            targetUser.displayName ||
+                                            "UNKNOWN USER",
+
+                                        targetEmail:
+                                            targetUser.email ||
+                                            "NO EMAIL",
+
+                                        requesterName:
+                                            requesterUser.name ||
+                                            requesterUser.displayName ||
+                                            "UNKNOWN OPERATOR",
+
+                                        requesterEmail:
+                                            requesterUser.email ||
+                                            "NO EMAIL"
+                                    };
+                                }
+                            )
+                            .sort(
+                                (a, b) => {
+
+                                    const aPending =
+                                        String(
+                                            a.status || ""
+                                        ).toLowerCase() === "pending";
+
+                                    const bPending =
+                                        String(
+                                            b.status || ""
+                                        ).toLowerCase() === "pending";
+
+                                    if (aPending !== bPending) {
+                                        return bPending - aPending;
+                                    }
+
+                                    return (
+                                        Number(
+                                            b.requestedAt || 0
+                                        ) -
+                                        Number(
+                                            a.requestedAt || 0
+                                        )
+                                    );
+                                }
+                            );
+
+                        const pendingCount =
+                            entries.filter(
+                                request =>
+                                    String(
+                                        request.status ||
+                                        ""
+                                    ).toLowerCase() ===
+                                    "pending"
+                            ).length;
+
+                        status.innerText =
+                            entries.length +
+                            " ROLE CHANGE REQUEST(S) // " +
+                            pendingCount +
+                            " PENDING";
+
+                        if (
+                            entries.length ===
+                            0
+                        ) {
+
+                            list.innerHTML = `
+                                <div class="empty-message">
+                                    NO ROLE CHANGE REQUESTS FOUND
+                                </div>
+                            `;
+
+                        } else {
+
+                            list.innerHTML =
+                                entries
+                                    .map(
+                                        request =>
+                                            renderRoleChangeRequestCard(
+                                                request
+                                            )
+                                    )
+                                    .join("");
                         }
-                    );
+
+                        /*
+                         * Re-render User Matrix so REQUEST PENDING /
+                         * REQUEST controls stay synchronized.
+                         */
+                        if (
+                            usersListenerStarted
+                        ) {
+                            database
+                                .ref("users")
+                                .once(
+                                    "value"
+                                )
+                                .then(
+                                    snapshot => {
+
+                                        renderSecurityUsersFromSnapshot(
+                                            snapshot
+                                        );
+                                    }
+                                )
+                                .catch(
+                                    error =>
+                                        console.error(
+                                            "User matrix refresh failed:",
+                                            error
+                                        )
+                                );
+                        }
+
+                    })
+                    .catch(error => {
+
+                        console.error(
+                            "Role change user-resolution failed:",
+                            error
+                        );
+
+                        status.innerText =
+                            "ROLE CHANGE MATRIX OFFLINE: " +
+                            error.message;
+                    });
 
                 const pendingCount =
                     entries.filter(
@@ -5050,7 +5166,9 @@ function renderRoleChangeRequestCard(
     const requestedAt =
         request.requestedAt
             ? new Date(
-                Number(request.requestedAt)
+                Number(
+                    request.requestedAt
+                )
               ).toLocaleString()
             : "UNKNOWN";
 
@@ -5060,143 +5178,144 @@ function renderRoleChangeRequestCard(
             ""
         ).toLowerCase();
 
-    const requestedBy =
+    const requestedByUid =
         request.requestedBy ||
-        "UNKNOWN";
+        "";
 
-    const user =
-        securityUserMap[request.uid] ||
-        {};
+    const requestedByName =
+        request.requesterName ||
+        "UNKNOWN OPERATOR";
 
-    const currentDbRole =
-        String(
-            user.role ||
-            "unknown"
-        ).toLowerCase();
+    const requestedByEmail =
+        request.requesterEmail ||
+        "NO EMAIL";
 
-    const currentAuthRole =
-        String(
-            user.authRole ||
-            "unknown"
-        ).toLowerCase();
+    const targetName =
+        request.targetName ||
+        "UNKNOWN USER";
+
+    const targetEmail =
+        request.targetEmail ||
+        "NO EMAIL";
 
     const roleText =
         requestedRole.toUpperCase();
 
-    const currentRoleText =
-        currentDbRole.toUpperCase();
-
-    const authRoleText =
-        currentAuthRole.toUpperCase();
-
-    const name =
-        user.name ||
-        request.name ||
-        "Unnamed User";
-
-    const email =
-        user.email ||
-        request.email ||
-        "";
-
-    const transition =
-        currentRoleText +
-        " → " +
-        roleText;
-
-    if (status === "approved") {
-
-        const processorState =
-            request.processorStatus === "completed"
-                ? "COMPLETED"
-                : request.roleAssigned === true
-                    ? "COMPLETED"
-                    : "APPROVED // PROCESSOR PENDING";
+    if (
+        status ===
+        "approved"
+    ) {
 
         return `
             <div class="request-card role-change-card">
 
                 <div class="request-header">
+
                     <div>
+
                         <div class="request-name">
-                            ${escapeHtml(name)}
+                            ROLE CHANGE
                         </div>
+
                         <div class="request-email">
-                            ${escapeHtml(email)}
+                            ${escapeHtml(targetName)}
+                            // ${escapeHtml(targetEmail)}
                         </div>
+
                     </div>
 
                     <div class="request-status">
-                        ${escapeHtml(processorState)}
+                        APPROVED
                     </div>
+
                 </div>
 
                 <div class="request-meta">
+
                     <div>
-                        CURRENT ROLE:
-                        ${escapeHtml(currentRoleText)}
+                        TARGET:
+                        ${escapeHtml(targetName)}
+                        // ${escapeHtml(targetEmail)}
                     </div>
+
                     <div>
-                        AUTH ROLE:
-                        ${escapeHtml(authRoleText)}
+                        TARGET UID:
+                        ${escapeHtml(request.uid)}
                     </div>
+
                     <div>
-                        CHANGE:
-                        ${escapeHtml(transition)}
+                        ROLE:
+                        ${escapeHtml(roleText)}
                     </div>
-                    <div>
-                        REQUESTED BY:
-                        ${escapeHtml(requestedBy)}
-                    </div>
+
                     <div>
                         REQUESTED:
                         ${escapeHtml(requestedAt)}
                     </div>
+
+                    <div>
+                        REQUESTED BY:
+                        ${escapeHtml(requestedByName)}
+                        // ${escapeHtml(requestedByEmail)}
+                    </div>
+
                 </div>
 
             </div>
         `;
     }
 
-    if (status === "rejected") {
+    if (
+        status ===
+        "rejected"
+    ) {
 
         return `
             <div class="request-card role-change-card">
 
                 <div class="request-header">
+
                     <div>
+
                         <div class="request-name">
-                            ${escapeHtml(name)}
+                            ROLE CHANGE
                         </div>
+
                         <div class="request-email">
-                            ${escapeHtml(email)}
+                            ${escapeHtml(targetName)}
+                            // ${escapeHtml(targetEmail)}
                         </div>
+
                     </div>
 
                     <div
                         class="request-status"
                         style="color:#ff003c;">
+
                         REJECTED
+
                     </div>
+
                 </div>
 
                 <div class="request-meta">
+
                     <div>
-                        CURRENT ROLE:
-                        ${escapeHtml(currentRoleText)}
+                        TARGET:
+                        ${escapeHtml(targetName)}
+                        // ${escapeHtml(targetEmail)}
                     </div>
+
                     <div>
-                        CHANGE REQUESTED:
-                        ${escapeHtml(transition)}
+                        TARGET UID:
+                        ${escapeHtml(request.uid)}
                     </div>
+
                     <div>
-                        REQUESTED BY:
-                        ${escapeHtml(requestedBy)}
+                        ROLE:
+                        ${escapeHtml(roleText)}
                     </div>
-                    <div>
-                        REQUESTED:
-                        ${escapeHtml(requestedAt)}
-                    </div>
+
                 </div>
 
             </div>
@@ -5211,13 +5330,16 @@ function renderRoleChangeRequestCard(
             <div class="request-header">
 
                 <div>
+
                     <div class="request-name">
-                        ${escapeHtml(name)}
+                        ROLE CHANGE REQUEST
                     </div>
 
                     <div class="request-email">
-                        ${escapeHtml(email)}
+                        ${escapeHtml(targetName)}
+                        // ${escapeHtml(targetEmail)}
                     </div>
+
                 </div>
 
                 <div class="request-status">
@@ -5229,33 +5351,30 @@ function renderRoleChangeRequestCard(
             <div class="request-meta">
 
                 <div>
-                    CURRENT ROLE:
-                    ${escapeHtml(currentRoleText)}
-                </div>
-
-                <div>
-                    AUTH ROLE:
-                    ${escapeHtml(authRoleText)}
-                </div>
-
-                <div>
-                    CHANGE REQUESTED:
-                    ${escapeHtml(transition)}
-                </div>
-
-                <div>
-                    REQUESTED BY:
-                    ${escapeHtml(requestedBy)}
-                </div>
-
-                <div>
-                    REQUESTED:
-                    ${escapeHtml(requestedAt)}
+                    TARGET:
+                    ${escapeHtml(targetName)}
+                    // ${escapeHtml(targetEmail)}
                 </div>
 
                 <div>
                     TARGET UID:
                     ${escapeHtml(request.uid)}
+                </div>
+
+                <div>
+                    REQUESTED ROLE:
+                    ${escapeHtml(roleText)}
+                </div>
+
+                <div>
+                    REQUESTED BY:
+                    ${escapeHtml(requestedByName)}
+                    // ${escapeHtml(requestedByEmail)}
+                </div>
+
+                <div>
+                    REQUESTED:
+                    ${escapeHtml(requestedAt)}
                 </div>
 
             </div>
@@ -5270,7 +5389,9 @@ function renderRoleChangeRequestCard(
                         'approve',
                         this
                     )">
+
                     APPROVE
+
                 </button>
 
                 <button
@@ -5281,7 +5402,9 @@ function renderRoleChangeRequestCard(
                         'reject',
                         this
                     )">
+
                     REJECT
+
                 </button>
 
             </div>
@@ -5289,6 +5412,7 @@ function renderRoleChangeRequestCard(
         </div>
     `;
 }
+
 
 async function requestRoleChange(
     uid,
