@@ -2733,6 +2733,221 @@ document
 
 
 /* ==========================================================
+   DASHBOARD — SYSTEM STATUS
+   ========================================================== */
+
+let dashboardSystemStatusLoading = false;
+
+function dashboardSystemStatusCard(name, state, detail) {
+
+    const normalized =
+        String(state || "checking").toLowerCase();
+
+    const badgeClass =
+        normalized === "online"
+            ? "dashboard-status-online"
+            : normalized === "offline"
+                ? "dashboard-status-offline"
+                : "dashboard-status-checking";
+
+    return `
+        <div class="dashboard-system-status-card">
+            <div class="dashboard-system-status-card-top">
+                <div class="dashboard-system-status-name">
+                    ${escapeHtml(name)}
+                </div>
+                <span class="dashboard-system-status-indicator ${badgeClass}"></span>
+            </div>
+            <div class="dashboard-system-status-detail">
+                ${escapeHtml(detail || "")}
+            </div>
+        </div>
+    `;
+}
+
+async function loadDashboardSystemStatus() {
+
+    if (currentUserRole !== "admin") {
+        return;
+    }
+
+    if (dashboardSystemStatusLoading) {
+        return;
+    }
+
+    const section =
+        document.getElementById("dashboard-system-status");
+
+    const grid =
+        document.getElementById("dashboard-system-status-grid");
+
+    const summary =
+        document.getElementById("dashboard-system-status-summary");
+
+    const master =
+        document.getElementById("dashboard-system-status-master-indicator");
+
+    if (!section || !grid || !summary) {
+        return;
+    }
+
+    dashboardSystemStatusLoading = true;
+
+    summary.innerText = "CHECKING SENTINEL CORE...";
+
+    if (master) {
+        master.className =
+            "dashboard-system-status-indicator dashboard-status-checking";
+    }
+
+    grid.innerHTML = `
+        ${dashboardSystemStatusCard("AUTHENTICATION", "checking", "Checking Admin session...")}
+        ${dashboardSystemStatusCard("DATABASE", "checking", "Checking Realtime Database...")}
+        ${dashboardSystemStatusCard("USER MATRIX", "checking", "Checking /users...")}
+        ${dashboardSystemStatusCard("ACCESS REQUESTS", "checking", "Checking authorization request paths...")}
+        ${dashboardSystemStatusCard("ROLE ENGINE", "checking", "Checking /roleChangeRequests...")}
+        ${dashboardSystemStatusCard("SECURITY AUDIT", "checking", "Checking /securityAudit...")}
+    `;
+
+    try {
+
+        const results = [];
+
+        if (auth && auth.currentUser) {
+            results.push({
+                name: "AUTHENTICATION",
+                state: "online",
+                detail:
+                    "Admin session active: " +
+                    (auth.currentUser.email || "authenticated")
+            });
+        } else {
+            results.push({
+                name: "AUTHENTICATION",
+                state: "offline",
+                detail: "No authenticated Firebase user."
+            });
+        }
+
+        const paths = [
+            ["DATABASE", "users"],
+            ["USER MATRIX", "users"],
+            ["ACCESS REQUESTS", "signupRequests"],
+            ["ROLE ENGINE", "roleChangeRequests"],
+            ["SECURITY AUDIT", "securityAudit"]
+        ];
+
+        const pathResults = await Promise.all(
+            paths.map(([label, path]) => checkSystemPath(label, path))
+        );
+
+        results.push(...pathResults);
+
+        const online =
+            results.filter(item => item.state === "online").length;
+
+        const offline =
+            results.filter(item => item.state === "offline").length;
+
+        const checking =
+            results.filter(item => item.state === "checking").length;
+
+        grid.innerHTML = results
+            .map(item =>
+                dashboardSystemStatusCard(
+                    item.name,
+                    item.state,
+                    item.detail
+                )
+            )
+            .join("");
+
+        summary.innerText =
+            online + " ONLINE // " +
+            offline + " OFFLINE // " +
+            checking + " CHECKING";
+
+        if (master) {
+            master.className =
+                "dashboard-system-status-indicator " +
+                (offline > 0
+                    ? "dashboard-status-offline"
+                    : "dashboard-status-online");
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard system status failed:",
+            error
+        );
+
+        summary.innerText =
+            "SYSTEM STATUS CHECK FAILED";
+
+        if (master) {
+            master.className =
+                "dashboard-system-status-indicator dashboard-status-offline";
+        }
+
+    } finally {
+
+        dashboardSystemStatusLoading = false;
+    }
+}
+
+
+/* Dashboard status controls */
+
+document
+    .getElementById("dashboard-system-status-refresh")
+    ?.addEventListener("click", () => {
+        loadDashboardSystemStatus();
+    });
+
+
+document
+    .getElementById("dashboard-system-status-details")
+    ?.addEventListener("click", () => {
+
+        if (currentUserRole !== "admin") {
+            return;
+        }
+
+        openSecurityPage();
+
+        document
+            .querySelectorAll("[data-security-tab]")
+            .forEach(item => item.classList.remove("active"));
+
+        const statusTab =
+            document.querySelector('[data-security-tab="status"]');
+
+        if (statusTab) {
+            statusTab.classList.add("active");
+        }
+
+        document
+            .getElementById("security-users-panel")
+            .style.display = "none";
+
+        document
+            .getElementById("security-requests-panel")
+            .style.display = "none";
+
+        document
+            .getElementById("security-audit-panel")
+            .style.display = "none";
+
+        document
+            .getElementById("security-status-panel")
+            .style.display = "block";
+
+        loadSystemStatus();
+    });
+
+
+/* ==========================================================
    DASHBOARD
    ========================================================== */
 
