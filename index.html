@@ -346,6 +346,68 @@
 
     </div>
 </div>
+
+    <div id="verification-overlay" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(4, 2, 10, 0.98);
+    z-index: 99997;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(15px);
+">
+    <div class="login-box">
+
+        <h2>Verify Identity</h2>
+
+        <p style="
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin: 25px 0;
+        ">
+            Your NEXUS identity has been created.
+            <br><br>
+
+            A verification link has been sent
+            to your email address.
+            <br><br>
+
+            Verify your email before requesting
+            NEXUS access.
+        </p>
+
+        <div style="
+            color: var(--neon-cyan);
+            font-family: monospace;
+            letter-spacing: 1px;
+            margin-bottom: 25px;
+        ">
+            STATUS: EMAIL VERIFICATION REQUIRED
+        </div>
+
+        <button
+            class="nexus-btn"
+            id="verification-login">
+            Return To Login
+        </button>
+
+        <p
+            id="verification-msg"
+            style="
+                color: #7a6e95;
+                font-size: 0.85rem;
+                margin-top: 20px;
+                font-family: monospace;
+            ">
+        </p>
+
+    </div>
+</div>
+    
     <div id="dashboard">
         <header>
             <div>
@@ -420,6 +482,17 @@ try {
     errorLabel.style.color =
         "#ff003c";
 }
+
+        document
+    .getElementById("verification-login")
+    .addEventListener("click", () => {
+
+        document.getElementById("verification-overlay")
+            .style.display = "none";
+
+        document.getElementById("login-overlay")
+            .style.display = "flex";
+    });
         document
     .getElementById("signup-open")
     .addEventListener("click", () => {
@@ -547,51 +620,34 @@ try {
             // SEND EMAIL VERIFICATION
             // ------------------------------------
 
-            await user.sendEmailVerification();
-
-
             // ------------------------------------
-            // CREATE SIGNUP REQUEST
-            // ------------------------------------
+// SEND EMAIL VERIFICATION
+// ------------------------------------
 
-            await database
-                .ref("signupRequests/" + user.uid)
-                .set({
+await user.sendEmailVerification();
 
-                    name: name,
-
-                    email: email,
-
-                    status: "pending",
-
-                    requestedAt:
-                        firebase.database.ServerValue.TIMESTAMP
-
-                });
+console.log(
+    "Verification email sent to:",
+    user.email
+);
 
 
-            console.log(
-                "Signup request created:",
-                user.uid
-            );
+// ------------------------------------
+// DO NOT CREATE SIGNUP REQUEST YET
+// ------------------------------------
+
+await auth.signOut();
 
 
-            // ------------------------------------
-            // SIGN OUT IMMEDIATELY
-            // ------------------------------------
+// ------------------------------------
+// SHOW VERIFICATION SCREEN
+// ------------------------------------
 
-            await auth.signOut();
+document.getElementById("signup-overlay")
+    .style.display = "none";
 
-
-            // ------------------------------------
-            // SHOW PENDING SCREEN
-            // ------------------------------------
-
-            document.getElementById("signup-overlay")
-                .style.display = "none";
-
-            document.getElementById("pending-overlay")
-                .style.display = "flex";
+document.getElementById("verification-overlay")
+    .style.display = "flex";
 
 
         } catch (error) {
@@ -694,7 +750,27 @@ document.getElementById('login-trigger').addEventListener('click', async () => {
 
         console.log("Authenticated user:", user.email);
         console.log("Firebase UID:", user.uid);
+// ----------------------------------------
+// EMAIL VERIFICATION CHECK
+// ----------------------------------------
 
+if (!user.emailVerified) {
+
+    console.warn(
+        "User email is not verified:",
+        user.email
+    );
+
+    errorLabel.innerText =
+        "EMAIL VERIFICATION REQUIRED";
+
+    errorLabel.style.color =
+        "#ff003c";
+
+    await auth.signOut();
+
+    return;
+}
 
         // ----------------------------------------
         // GET FRESH CUSTOM CLAIMS
@@ -715,7 +791,109 @@ document.getElementById('login-trigger').addEventListener('click', async () => {
             "Assigned role:",
             assignedRole
         );
+// ----------------------------------------
+// VERIFIED USER WITH NO ROLE
+// ----------------------------------------
 
+if (!assignedRole) {
+
+    await createOrCheckSignupRequest(user);
+
+    return;
+}
+        async function createOrCheckSignupRequest(user) {
+
+    try {
+
+        const requestRef =
+            database.ref(
+                "signupRequests/" + user.uid
+            );
+
+        const snapshot =
+            await requestRef.once("value");
+
+        // ------------------------------------
+        // REQUEST ALREADY EXISTS
+        // ------------------------------------
+
+        if (snapshot.exists()) {
+
+            const request =
+                snapshot.val();
+
+            console.log(
+                "Existing signup request:",
+                request
+            );
+
+            await handlePendingUser(user);
+
+            return;
+        }
+
+
+        // ------------------------------------
+        // CREATE FIRST APPROVAL REQUEST
+        // ------------------------------------
+
+        await requestRef.set({
+
+            name:
+                user.displayName || "Unknown Operator",
+
+            email:
+                user.email,
+
+            status:
+                "pending",
+
+            requestedAt:
+                firebase.database.ServerValue.TIMESTAMP
+
+        });
+
+
+        console.log(
+            "Signup approval request created:",
+            user.uid
+        );
+
+
+        // ------------------------------------
+        // SIGN OUT
+        // ------------------------------------
+
+        await auth.signOut();
+
+
+        // ------------------------------------
+        // SHOW PENDING SCREEN
+        // ------------------------------------
+
+        document.getElementById("login-overlay")
+            .style.display = "none";
+
+        document.getElementById("pending-overlay")
+            .style.display = "flex";
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to create signup request:",
+            error
+        );
+
+        errorLabel.innerText =
+            "FAILED TO CREATE ACCESS REQUEST";
+
+        errorLabel.style.color =
+            "#ff003c";
+
+        await auth.signOut();
+    }
+}
 
         // ----------------------------------------
         // NO ROLE = PENDING USER
