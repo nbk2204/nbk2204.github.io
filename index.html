@@ -265,6 +265,19 @@ header h1 {
 .card.unlocked {
     border-color: rgba(188,19,254,0.5);
     box-shadow: 0 0 15px rgba(188,19,254,0.12);
+
+    transition:
+        transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1),
+        border-color 0.3s ease,
+        box-shadow 0.3s ease;
+}
+
+.card.unlocked:hover {
+    transform: translateY(-5px);
+    border-color: var(--neon-cyan);
+    box-shadow:
+        0 0 25px rgba(0,243,255,0.35),
+        0 0 45px rgba(188,19,254,0.15);
 }
 
 .card.unlocked::before {
@@ -335,6 +348,21 @@ header h1 {
     border-color: rgba(255,255,255,0.1);
     color: rgba(255,255,255,0.2);
     pointer-events: none;
+}
+
+.server-link {
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+.card.unlocked .server-link:hover {
+    background: var(--neon-cyan);
+    color: var(--bg-color);
+    box-shadow: 0 0 18px var(--neon-cyan);
+    transform: translateY(-1px);
 }
 
 .server-link:disabled {
@@ -750,7 +778,7 @@ header h1 {
          SECURITY OPS
          =================================================== -->
 
-    <section id="security-ops">
+    <section id="security-ops" style="display:none;">
 
         <div class="security-header">
 
@@ -892,14 +920,13 @@ header h1 {
 
 const firebaseConfig = {
 
-    apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
+            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
             projectId: "nbk-nexus",
             storageBucket: "nbk-nexus.firebasestorage.app",
             messagingSenderId: "324577021220",
             appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
-            measurementId: "G-FPVH852M59",
-            databaseURL: "https://nbk-nexus-default-rtdb.firebaseio.com"
+            measurementId: "G-FPVH852M59"
 
 };
 
@@ -1751,13 +1778,18 @@ function transitionToDashboard(
             "block";
 
 
+        
+        /*
+         * SENTINEL SECURITY OPS MUST REMAIN HIDDEN
+         * UNTIL THE ADMIN CLICKS THE SENTINEL CARD.
+         */
         securityOps.style.display =
-            "block";
+            "none";
 
-
-        loadSecurityUsers();
-
-        loadAccessRequests();
+        /*
+         * Security Ops data is loaded only when
+         * Sentinel is opened.
+         */
 
     } else if (
         currentUserRole ===
@@ -1972,6 +2004,7 @@ document
 
 
                 loadSecurityUsers();
+                loadAccessRequests();
 
                 return;
             }
@@ -2105,38 +2138,42 @@ let usersListenerStarted =
 
 function loadSecurityUsers() {
 
-    if (
-        currentUserRole !==
-        "admin"
-    ) {
-
+    if (currentUserRole !== "admin") {
         return;
     }
-
-
-    if (
-        usersListenerStarted
-    ) {
-
-        return;
-    }
-
-
-    usersListenerStarted =
-        true;
-
 
     const status =
         document.getElementById(
             "users-status"
         );
 
-
     const body =
         document.getElementById(
             "security-users-body"
         );
 
+    if (!database) {
+
+        status.innerText =
+            "USER MATRIX OFFLINE: DATABASE NOT INITIALIZED";
+
+        return;
+    }
+
+    status.innerText =
+        "CONNECTING TO AUTHORIZATION MATRIX...";
+
+    body.innerHTML = `
+        <tr>
+            <td colspan="4">
+                LOADING USER RECORDS...
+            </td>
+        </tr>
+    `;
+
+    if (usersListenerStarted) {
+        return;
+    }
 
     database
         .ref("users")
@@ -2145,10 +2182,12 @@ function loadSecurityUsers() {
 
             snapshot => {
 
+                usersListenerStarted =
+                    true;
+
                 const users =
                     snapshot.val() ||
                     {};
-
 
                 const rows =
                     Object.entries(
@@ -2177,11 +2216,9 @@ function loadSecurityUsers() {
                             )
                     );
 
-
                 status.innerText =
                     rows.length +
                     " USER RECORD(S) // LIVE AUTHORIZATION MATRIX";
-
 
                 if (
                     rows.length ===
@@ -2199,7 +2236,6 @@ function loadSecurityUsers() {
                     return;
                 }
 
-
                 body.innerHTML =
                     rows
                         .map(
@@ -2210,7 +2246,6 @@ function loadSecurityUsers() {
                                         user.role ||
                                         "guest"
                                     ).toLowerCase();
-
 
                                 const roleClass =
                                     role ===
@@ -2225,11 +2260,8 @@ function loadSecurityUsers() {
 
                                       : "role-guest";
 
-
                                 return `
-
                                     <tr>
-
                                         <td>
                                             ${escapeHtml(
                                                 user.name ||
@@ -2239,33 +2271,28 @@ function loadSecurityUsers() {
 
                                         <td>
                                             ${escapeHtml(
-                                                user.uid
+                                                user.uid ||
+                                                "—"
                                             )}
                                         </td>
 
                                         <td>
                                             ${escapeHtml(
-                                                user.email
+                                                user.email ||
+                                                "—"
                                             )}
                                         </td>
 
                                         <td>
-
                                             <span
                                                 class="role-badge ${roleClass}">
-
                                                 ${escapeHtml(
                                                     role.toUpperCase()
                                                 )}
-
                                             </span>
-
                                         </td>
-
                                     </tr>
-
                                 `;
-
                             }
                         )
                         .join("");
@@ -2274,15 +2301,25 @@ function loadSecurityUsers() {
 
             error => {
 
+                usersListenerStarted =
+                    false;
+
                 console.error(
                     "User matrix failed:",
                     error
                 );
 
-
                 status.innerText =
                     "USER MATRIX OFFLINE: " +
                     error.message;
+
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="4">
+                            USER MATRIX OFFLINE
+                        </td>
+                    </tr>
+                `;
             }
         );
 }
