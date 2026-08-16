@@ -501,6 +501,76 @@ header h1 {
     background: rgba(0,243,255,0.06);
 }
 
+.security-audit-toolbar {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.security-audit-filter {
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.7px;
+    cursor: pointer;
+}
+.security-audit-filter.active {
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+    background: rgba(0,243,255,0.06);
+}
+.security-audit-card {
+    border: 1px solid rgba(0,243,255,0.18);
+    background: rgba(0,0,0,0.16);
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+}
+.security-audit-card:hover {
+    border-color: rgba(0,243,255,0.42);
+    box-shadow: 0 0 14px rgba(0,243,255,0.08);
+}
+.security-audit-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.security-audit-action {
+    color: var(--neon-cyan);
+    font-family: monospace;
+    font-weight: bold;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+.security-audit-time {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.68rem;
+}
+.security-audit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 8px 18px;
+}
+.security-audit-field {
+    color: var(--text-main);
+    font-family: monospace;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    word-break: break-word;
+}
+.security-audit-label { color: var(--text-muted); }
+.audit-result-success { color: #00ff88; }
+.audit-result-blocked { color: var(--neon-red); }
+.audit-result-error { color: #ffcc66; }
+.audit-result-unknown { color: var(--text-muted); }
+
 .security-panel {
     padding: 20px;
 }
@@ -1044,6 +1114,15 @@ header h1 {
 
             </button>
 
+            <button
+                class="security-tab"
+                data-security-tab="audit"
+                type="button">
+
+                SECURITY AUDIT
+
+            </button>
+
         </div>
 
 
@@ -1150,6 +1229,33 @@ header h1 {
                     Loading role change requests...
                 </div>
 
+            </div>
+
+        </div>
+
+        <!-- SECURITY AUDIT -->
+
+        <div
+            class="security-panel"
+            id="security-audit-panel"
+            style="display:none;">
+
+            <div
+                class="ops-status"
+                id="security-audit-status">
+                LOADING SECURITY AUDIT...
+            </div>
+
+            <div class="security-audit-toolbar">
+                <button type="button" class="security-audit-filter active" data-audit-filter="all">ALL</button>
+                <button type="button" class="security-audit-filter" data-audit-filter="signup">SIGNUPS</button>
+                <button type="button" class="security-audit-filter" data-audit-filter="role">ROLE CHANGES</button>
+                <button type="button" class="security-audit-filter" data-audit-filter="blocked">BLOCKED</button>
+                <button type="button" class="security-audit-filter" data-audit-filter="error">ERRORS</button>
+            </div>
+
+            <div id="security-audit-list">
+                <div class="empty-message">Loading security audit...</div>
             </div>
 
         </div>
@@ -2451,6 +2557,7 @@ function openSecurityPage() {
     loadSecurityUsers();
     loadAccessRequests();
     loadRoleChangeRequests();
+    loadSecurityAudit();
 }
 
 
@@ -2594,17 +2701,6 @@ function loadSecurityUsers() {
                 const users =
                     snapshot.val() ||
                     {};
-
-                securityUserMap = {};
-
-                Object.entries(users).forEach(
-                    ([uid, value]) => {
-                        securityUserMap[uid] = {
-                            uid,
-                            ...(value || {})
-                        };
-                    }
-                );
 
                 const rows =
                     Object.entries(
@@ -3038,58 +3134,15 @@ function loadAccessRequests() {
                         })
                     )
                     .sort(
-                        (a, b) => {
-                            const statusRank = status => {
-                                const value = String(
-                                    status ||
-                                    ""
-                                ).toLowerCase();
-
-                                if (value === "pending") {
-                                    return 0;
-                                }
-
-                                if (
-                                    value === "approved" &&
-                                    requestRoleAssigned(a) === false
-                                ) {
-                                    return 1;
-                                }
-
-                                if (value === "approved") {
-                                    return 2;
-                                }
-
-                                if (value === "rejected") {
-                                    return 3;
-                                }
-
-                                return 4;
-                            };
-
-                            const rankA = statusRank(a.status);
-                            const rankB = statusRank(b.status);
-
-                            if (rankA !== rankB) {
-                                return rankA - rankB;
-                            }
-
-                            const timeA = Number(
-                                a.reviewedAt ||
-                                a.approvedAt ||
-                                a.requestedAt ||
-                                0
-                            );
-
-                            const timeB = Number(
-                                b.reviewedAt ||
-                                b.approvedAt ||
+                        (a, b) =>
+                            Number(
                                 b.requestedAt ||
                                 0
-                            );
-
-                            return timeB - timeA;
-                        }
+                            ) -
+                            Number(
+                                a.requestedAt ||
+                                0
+                            )
                     );
 
 
@@ -3630,25 +3683,6 @@ let roleChangeRequestListenerStarted =
 let roleChangeRequestMap =
     {};
 
-let securityUserMap =
-    {};
-
-function requestRoleAssigned(request) {
-    return request &&
-        request.roleAssigned === true;
-}
-
-
-function getRoleChangeUser(uid) {
-    return securityUserMap[uid] || {
-        uid,
-        name: "UNKNOWN USER",
-        email: "UNKNOWN EMAIL",
-        role: "guest"
-    };
-}
-
-
 function loadRoleChangeRequests() {
 
     if (
@@ -3815,26 +3849,6 @@ function renderRoleChangeRequestCard(
             "pending"
         ).toLowerCase();
 
-    const user =
-        getRoleChangeUser(
-            request.uid
-        );
-
-    const currentRole =
-        String(
-            user.role ||
-            "guest"
-        ).toLowerCase();
-
-    const requestedRole =
-        String(
-            request.requestedRole ||
-            ""
-        ).toLowerCase();
-
-    const roleAssigned =
-        request.roleAssigned === true;
-
     const requestedAt =
         request.requestedAt
             ? new Date(
@@ -3844,78 +3858,117 @@ function renderRoleChangeRequestCard(
               ).toLocaleString()
             : "UNKNOWN";
 
-    const reviewedAt =
-        request.reviewedAt
-            ? new Date(
-                Number(
-                    request.reviewedAt
-                )
-              ).toLocaleString()
-            : "—";
+    const requestedRole =
+        String(
+            request.requestedRole ||
+            ""
+        ).toLowerCase();
 
     const requestedBy =
         request.requestedBy ||
         "UNKNOWN";
 
-    const reviewedBy =
-        request.reviewedBy ||
-        "—";
-
-    const statusText =
-        status === "pending"
-            ? "PENDING"
-            : status === "approved"
-                ? roleAssigned
-                    ? "COMPLETED"
-                    : "APPROVED / PROCESSOR PENDING"
-                : status === "rejected"
-                    ? "REJECTED"
-                    : status.toUpperCase();
-
-    const statusClass =
-        status === "pending"
-            ? "request-status"
-            : "request-status";
-
-    const statusStyle =
-        status === "rejected"
-            ? "color:#ff003c;"
-            : roleAssigned
-                ? "color:#00ff9c;"
-                : "";
-
-    const roleFlow =
-        currentRole.toUpperCase() +
-        " → " +
+    const roleText =
         requestedRole.toUpperCase();
 
-    let actionHtml = "";
+    if (
+        status ===
+        "approved"
+    ) {
 
-    if (status === "pending") {
-        actionHtml = `
-            <div class="role-change-actions">
+        return `
+            <div class="request-card role-change-card">
 
-                <button
-                    type="button"
-                    class="approve-btn"
-                    onclick="processRoleChangeRequest(
-                        '${escapeHtml(request.uid)}',
-                        'approve',
-                        this
-                    )">
-                    APPROVE
-                </button>
+                <div class="request-header">
 
-                <button
-                    type="button"
-                    class="reject-btn"
-                    onclick="processRoleChangeRequest(
-                        '${escapeHtml(request.uid)}',
-                        'reject',
-                        this
-                    )">
-                    REJECT
-                </button>
+                    <div>
+
+                        <div class="request-name">
+                            ROLE CHANGE
+                        </div>
+
+                        <div class="request-email">
+                            UID:
+                            ${escapeHtml(request.uid)}
+                        </div>
+
+                    </div>
+
+                    <div class="request-status">
+                        APPROVED
+                    </div>
+
+                </div>
+
+                <div class="request-meta">
+
+                    <div>
+                        TARGET:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                    <div>
+                        ROLE:
+                        ${escapeHtml(roleText)}
+                    </div>
+
+                    <div>
+                        REQUESTED:
+                        ${escapeHtml(requestedAt)}
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    }
+
+    if (
+        status ===
+        "rejected"
+    ) {
+
+        return `
+            <div class="request-card role-change-card">
+
+                <div class="request-header">
+
+                    <div>
+
+                        <div class="request-name">
+                            ROLE CHANGE
+                        </div>
+
+                        <div class="request-email">
+                            UID:
+                            ${escapeHtml(request.uid)}
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="request-status"
+                        style="color:#ff003c;">
+
+                        REJECTED
+
+                    </div>
+
+                </div>
+
+                <div class="request-meta">
+
+                    <div>
+                        TARGET:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                    <div>
+                        ROLE:
+                        ${escapeHtml(roleText)}
+                    </div>
+
+                </div>
 
             </div>
         `;
@@ -3929,29 +3982,20 @@ function renderRoleChangeRequestCard(
             <div class="request-header">
 
                 <div>
+
                     <div class="request-name">
                         ROLE CHANGE REQUEST
                     </div>
 
                     <div class="request-email">
-                        ${escapeHtml(
-                            user.name ||
-                            "UNKNOWN USER"
-                        )}
+                        TARGET UID:
+                        ${escapeHtml(request.uid)}
                     </div>
 
-                    <div class="request-email">
-                        ${escapeHtml(
-                            user.email ||
-                            "UNKNOWN EMAIL"
-                        )}
-                    </div>
                 </div>
 
-                <div
-                    class="${statusClass}"
-                    style="${statusStyle}">
-                    ${escapeHtml(statusText)}
+                <div class="request-status">
+                    PENDING
                 </div>
 
             </div>
@@ -3959,27 +4003,8 @@ function renderRoleChangeRequestCard(
             <div class="request-meta">
 
                 <div>
-                    TARGET UID:
-                    ${escapeHtml(request.uid)}
-                </div>
-
-                <div>
-                    CURRENT ROLE:
-                    <strong>
-                        ${escapeHtml(currentRole.toUpperCase())}
-                    </strong>
-                </div>
-
-                <div>
-                    CHANGE REQUESTED:
-                    <strong>
-                        ${escapeHtml(roleFlow)}
-                    </strong>
-                </div>
-
-                <div>
                     REQUESTED ROLE:
-                    ${escapeHtml(requestedRole.toUpperCase())}
+                    ${escapeHtml(roleText)}
                 </div>
 
                 <div>
@@ -3992,25 +4017,37 @@ function renderRoleChangeRequestCard(
                     ${escapeHtml(requestedAt)}
                 </div>
 
-                ${
-                    status !== "pending"
-                        ? `
-                            <div>
-                                REVIEWED BY:
-                                ${escapeHtml(reviewedBy)}
-                            </div>
-
-                            <div>
-                                REVIEWED:
-                                ${escapeHtml(reviewedAt)}
-                            </div>
-                        `
-                        : ""
-                }
-
             </div>
 
-            ${actionHtml}
+            <div class="role-change-actions">
+
+                <button
+                    type="button"
+                    class="approve-btn"
+                    onclick="processRoleChangeRequest(
+                        '${escapeHtml(request.uid)}',
+                        'approve',
+                        this
+                    )">
+
+                    APPROVE
+
+                </button>
+
+                <button
+                    type="button"
+                    class="reject-btn"
+                    onclick="processRoleChangeRequest(
+                        '${escapeHtml(request.uid)}',
+                        'reject',
+                        this
+                    )">
+
+                    REJECT
+
+                </button>
+
+            </div>
 
         </div>
     `;
@@ -4358,17 +4395,6 @@ function renderSecurityUsersFromSnapshot(
         snapshot.val() ||
         {};
 
-    securityUserMap = {};
-
-    Object.entries(users).forEach(
-        ([uid, value]) => {
-            securityUserMap[uid] = {
-                uid,
-                ...(value || {})
-            };
-        }
-    );
-
     const rows =
         Object.entries(
             users
@@ -4517,6 +4543,143 @@ function renderSecurityUsersFromSnapshot(
 
 
 /* ==========================================================
+   SECURITY OPS — SECURITY AUDIT
+   ========================================================== */
+
+let securityAuditListenerStarted = false;
+let securityAuditRecords = [];
+let securityAuditFilter = "all";
+
+function loadSecurityAudit() {
+    if (currentUserRole !== "admin") return;
+
+    if (securityAuditListenerStarted) {
+        renderSecurityAudit();
+        return;
+    }
+
+    securityAuditListenerStarted = true;
+
+    const status = document.getElementById("security-audit-status");
+
+    database.ref("securityAudit").on("value", snapshot => {
+        const records = snapshot.val() || {};
+
+        securityAuditRecords = Object.entries(records)
+            .map(([id, record]) => ({ id, ...(record || {}) }))
+            .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+
+        renderSecurityAudit();
+    }, error => {
+        securityAuditListenerStarted = false;
+        console.error("Security audit failed:", error);
+        if (status) {
+            status.innerText = "SECURITY AUDIT OFFLINE: " + error.message;
+        }
+    });
+}
+
+function auditCategory(record) {
+    const action = String(record.action || "").toUpperCase();
+    const result = String(record.result || "").toLowerCase();
+
+    if (result === "blocked" || action.includes("BLOCKED")) return "blocked";
+    if (result === "error" || action.includes("ERROR")) return "error";
+    if (action.startsWith("ROLE_")) return "role";
+    if (action.startsWith("SIGNUP_")) return "signup";
+    return "other";
+}
+
+function renderSecurityAudit() {
+    const list = document.getElementById("security-audit-list");
+    const status = document.getElementById("security-audit-status");
+    if (!list || !status) return;
+
+    const filtered = securityAuditRecords.filter(record =>
+        securityAuditFilter === "all" || auditCategory(record) === securityAuditFilter
+    );
+
+    status.innerText =
+        securityAuditRecords.length +
+        " AUDIT EVENT(S) // " +
+        filtered.length +
+        " DISPLAYED";
+
+    if (!filtered.length) {
+        list.innerHTML = `<div class="empty-message">NO SECURITY AUDIT EVENTS FOUND</div>`;
+        return;
+    }
+
+    list.innerHTML = filtered.map(renderSecurityAuditCard).join("");
+}
+
+function renderSecurityAuditCard(record) {
+    const action = String(record.action || "UNKNOWN").toUpperCase();
+    const result = String(record.result || "unknown").toLowerCase();
+    const resultClass =
+        result === "success" ? "audit-result-success" :
+        result === "blocked" ? "audit-result-blocked" :
+        result === "error" ? "audit-result-error" :
+        "audit-result-unknown";
+
+    const timestamp = record.timestamp
+        ? new Date(Number(record.timestamp)).toLocaleString()
+        : "UNKNOWN";
+
+    const actor = record.actorEmail
+        ? record.actorEmail + " / " + (record.actorUid || "UNKNOWN")
+        : (record.actorUid || "SYSTEM");
+
+    const target = record.targetEmail
+        ? record.targetEmail + " / " + (record.targetUid || "UNKNOWN")
+        : (record.targetUid || "NONE");
+
+    const roleChange = (record.previousRole || record.newRole)
+        ? (record.previousRole || "NONE").toUpperCase() +
+          " → " +
+          (record.newRole || "NONE").toUpperCase()
+        : "N/A";
+
+    return `
+        <div class="security-audit-card">
+            <div class="security-audit-header">
+                <div class="security-audit-action">${escapeHtml(action)}</div>
+                <div class="security-audit-time">${escapeHtml(timestamp)}</div>
+            </div>
+
+            <div class="security-audit-grid">
+                <div class="security-audit-field"><span class="security-audit-label">ACTOR:</span> ${escapeHtml(actor)}</div>
+                <div class="security-audit-field"><span class="security-audit-label">TARGET:</span> ${escapeHtml(target)}</div>
+                <div class="security-audit-field"><span class="security-audit-label">ROLE:</span> ${escapeHtml(roleChange)}</div>
+                <div class="security-audit-field"><span class="security-audit-label">REQUESTED BY:</span> ${escapeHtml(record.requestedBy || "NONE")}</div>
+                <div class="security-audit-field"><span class="security-audit-label">RESULT:</span> <span class="${resultClass}">${escapeHtml(result.toUpperCase())}</span></div>
+                <div class="security-audit-field"><span class="security-audit-label">EVENT ID:</span> ${escapeHtml(record.id || "UNKNOWN")}</div>
+            </div>
+
+            ${record.targetName ? `<div class="audit-note">TARGET NAME: ${escapeHtml(record.targetName)}</div>` : ""}
+            ${record.details ? `<div class="audit-note">DETAILS: ${escapeHtml(record.details)}</div>` : ""}
+        </div>
+    `;
+}
+
+/* ==========================================================
+   SECURITY AUDIT FILTERS
+   ========================================================== */
+
+document.querySelectorAll("[data-audit-filter]").forEach(filter => {
+    filter.addEventListener("click", () => {
+        document.querySelectorAll("[data-audit-filter]").forEach(item =>
+            item.classList.remove("active")
+        );
+
+        filter.classList.add("active");
+        securityAuditFilter = filter.dataset.auditFilter || "all";
+        renderSecurityAudit();
+    });
+});
+
+
+/* ==========================================================
    SECURITY OPS TABS
    ========================================================== */
 
@@ -4548,29 +4711,27 @@ document
                     );
 
 
-                    const users =
-                        tab.dataset.securityTab ===
-                        "users";
-
+                    const selected =
+                        tab.dataset.securityTab;
 
                     document
-                        .getElementById(
-                            "security-users-panel"
-                        )
+                        .getElementById("security-users-panel")
                         .style.display =
-                            users
-                                ? "block"
-                                : "none";
-
+                            selected === "users" ? "block" : "none";
 
                     document
-                        .getElementById(
-                            "security-requests-panel"
-                        )
+                        .getElementById("security-requests-panel")
                         .style.display =
-                            users
-                                ? "none"
-                                : "block";
+                            selected === "requests" ? "block" : "none";
+
+                    document
+                        .getElementById("security-audit-panel")
+                        .style.display =
+                            selected === "audit" ? "block" : "none";
+
+                    if (selected === "audit") {
+                        loadSecurityAudit();
+                    }
 
                 }
             );
