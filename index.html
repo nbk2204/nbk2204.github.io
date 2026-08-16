@@ -237,6 +237,205 @@ header h1 {
     font-family: monospace;
 }
 
+
+/* =========================================================
+   DASHBOARD SYSTEM STATUS
+   ========================================================= */
+
+.dashboard-system-status {
+    display: none;
+    margin: 0 0 30px 0;
+    padding: 18px;
+    background: rgba(12, 8, 25, 0.72);
+    border: 1px solid rgba(0, 243, 255, 0.18);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-system-status-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 14px;
+}
+
+.dashboard-system-status-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.dashboard-system-status-title h2 {
+    margin: 0;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.dashboard-system-status-summary {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.7px;
+    white-space: nowrap;
+}
+
+.dashboard-system-status-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 0 0 auto;
+}
+
+.dashboard-system-status-btn {
+    padding: 7px 10px;
+    background: rgba(255,255,255,0.025);
+    color: var(--neon-cyan);
+    border: 1px solid rgba(0,243,255,0.28);
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.dashboard-system-status-btn:hover {
+    background: var(--neon-cyan);
+    color: var(--bg-color);
+    box-shadow: 0 0 14px rgba(0,243,255,0.3);
+    transform: translateY(-1px);
+}
+
+.dashboard-system-status-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.dashboard-system-status-card {
+    min-width: 0;
+    padding: 12px;
+    background: rgba(255,255,255,0.018);
+    border: 1px solid rgba(188,19,254,0.16);
+    border-radius: 8px;
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.dashboard-system-status-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(0,243,255,0.42);
+    box-shadow: 0 0 16px rgba(0,243,255,0.08);
+}
+
+.dashboard-system-status-card-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+}
+
+.dashboard-system-status-name {
+    min-width: 0;
+    color: #d9d2e8;
+    font-size: 0.66rem;
+    font-weight: bold;
+    letter-spacing: 0.8px;
+    line-height: 1.3;
+}
+
+.dashboard-system-status-indicator {
+    flex: 0 0 auto;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    box-shadow: 0 0 7px currentColor;
+}
+
+.dashboard-status-online {
+    color: #48ff91;
+    background: currentColor;
+}
+
+.dashboard-status-offline {
+    color: #ff486f;
+    background: currentColor;
+}
+
+.dashboard-status-checking {
+    color: #ffc857;
+    background: currentColor;
+    animation: dashboardStatusPulse 1.2s ease-in-out infinite;
+}
+
+.dashboard-system-status-detail {
+    margin-top: 7px;
+    color: #756a8e;
+    font-family: monospace;
+    font-size: 0.62rem;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@keyframes dashboardStatusPulse {
+    0%, 100% { opacity: 0.45; }
+    50% { opacity: 1; }
+}
+
+@media (max-width: 1050px) {
+    .dashboard-system-status-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 700px) {
+    .dashboard-system-status {
+        padding: 14px;
+        margin-bottom: 22px;
+    }
+
+    .dashboard-system-status-header {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dashboard-system-status-actions {
+        width: 100%;
+    }
+
+    .dashboard-system-status-btn {
+        flex: 1;
+    }
+
+    .dashboard-system-status-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 430px) {
+    .dashboard-system-status-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-system-status-summary {
+        white-space: normal;
+        line-height: 1.4;
+    }
+}
+
 /* =========================================================
    SERVER CARDS
    ========================================================= */
@@ -397,7 +596,8 @@ header h1 {
 
 #dashboard.security-page-active > header,
 #dashboard.security-page-active > #admin-panel,
-#dashboard.security-page-active > #server-grid {
+#dashboard.security-page-active > #server-grid,
+#dashboard.security-page-active > #dashboard-system-status {
     display: none !important;
 }
 
@@ -499,6 +699,336 @@ header h1 {
     color: var(--neon-cyan);
     border-color: var(--neon-cyan);
     background: rgba(0,243,255,0.06);
+}
+
+/* ==========================================================
+   DASHBOARD — SYSTEM STATUS OVERVIEW
+   ========================================================== */
+
+let dashboardSystemStatusLoading = false;
+
+function dashboardStatusCard(name, state, detail) {
+
+    const normalized =
+        String(state || "checking").toLowerCase();
+
+    const indicatorClass =
+        normalized === "online"
+            ? "dashboard-status-online"
+            : normalized === "offline"
+                ? "dashboard-status-offline"
+                : "dashboard-status-checking";
+
+    return `
+        <div class="dashboard-system-status-card">
+            <div class="dashboard-system-status-card-top">
+                <div class="dashboard-system-status-name">
+                    ${escapeHtml(name)}
+                </div>
+                <span class="dashboard-system-status-indicator ${indicatorClass}"></span>
+            </div>
+            <div class="dashboard-system-status-detail" title="${escapeHtml(detail || "")}">
+                ${escapeHtml(normalized.toUpperCase())}
+                //
+                ${escapeHtml(detail || "")}
+            </div>
+        </div>
+    `;
+}
+
+async function loadDashboardSystemStatus() {
+
+    if (currentUserRole !== "admin") {
+        return;
+    }
+
+    if (dashboardSystemStatusLoading) {
+        return;
+    }
+
+    const section =
+        document.getElementById(
+            "dashboard-system-status"
+        );
+
+    const grid =
+        document.getElementById(
+            "dashboard-system-status-grid"
+        );
+
+    const summary =
+        document.getElementById(
+            "dashboard-system-status-summary"
+        );
+
+    const masterIndicator =
+        document.getElementById(
+            "dashboard-system-status-master-indicator"
+        );
+
+    if (!section || !grid || !summary) {
+        return;
+    }
+
+    dashboardSystemStatusLoading = true;
+
+    summary.innerText =
+        "CHECKING SENTINEL CORE...";
+
+    if (masterIndicator) {
+        masterIndicator.className =
+            "dashboard-system-status-indicator dashboard-status-checking";
+    }
+
+    grid.innerHTML = [
+        ["AUTHENTICATION", "checking", "Checking Admin session..."],
+        ["DATABASE", "checking", "Checking Realtime Database..."],
+        ["USER MATRIX", "checking", "Checking /users..."],
+        ["ACCESS REQUESTS", "checking", "Checking approval data..."],
+        ["ROLE ENGINE", "checking", "Checking role-change requests..."],
+        ["SECURITY AUDIT", "checking", "Checking /securityAudit..."]
+    ].map(item =>
+        dashboardStatusCard(
+            item[0],
+            item[1],
+            item[2]
+        )
+    ).join("");
+
+    try {
+
+        const authResult =
+            auth.currentUser
+                ? {
+                    name: "AUTHENTICATION",
+                    state: "online",
+                    detail:
+                        "Admin session active"
+                }
+                : {
+                    name: "AUTHENTICATION",
+                    state: "offline",
+                    detail:
+                        "No authenticated session"
+                };
+
+        const pathResults =
+            await Promise.all([
+
+                checkSystemPath(
+                    "DATABASE",
+                    "users"
+                ),
+
+                checkSystemPath(
+                    "USER MATRIX",
+                    "users"
+                ),
+
+                checkSystemPath(
+                    "ACCESS REQUESTS",
+                    "signupRequests"
+                ),
+
+                checkSystemPath(
+                    "ROLE ENGINE",
+                    "roleChangeRequests"
+                ),
+
+                checkSystemPath(
+                    "SECURITY AUDIT",
+                    "securityAudit"
+                )
+            ]);
+
+        const allResults = [
+            authResult,
+            ...pathResults
+        ];
+
+        grid.innerHTML =
+            allResults
+                .map(item =>
+                    dashboardStatusCard(
+                        item.name,
+                        item.state,
+                        item.detail
+                    )
+                )
+                .join("");
+
+        const onlineCount =
+            allResults.filter(
+                item => item.state === "online"
+            ).length;
+
+        const offlineCount =
+            allResults.filter(
+                item => item.state === "offline"
+            ).length;
+
+        const checkingCount =
+            allResults.filter(
+                item => item.state === "checking"
+            ).length;
+
+        summary.innerText =
+            onlineCount +
+            " ONLINE // " +
+            offlineCount +
+            " OFFLINE // " +
+            checkingCount +
+            " CHECKING";
+
+        if (masterIndicator) {
+            masterIndicator.className =
+                "dashboard-system-status-indicator " +
+                (
+                    offlineCount > 0
+                        ? "dashboard-status-offline"
+                        : checkingCount > 0
+                            ? "dashboard-status-checking"
+                            : "dashboard-status-online"
+                );
+        }
+
+    } catch (error) {
+
+        console.error(
+            "Dashboard system status failed:",
+            error
+        );
+
+        summary.innerText =
+            "SYSTEM STATUS CHECK FAILED: " +
+            (error.message || "UNKNOWN ERROR");
+
+        if (masterIndicator) {
+            masterIndicator.className =
+                "dashboard-system-status-indicator dashboard-status-offline";
+        }
+
+    } finally {
+
+        dashboardSystemStatusLoading = false;
+    }
+}
+
+
+document
+    .getElementById(
+        "dashboard-system-status-refresh"
+    )
+    ?.addEventListener(
+        "click",
+        () => {
+            loadDashboardSystemStatus();
+        }
+    );
+
+
+document
+    .getElementById(
+        "dashboard-system-status-details"
+    )
+    ?.addEventListener(
+        "click",
+        () => {
+            if (currentUserRole === "admin") {
+                openSecurityPage();
+
+                setTimeout(() => {
+                    const auditTab =
+                        document.querySelector(
+                            '[data-security-tab="status"]'
+                        );
+
+                    if (auditTab) {
+                        auditTab.click();
+                    }
+                }, 0);
+            }
+        }
+    );
+
+
+/* ==========================================================
+   SECURITY OPS — SYSTEM STATUS
+   ========================================================== */
+.system-status-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+.system-status-refresh {
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.7px;
+    cursor: pointer;
+}
+.system-status-refresh:hover {
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+}
+.system-status-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+}
+.system-status-card {
+    border: 1px solid rgba(0,243,255,0.15);
+    background: rgba(0,0,0,0.16);
+    padding: 14px;
+    border-radius: 5px;
+}
+.system-status-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.system-status-name {
+    font-family: monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    color: var(--text-main);
+}
+.system-status-badge {
+    font-family: monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.8px;
+    padding: 4px 7px;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 3px;
+}
+.system-status-online {
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+}
+.system-status-offline {
+    color: var(--neon-red);
+    border-color: var(--neon-red);
+}
+.system-status-checking {
+    color: var(--text-muted);
+}
+.system-status-detail {
+    margin-top: 8px;
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.64rem;
+    line-height: 1.5;
+}
+.system-status-summary {
+    margin-bottom: 12px;
 }
 
 .security-audit-toolbar {
@@ -1053,6 +1583,65 @@ header h1 {
     </div>
 
 
+    <!-- ===================================================
+         DASHBOARD SYSTEM STATUS
+         =================================================== -->
+
+    <section
+        id="dashboard-system-status"
+        class="dashboard-system-status"
+        aria-label="System status">
+
+        <div class="dashboard-system-status-header">
+
+            <div>
+                <div class="dashboard-system-status-title">
+                    <span class="dashboard-system-status-indicator dashboard-status-checking" id="dashboard-system-status-master-indicator"></span>
+                    <h2>SYSTEM STATUS</h2>
+                </div>
+
+                <div
+                    class="dashboard-system-status-summary"
+                    id="dashboard-system-status-summary">
+                    CHECKING SENTINEL CORE...
+                </div>
+            </div>
+
+            <div class="dashboard-system-status-actions">
+                <button
+                    type="button"
+                    class="dashboard-system-status-btn"
+                    id="dashboard-system-status-refresh">
+                    ↻ REFRESH
+                </button>
+
+                <button
+                    type="button"
+                    class="dashboard-system-status-btn"
+                    id="dashboard-system-status-details">
+                    FULL STATUS →
+                </button>
+            </div>
+
+        </div>
+
+        <div
+            class="dashboard-system-status-grid"
+            id="dashboard-system-status-grid">
+
+            <div class="dashboard-system-status-card">
+                <div class="dashboard-system-status-card-top">
+                    <div class="dashboard-system-status-name">CHECKING CORE</div>
+                    <span class="dashboard-system-status-indicator dashboard-status-checking"></span>
+                </div>
+                <div class="dashboard-system-status-detail">Synchronizing...</div>
+            </div>
+
+        </div>
+
+    </section>
+
+
     <!-- SERVER MATRIX -->
 
     <div
@@ -1120,6 +1709,15 @@ header h1 {
                 type="button">
 
                 SECURITY AUDIT
+
+            </button>
+
+            <button
+                class="security-tab"
+                data-security-tab="status"
+                type="button">
+
+                SYSTEM STATUS
 
             </button>
 
@@ -1256,6 +1854,56 @@ header h1 {
 
             <div id="security-audit-list">
                 <div class="empty-message">Loading security audit...</div>
+            </div>
+
+        </div>
+
+
+        <!-- SYSTEM STATUS -->
+
+        <div
+            class="security-panel"
+            id="security-status-panel"
+            style="display:none;">
+
+            <div class="system-status-toolbar">
+
+                <div>
+                    <div
+                        class="ops-status system-status-summary"
+                        id="system-status-summary">
+                        CHECKING SENTINEL SYSTEM STATUS...
+                    </div>
+
+                    <div class="audit-note">
+                        Status checks verify that the authenticated Admin can reach
+                        the protected Firebase services and Sentinel data paths.
+                        PROCESSOR status is based on the latest server-side audit
+                        event; it does not claim that the processor is continuously running.
+                    </div>
+                </div>
+
+                <button
+                    type="button"
+                    class="system-status-refresh"
+                    id="system-status-refresh-btn">
+                    ↻ REFRESH STATUS
+                </button>
+
+            </div>
+
+            <div
+                class="system-status-grid"
+                id="system-status-grid">
+
+                <div class="system-status-card">
+                    <div class="system-status-card-header">
+                        <div class="system-status-name">FIREBASE AUTHENTICATION</div>
+                        <span class="system-status-badge system-status-checking">CHECKING</span>
+                    </div>
+                    <div class="system-status-detail">Checking current Admin session...</div>
+                </div>
+
             </div>
 
         </div>
@@ -2176,6 +2824,17 @@ function transitionToDashboard(
         adminPanel.style.display =
             "block";
 
+        const dashboardSystemStatus =
+            document.getElementById(
+                "dashboard-system-status"
+            );
+
+        if (dashboardSystemStatus) {
+            dashboardSystemStatus.style.display =
+                "block";
+        }
+
+        loadDashboardSystemStatus();
 
         
         /*
@@ -2205,6 +2864,16 @@ function transitionToDashboard(
         adminPanel.style.display =
             "none";
 
+        const dashboardSystemStatus =
+            document.getElementById(
+                "dashboard-system-status"
+            );
+
+        if (dashboardSystemStatus) {
+            dashboardSystemStatus.style.display =
+                "none";
+        }
+
 
     } else {
 
@@ -2217,6 +2886,16 @@ function transitionToDashboard(
 
         adminPanel.style.display =
             "none";
+
+        const dashboardSystemStatus =
+            document.getElementById(
+                "dashboard-system-status"
+            );
+
+        if (dashboardSystemStatus) {
+            dashboardSystemStatus.style.display =
+                "none";
+        }
 
     }
 
@@ -2558,6 +3237,7 @@ function openSecurityPage() {
     loadAccessRequests();
     loadRoleChangeRequests();
     loadSecurityAudit();
+    loadSystemStatus();
 }
 
 
@@ -4543,6 +5223,332 @@ function renderSecurityUsersFromSnapshot(
 
 
 /* ==========================================================
+   SECURITY OPS — SYSTEM STATUS
+   ========================================================== */
+
+let systemStatusLoading = false;
+
+function systemStatusCard(name, state, detail) {
+
+    const normalized =
+        String(state || "checking").toLowerCase();
+
+    const badgeClass =
+        normalized === "online"
+            ? "system-status-online"
+            : normalized === "offline"
+                ? "system-status-offline"
+                : "system-status-checking";
+
+    return `
+        <div class="system-status-card">
+            <div class="system-status-card-header">
+                <div class="system-status-name">
+                    ${escapeHtml(name)}
+                </div>
+                <span class="system-status-badge ${badgeClass}">
+                    ${escapeHtml(normalized.toUpperCase())}
+                </span>
+            </div>
+            <div class="system-status-detail">
+                ${escapeHtml(detail || "")}
+            </div>
+        </div>
+    `;
+}
+
+async function checkSystemPath(label, path) {
+
+    try {
+
+        await database
+            .ref(path)
+            .once("value");
+
+        return {
+            name: label,
+            state: "online",
+            detail: "Realtime Database read successful."
+        };
+
+    } catch (error) {
+
+        return {
+            name: label,
+            state: "offline",
+            detail: error.message || "Database access failed."
+        };
+    }
+}
+
+async function loadSystemStatus() {
+
+    if (currentUserRole !== "admin") {
+        return;
+    }
+
+    if (systemStatusLoading) {
+        return;
+    }
+
+    const grid =
+        document.getElementById(
+            "system-status-grid"
+        );
+
+    const summary =
+        document.getElementById(
+            "system-status-summary"
+        );
+
+    if (!grid || !summary) {
+        return;
+    }
+
+    systemStatusLoading = true;
+
+    summary.innerText =
+        "CHECKING SENTINEL SYSTEM STATUS...";
+
+    grid.innerHTML = `
+        ${systemStatusCard(
+            "FIREBASE AUTHENTICATION",
+            "checking",
+            "Checking current Admin session..."
+        )}
+        ${systemStatusCard(
+            "REALTIME DATABASE",
+            "checking",
+            "Checking protected database access..."
+        )}
+        ${systemStatusCard(
+            "USER MATRIX",
+            "checking",
+            "Checking /users access..."
+        )}
+        ${systemStatusCard(
+            "SIGNUP REQUESTS",
+            "checking",
+            "Checking /signupRequests access..."
+        )}
+        ${systemStatusCard(
+            "ROLE CHANGE REQUESTS",
+            "checking",
+            "Checking /roleChangeRequests access..."
+        )}
+        ${systemStatusCard(
+            "SECURITY AUDIT",
+            "checking",
+            "Checking /securityAudit access..."
+        )}
+        ${systemStatusCard(
+            "SERVER LINKS",
+            "checking",
+            "Checking protected server-link access..."
+        )}
+        ${systemStatusCard(
+            "AUTHORIZATION PROCESSOR",
+            "checking",
+            "Checking latest server-side audit activity..."
+        )}
+    `;
+
+    try {
+
+        const authResult =
+            auth.currentUser
+                ? {
+                    name: "FIREBASE AUTHENTICATION",
+                    state: "online",
+                    detail:
+                        "Admin session active: " +
+                        (auth.currentUser.email || "authenticated user")
+                }
+                : {
+                    name: "FIREBASE AUTHENTICATION",
+                    state: "offline",
+                    detail: "No authenticated Firebase user is available."
+                };
+
+
+        const results =
+            await Promise.all([
+
+                checkSystemPath(
+                    "REALTIME DATABASE",
+                    "users"
+                ),
+
+                checkSystemPath(
+                    "USER MATRIX",
+                    "users"
+                ),
+
+                checkSystemPath(
+                    "SIGNUP REQUESTS",
+                    "signupRequests"
+                ),
+
+                checkSystemPath(
+                    "ROLE CHANGE REQUESTS",
+                    "roleChangeRequests"
+                ),
+
+                checkSystemPath(
+                    "SECURITY AUDIT",
+                    "securityAudit"
+                ),
+
+                checkSystemPath(
+                    "SERVER LINKS",
+                    "serverLinks"
+                )
+            ]);
+
+
+        /* =====================================================
+           AUTHORIZATION PROCESSOR STATUS
+           ===================================================== */
+
+        let processorResult;
+
+        try {
+
+            const auditSnapshot =
+                await database
+                    .ref("securityAudit")
+                    .once("value");
+
+            const records =
+                auditSnapshot.val() || {};
+
+            const latest =
+                Object.entries(records)
+                    .map(([id, record]) => ({
+                        id,
+                        ...(record || {})
+                    }))
+                    .sort(
+                        (a, b) =>
+                            Number(b.timestamp || 0) -
+                            Number(a.timestamp || 0)
+                    )[0];
+
+            if (latest && latest.timestamp) {
+
+                processorResult = {
+                    name: "AUTHORIZATION PROCESSOR",
+                    state: "online",
+                    detail:
+                        "Latest server-side audit event: " +
+                        (latest.action || "UNKNOWN") +
+                        " at " +
+                        new Date(
+                            Number(latest.timestamp)
+                        ).toLocaleString()
+                };
+
+            } else {
+
+                processorResult = {
+                    name: "AUTHORIZATION PROCESSOR",
+                    state: "checking",
+                    detail:
+                        "No server-side audit event has been recorded yet."
+                };
+            }
+
+        } catch (error) {
+
+            processorResult = {
+                name: "AUTHORIZATION PROCESSOR",
+                state: "offline",
+                detail:
+                    "Unable to read server-side audit activity: " +
+                    (error.message || "unknown error")
+            };
+        }
+
+
+        const allResults = [
+            authResult,
+            ...results,
+            processorResult
+        ];
+
+
+        grid.innerHTML =
+            allResults
+                .map(item =>
+                    systemStatusCard(
+                        item.name,
+                        item.state,
+                        item.detail
+                    )
+                )
+                .join("");
+
+
+        const onlineCount =
+            allResults.filter(
+                item => item.state === "online"
+            ).length;
+
+        const offlineCount =
+            allResults.filter(
+                item => item.state === "offline"
+            ).length;
+
+        const checkingCount =
+            allResults.filter(
+                item => item.state === "checking"
+            ).length;
+
+
+        summary.innerText =
+            onlineCount +
+            " ONLINE // " +
+            offlineCount +
+            " OFFLINE // " +
+            checkingCount +
+            " CHECKING";
+
+
+    } catch (error) {
+
+        console.error(
+            "System status check failed:",
+            error
+        );
+
+        summary.innerText =
+            "SYSTEM STATUS CHECK FAILED: " +
+            (error.message || "UNKNOWN ERROR");
+
+    } finally {
+
+        systemStatusLoading = false;
+    }
+}
+
+
+/* ==========================================================
+   SYSTEM STATUS REFRESH
+   ========================================================== */
+
+document
+    .getElementById(
+        "system-status-refresh-btn"
+    )
+    ?.addEventListener(
+        "click",
+        () => {
+            loadSystemStatus();
+        }
+    );
+
+
+/* ==========================================================
    SECURITY OPS — SECURITY AUDIT
    ========================================================== */
 
@@ -4729,8 +5735,17 @@ document
                         .style.display =
                             selected === "audit" ? "block" : "none";
 
+                    document
+                        .getElementById("security-status-panel")
+                        .style.display =
+                            selected === "status" ? "block" : "none";
+
                     if (selected === "audit") {
                         loadSecurityAudit();
+                    }
+
+                    if (selected === "status") {
+                        loadSystemStatus();
                     }
 
                 }
