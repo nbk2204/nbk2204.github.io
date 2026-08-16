@@ -2595,6 +2595,17 @@ function loadSecurityUsers() {
                     snapshot.val() ||
                     {};
 
+                securityUserMap = {};
+
+                Object.entries(users).forEach(
+                    ([uid, value]) => {
+                        securityUserMap[uid] = {
+                            uid,
+                            ...(value || {})
+                        };
+                    }
+                );
+
                 const rows =
                     Object.entries(
                         users
@@ -3027,15 +3038,58 @@ function loadAccessRequests() {
                         })
                     )
                     .sort(
-                        (a, b) =>
-                            Number(
-                                b.requestedAt ||
-                                0
-                            ) -
-                            Number(
+                        (a, b) => {
+                            const statusRank = status => {
+                                const value = String(
+                                    status ||
+                                    ""
+                                ).toLowerCase();
+
+                                if (value === "pending") {
+                                    return 0;
+                                }
+
+                                if (
+                                    value === "approved" &&
+                                    requestRoleAssigned(a) === false
+                                ) {
+                                    return 1;
+                                }
+
+                                if (value === "approved") {
+                                    return 2;
+                                }
+
+                                if (value === "rejected") {
+                                    return 3;
+                                }
+
+                                return 4;
+                            };
+
+                            const rankA = statusRank(a.status);
+                            const rankB = statusRank(b.status);
+
+                            if (rankA !== rankB) {
+                                return rankA - rankB;
+                            }
+
+                            const timeA = Number(
+                                a.reviewedAt ||
+                                a.approvedAt ||
                                 a.requestedAt ||
                                 0
-                            )
+                            );
+
+                            const timeB = Number(
+                                b.reviewedAt ||
+                                b.approvedAt ||
+                                b.requestedAt ||
+                                0
+                            );
+
+                            return timeB - timeA;
+                        }
                     );
 
 
@@ -3576,6 +3630,25 @@ let roleChangeRequestListenerStarted =
 let roleChangeRequestMap =
     {};
 
+let securityUserMap =
+    {};
+
+function requestRoleAssigned(request) {
+    return request &&
+        request.roleAssigned === true;
+}
+
+
+function getRoleChangeUser(uid) {
+    return securityUserMap[uid] || {
+        uid,
+        name: "UNKNOWN USER",
+        email: "UNKNOWN EMAIL",
+        role: "guest"
+    };
+}
+
+
 function loadRoleChangeRequests() {
 
     if (
@@ -3742,6 +3815,26 @@ function renderRoleChangeRequestCard(
             "pending"
         ).toLowerCase();
 
+    const user =
+        getRoleChangeUser(
+            request.uid
+        );
+
+    const currentRole =
+        String(
+            user.role ||
+            "guest"
+        ).toLowerCase();
+
+    const requestedRole =
+        String(
+            request.requestedRole ||
+            ""
+        ).toLowerCase();
+
+    const roleAssigned =
+        request.roleAssigned === true;
+
     const requestedAt =
         request.requestedAt
             ? new Date(
@@ -3751,117 +3844,78 @@ function renderRoleChangeRequestCard(
               ).toLocaleString()
             : "UNKNOWN";
 
-    const requestedRole =
-        String(
-            request.requestedRole ||
-            ""
-        ).toLowerCase();
+    const reviewedAt =
+        request.reviewedAt
+            ? new Date(
+                Number(
+                    request.reviewedAt
+                )
+              ).toLocaleString()
+            : "—";
 
     const requestedBy =
         request.requestedBy ||
         "UNKNOWN";
 
-    const roleText =
+    const reviewedBy =
+        request.reviewedBy ||
+        "—";
+
+    const statusText =
+        status === "pending"
+            ? "PENDING"
+            : status === "approved"
+                ? roleAssigned
+                    ? "COMPLETED"
+                    : "APPROVED / PROCESSOR PENDING"
+                : status === "rejected"
+                    ? "REJECTED"
+                    : status.toUpperCase();
+
+    const statusClass =
+        status === "pending"
+            ? "request-status"
+            : "request-status";
+
+    const statusStyle =
+        status === "rejected"
+            ? "color:#ff003c;"
+            : roleAssigned
+                ? "color:#00ff9c;"
+                : "";
+
+    const roleFlow =
+        currentRole.toUpperCase() +
+        " → " +
         requestedRole.toUpperCase();
 
-    if (
-        status ===
-        "approved"
-    ) {
+    let actionHtml = "";
 
-        return `
-            <div class="request-card role-change-card">
+    if (status === "pending") {
+        actionHtml = `
+            <div class="role-change-actions">
 
-                <div class="request-header">
+                <button
+                    type="button"
+                    class="approve-btn"
+                    onclick="processRoleChangeRequest(
+                        '${escapeHtml(request.uid)}',
+                        'approve',
+                        this
+                    )">
+                    APPROVE
+                </button>
 
-                    <div>
-
-                        <div class="request-name">
-                            ROLE CHANGE
-                        </div>
-
-                        <div class="request-email">
-                            UID:
-                            ${escapeHtml(request.uid)}
-                        </div>
-
-                    </div>
-
-                    <div class="request-status">
-                        APPROVED
-                    </div>
-
-                </div>
-
-                <div class="request-meta">
-
-                    <div>
-                        TARGET:
-                        ${escapeHtml(request.uid)}
-                    </div>
-
-                    <div>
-                        ROLE:
-                        ${escapeHtml(roleText)}
-                    </div>
-
-                    <div>
-                        REQUESTED:
-                        ${escapeHtml(requestedAt)}
-                    </div>
-
-                </div>
-
-            </div>
-        `;
-    }
-
-    if (
-        status ===
-        "rejected"
-    ) {
-
-        return `
-            <div class="request-card role-change-card">
-
-                <div class="request-header">
-
-                    <div>
-
-                        <div class="request-name">
-                            ROLE CHANGE
-                        </div>
-
-                        <div class="request-email">
-                            UID:
-                            ${escapeHtml(request.uid)}
-                        </div>
-
-                    </div>
-
-                    <div
-                        class="request-status"
-                        style="color:#ff003c;">
-
-                        REJECTED
-
-                    </div>
-
-                </div>
-
-                <div class="request-meta">
-
-                    <div>
-                        TARGET:
-                        ${escapeHtml(request.uid)}
-                    </div>
-
-                    <div>
-                        ROLE:
-                        ${escapeHtml(roleText)}
-                    </div>
-
-                </div>
+                <button
+                    type="button"
+                    class="reject-btn"
+                    onclick="processRoleChangeRequest(
+                        '${escapeHtml(request.uid)}',
+                        'reject',
+                        this
+                    )">
+                    REJECT
+                </button>
 
             </div>
         `;
@@ -3875,20 +3929,29 @@ function renderRoleChangeRequestCard(
             <div class="request-header">
 
                 <div>
-
                     <div class="request-name">
                         ROLE CHANGE REQUEST
                     </div>
 
                     <div class="request-email">
-                        TARGET UID:
-                        ${escapeHtml(request.uid)}
+                        ${escapeHtml(
+                            user.name ||
+                            "UNKNOWN USER"
+                        )}
                     </div>
 
+                    <div class="request-email">
+                        ${escapeHtml(
+                            user.email ||
+                            "UNKNOWN EMAIL"
+                        )}
+                    </div>
                 </div>
 
-                <div class="request-status">
-                    PENDING
+                <div
+                    class="${statusClass}"
+                    style="${statusStyle}">
+                    ${escapeHtml(statusText)}
                 </div>
 
             </div>
@@ -3896,8 +3959,27 @@ function renderRoleChangeRequestCard(
             <div class="request-meta">
 
                 <div>
+                    TARGET UID:
+                    ${escapeHtml(request.uid)}
+                </div>
+
+                <div>
+                    CURRENT ROLE:
+                    <strong>
+                        ${escapeHtml(currentRole.toUpperCase())}
+                    </strong>
+                </div>
+
+                <div>
+                    CHANGE REQUESTED:
+                    <strong>
+                        ${escapeHtml(roleFlow)}
+                    </strong>
+                </div>
+
+                <div>
                     REQUESTED ROLE:
-                    ${escapeHtml(roleText)}
+                    ${escapeHtml(requestedRole.toUpperCase())}
                 </div>
 
                 <div>
@@ -3910,37 +3992,25 @@ function renderRoleChangeRequestCard(
                     ${escapeHtml(requestedAt)}
                 </div>
 
-            </div>
+                ${
+                    status !== "pending"
+                        ? `
+                            <div>
+                                REVIEWED BY:
+                                ${escapeHtml(reviewedBy)}
+                            </div>
 
-            <div class="role-change-actions">
-
-                <button
-                    type="button"
-                    class="approve-btn"
-                    onclick="processRoleChangeRequest(
-                        '${escapeHtml(request.uid)}',
-                        'approve',
-                        this
-                    )">
-
-                    APPROVE
-
-                </button>
-
-                <button
-                    type="button"
-                    class="reject-btn"
-                    onclick="processRoleChangeRequest(
-                        '${escapeHtml(request.uid)}',
-                        'reject',
-                        this
-                    )">
-
-                    REJECT
-
-                </button>
+                            <div>
+                                REVIEWED:
+                                ${escapeHtml(reviewedAt)}
+                            </div>
+                        `
+                        : ""
+                }
 
             </div>
+
+            ${actionHtml}
 
         </div>
     `;
@@ -4287,6 +4357,17 @@ function renderSecurityUsersFromSnapshot(
     const users =
         snapshot.val() ||
         {};
+
+    securityUserMap = {};
+
+    Object.entries(users).forEach(
+        ([uid, value]) => {
+            securityUserMap[uid] = {
+                uid,
+                ...(value || {})
+            };
+        }
+    );
 
     const rows =
         Object.entries(
