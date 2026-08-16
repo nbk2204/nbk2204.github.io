@@ -243,9 +243,15 @@
 .request-card {
     background: rgba(5, 2, 18, 0.75);
     border: 1px solid rgba(255, 0, 60, 0.25);
-    border-radius: 8px;
-    padding: 20px;
+    border-radius: 10px;
+    padding: 22px;
     margin-bottom: 15px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.request-card:hover {
+    border-color: rgba(0, 243, 255, 0.35);
+    box-shadow: 0 0 18px rgba(0, 243, 255, 0.06);
 }
 
 .request-card-header {
@@ -253,13 +259,13 @@
     justify-content: space-between;
     align-items: flex-start;
     gap: 15px;
-    margin-bottom: 15px;
+    margin-bottom: 18px;
 }
 
 .request-name {
     color: #fff;
     font-weight: bold;
-    font-size: 1rem;
+    font-size: 1.05rem;
     letter-spacing: 1px;
 }
 
@@ -275,6 +281,7 @@
     font-family: monospace;
     font-size: 0.7rem;
     letter-spacing: 1px;
+    white-space: nowrap;
 }
 
 .request-meta {
@@ -285,6 +292,40 @@
     font-family: monospace;
     font-size: 0.72rem;
     color: var(--text-muted);
+}
+
+.request-clearance-label {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.72rem;
+    letter-spacing: 1px;
+    margin-bottom: 7px;
+    text-transform: uppercase;
+}
+
+.request-role-select {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(0, 243, 255, 0.3);
+    color: #fff;
+    padding: 11px 12px;
+    border-radius: 5px;
+    outline: none;
+    font-family: monospace;
+    font-size: 0.78rem;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    cursor: pointer;
+}
+
+.request-role-select:focus {
+    border-color: var(--neon-cyan);
+    box-shadow: 0 0 12px rgba(0, 243, 255, 0.15);
+}
+
+.request-role-select option {
+    background: #100820;
+    color: #fff;
 }
 
 .request-actions {
@@ -324,6 +365,12 @@
 .reject-btn:hover {
     background: var(--neon-red);
     color: #fff;
+}
+
+.request-btn:disabled,
+.request-role-select:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .request-processing {
@@ -604,10 +651,8 @@
 
     <!-- 2. VANILLA SYSTEM ENGINE PIPELINE (NO MIME SPECS) -->
     <script>
-        // ============================================================
-        // NBK NEXUS // SECURE CLIENT CONTROLLER
-        // ============================================================
-
+        // --- 1. CONFIGURATION CODES ---
+        // Make sure to double-check the physical label matches your Firebase settings exactly
         const firebaseConfig = {
             apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
@@ -619,1002 +664,1076 @@
             databaseURL: "https://nbk-nexus-default-rtdb.firebaseio.com"
         };
 
-        const errorLabel = document.getElementById("error-msg");
+        const errorLabel = document.getElementById('error-msg');
 
-        let auth = null;
-        let database = null;
+let auth = null;
+let database = null;
+
+try {
+
+    firebase.initializeApp(firebaseConfig);
+
+    auth = firebase.auth();
+
+    database = firebase.database();
+
+    errorLabel.innerText =
+        "System Matrix Online. Ready.";
+
+    errorLabel.style.color =
+        "#00ff00";
+
+    console.log(
+        "Secure Identity Core Fully Operational."
+    );
+
+    console.log(
+        "Realtime Database Core Fully Operational."
+    );
+
+} catch (e) {
+
+    console.error(e);
+
+    errorLabel.innerText =
+        "CRITICAL BOOT ERROR: " + e.message;
+
+    errorLabel.style.color =
+        "#ff003c";
+}
+
+        document
+    .getElementById("verification-login")
+    .addEventListener("click", () => {
+
+        document.getElementById("verification-overlay")
+            .style.display = "none";
+
+        document.getElementById("login-overlay")
+            .style.display = "flex";
+    });
+        document
+    .getElementById("signup-open")
+    .addEventListener("click", () => {
+
+        document.getElementById("login-overlay")
+            .style.display = "none";
+
+        document.getElementById("signup-overlay")
+            .style.display = "flex";
+
+        document.getElementById("signup-msg").innerText =
+            "Awaiting registration input...";
+
+        document.getElementById("signup-msg").style.color =
+            "#7a6e95";
+    });
+        document
+    .getElementById("signup-cancel")
+    .addEventListener("click", () => {
+
+        document.getElementById("signup-overlay")
+            .style.display = "none";
+
+        document.getElementById("login-overlay")
+            .style.display = "flex";
+    });
+        document
+    .getElementById("signup-submit")
+    .addEventListener("click", async () => {
+
+        const name =
+            document.getElementById("signup-name")
+                .value.trim();
+
+        const email =
+            document.getElementById("signup-email")
+                .value.trim()
+                .toLowerCase();
+
+        const password =
+            document.getElementById("signup-password")
+                .value;
+
+        const confirm =
+            document.getElementById("signup-confirm")
+                .value;
+
+        const msg =
+            document.getElementById("signup-msg");
+
+
+        // -------------------------------
+        // VALIDATION
+        // -------------------------------
+
+        if (!name || !email || !password || !confirm) {
+
+            msg.innerText =
+                "ALL REGISTRATION FIELDS REQUIRED";
+
+            msg.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        if (password !== confirm) {
+
+            msg.innerText =
+                "ACCESS CODES DO NOT MATCH";
+
+            msg.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        if (password.length < 6) {
+
+            msg.innerText =
+                "ACCESS CODE MUST BE AT LEAST 6 CHARACTERS";
+
+            msg.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        msg.innerText =
+            "CREATING SECURE IDENTITY...";
+
+        msg.style.color =
+            "#00f3ff";
+
 
         try {
-            firebase.initializeApp(firebaseConfig);
-            auth = firebase.auth();
-            database = firebase.database();
 
-            errorLabel.innerText = "System Matrix Online. Ready.";
-            errorLabel.style.color = "#00ff00";
+            // ------------------------------------
+            // CREATE FIREBASE AUTH ACCOUNT
+            // ------------------------------------
 
-            console.log("Secure Identity Core Fully Operational.");
-            console.log("Realtime Database Core Fully Operational.");
-        } catch (e) {
-            console.error("Firebase initialization failed:", e);
-            errorLabel.innerText = "CRITICAL BOOT ERROR: " + e.message;
-            errorLabel.style.color = "#ff003c";
-        }
-
-        // ============================================================
-        // ROLE / ACCESS MATRIX
-        // ============================================================
-
-        const ROLE_LABELS = {
-            admin: "ROOT ADMIN",
-            friend: "PRIVILEGED MEMBER",
-            guest: "GUEST USER"
-        };
-
-        const VALID_ROLES = ["admin", "friend", "guest"];
-
-        const ROLE_LEVEL = {
-            guest: 1,
-            friend: 2,
-            admin: 3
-        };
-
-        const servers = [
-            {
-                id: 1,
-                name: "PUBLIC SECTOR ENTRY",
-                desc: "General purpose web node hosting basic landing layouts and public asset libraries.",
-                url: "https://google.com",
-                minRole: "guest"
-            },
-            {
-                id: 2,
-                name: "NEXUS MEDIA ARCHIVE",
-                desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.",
-                url: "https://plex.tv",
-                minRole: "friend"
-            },
-            {
-                id: 3,
-                name: "SENTINEL SECURITY OPS",
-                desc: "Administrative backends, configuration terminal access pipelines, and core container logs.",
-                url: "https://amazon.com",
-                minRole: "admin"
-            }
-        ];
-
-        // ============================================================
-        // UTILITY
-        // ============================================================
-
-        function escapeHtml(value) {
-            return String(value ?? "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-
-        function showLoginMessage(message, color = "#ff003c") {
-            errorLabel.innerText = message;
-            errorLabel.style.color = color;
-        }
-
-        async function signOutAndReturnToLogin() {
-            try {
-                if (auth && auth.currentUser) {
-                    await auth.signOut();
-                }
-            } catch (e) {
-                console.error("Sign-out failed:", e);
-            }
-
-            document.getElementById("dashboard").style.display = "none";
-            document.getElementById("pending-overlay").style.display = "none";
-            document.getElementById("verification-overlay").style.display = "none";
-            document.getElementById("signup-overlay").style.display = "none";
-            document.getElementById("login-overlay").style.display = "flex";
-        }
-
-        // ============================================================
-        // SIGN-UP
-        //
-        // IMPORTANT:
-        // We create the Firebase Auth account and send verification.
-        // We do NOT create /signupRequests until the user comes back
-        // and successfully verifies the email.
-        // ============================================================
-
-        document.getElementById("signup-open").addEventListener("click", () => {
-            document.getElementById("login-overlay").style.display = "none";
-            document.getElementById("signup-overlay").style.display = "flex";
-
-            document.getElementById("signup-msg").innerText =
-                "Awaiting registration input...";
-            document.getElementById("signup-msg").style.color = "#7a6e95";
-        });
-
-        document.getElementById("signup-cancel").addEventListener("click", () => {
-            document.getElementById("signup-overlay").style.display = "none";
-            document.getElementById("login-overlay").style.display = "flex";
-        });
-
-        document.getElementById("signup-submit").addEventListener("click", async () => {
-            const name = document.getElementById("signup-name").value.trim();
-            const email = document.getElementById("signup-email").value.trim().toLowerCase();
-            const password = document.getElementById("signup-password").value;
-            const confirm = document.getElementById("signup-confirm").value;
-            const msg = document.getElementById("signup-msg");
-
-            if (!name || !email || !password || !confirm) {
-                msg.innerText = "ALL REGISTRATION FIELDS REQUIRED";
-                msg.style.color = "#ff003c";
-                return;
-            }
-
-            if (password !== confirm) {
-                msg.innerText = "ACCESS CODES DO NOT MATCH";
-                msg.style.color = "#ff003c";
-                return;
-            }
-
-            if (password.length < 6) {
-                msg.innerText = "ACCESS CODE MUST BE AT LEAST 6 CHARACTERS";
-                msg.style.color = "#ff003c";
-                return;
-            }
-
-            msg.innerText = "CREATING SECURE IDENTITY...";
-            msg.style.color = "#00f3ff";
-
-            try {
-                const credential =
-                    await auth.createUserWithEmailAndPassword(email, password);
-
-                const user = credential.user;
-
-                await user.updateProfile({
-                    displayName: name
-                });
-
-                await user.sendEmailVerification();
-
-                console.log("Verification email sent to:", user.email);
-
-                // Store only the temporary registration information locally.
-                // This is not an authorization mechanism.
-                sessionStorage.setItem(
-                    "nbk_pending_signup",
-                    JSON.stringify({
-                        uid: user.uid,
-                        name: name,
-                        email: user.email
-                    })
+            const credential =
+                await auth.createUserWithEmailAndPassword(
+                    email,
+                    password
                 );
 
-                await auth.signOut();
+            const user =
+                credential.user;
 
-                document.getElementById("signup-overlay").style.display = "none";
-                document.getElementById("verification-overlay").style.display = "flex";
 
-                document.getElementById("verification-msg").innerText =
-                    "Verification link sent to " + user.email;
-            } catch (error) {
-                console.error("Signup error:", error);
+            // ------------------------------------
+            // UPDATE DISPLAY NAME
+            // ------------------------------------
 
-                msg.style.color = "#ff003c";
+            await user.updateProfile({
+                displayName: name
+            });
 
-                switch (error.code) {
-                    case "auth/email-already-in-use":
-                        msg.innerText = "IDENTITY ALREADY REGISTERED";
-                        break;
 
-                    case "auth/invalid-email":
-                        msg.innerText = "INVALID EMAIL ADDRESS";
-                        break;
+            // ------------------------------------
+            // SEND EMAIL VERIFICATION
+            // ------------------------------------
 
-                    case "auth/weak-password":
-                        msg.innerText = "ACCESS CODE IS TOO WEAK";
-                        break;
+            // ------------------------------------
+// SEND EMAIL VERIFICATION
+// ------------------------------------
 
-                    default:
-                        msg.innerText =
-                            "REGISTRATION FAILED: " +
-                            (error.message || "Unknown error.");
-                }
+await user.sendEmailVerification();
+
+console.log(
+    "Verification email sent to:",
+    user.email
+);
+
+
+// ------------------------------------
+// DO NOT CREATE SIGNUP REQUEST YET
+// ------------------------------------
+
+await auth.signOut();
+
+
+// ------------------------------------
+// SHOW VERIFICATION SCREEN
+// ------------------------------------
+
+document.getElementById("signup-overlay")
+    .style.display = "none";
+
+document.getElementById("verification-overlay")
+    .style.display = "flex";
+
+
+        } catch (error) {
+
+            console.error(
+                "Signup error:",
+                error
+            );
+
+            msg.style.color =
+                "#ff003c";
+
+
+            switch (error.code) {
+
+                case "auth/email-already-in-use":
+
+                    msg.innerText =
+                        "IDENTITY ALREADY REGISTERED";
+
+                    break;
+
+
+                case "auth/invalid-email":
+
+                    msg.innerText =
+                        "INVALID EMAIL ADDRESS";
+
+                    break;
+
+
+                case "auth/weak-password":
+
+                    msg.innerText =
+                        "ACCESS CODE IS TOO WEAK";
+
+                    break;
+
+
+                default:
+
+                    msg.innerText =
+                        "REGISTRATION FAILED: " +
+                        error.message;
             }
+        }
+    });
+        document
+    .getElementById("pending-logout")
+    .addEventListener("click", async () => {
+
+        if (auth.currentUser) {
+            await auth.signOut();
+        }
+
+        location.reload();
+    });
+
+        // --- 2. SERVERS SECTOR PERMISSIONS MATRIX ---
+        const servers = [
+            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
+            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
+            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
+        ];
+
+        // --- 3. HARDWARE USER EVENT ACTION LISTENERS ---
+document.getElementById('login-trigger').addEventListener('click', async () => {
+
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value;
+
+    if (!email || !pass) {
+        errorLabel.innerText = "CREDENTIALS REQUIRED";
+        errorLabel.style.color = "#ff003c";
+        return;
+    }
+
+    if (!auth) {
+        errorLabel.innerText = "AUTHENTICATION ENGINE OFFLINE";
+        errorLabel.style.color = "#ff003c";
+        return;
+    }
+
+    errorLabel.innerText = "TRANSMITTING SECURE TOKENS...";
+    errorLabel.style.color = "#00f3ff";
+
+    try {
+
+        // ----------------------------------------
+        // FIREBASE LOGIN
+        // ----------------------------------------
+
+        const userCredential =
+            await auth.signInWithEmailAndPassword(
+                email,
+                pass
+            );
+
+        const user = userCredential.user;
+
+console.log("Authenticated user:", user.email);
+console.log("Firebase UID:", user.uid);
+
+
+// ----------------------------------------
+// GET FRESH CUSTOM CLAIMS FIRST
+// ----------------------------------------
+
+const idTokenResult =
+    await user.getIdTokenResult(true);
+
+const assignedRole =
+    idTokenResult.claims.role || null;
+
+console.log(
+    "Firebase custom claims:",
+    idTokenResult.claims
+);
+
+console.log(
+    "Assigned role:",
+    assignedRole
+);
+
+
+// ----------------------------------------
+// ADMIN CHECK
+// ----------------------------------------
+//
+// Admin role is a server-side custom claim.
+// If role === admin, this is an authorized
+// administrator account.
+//
+
+if (assignedRole === "admin") {
+
+    console.log(
+        "ROOT ADMIN AUTHENTICATED"
+    );
+
+    transitionToDashboard(
+        user.email,
+        "admin"
+    );
+
+    return;
+}
+
+
+// ----------------------------------------
+// NON-ADMIN USERS MUST VERIFY EMAIL
+// ----------------------------------------
+
+if (!user.emailVerified) {
+
+    errorLabel.innerText =
+        "EMAIL VERIFICATION REQUIRED";
+
+    errorLabel.style.color =
+        "#ff003c";
+
+    await auth.signOut();
+
+    return;
+}
+
+
+// ----------------------------------------
+// VERIFIED FRIEND
+// ----------------------------------------
+
+if (assignedRole === "friend") {
+
+    transitionToDashboard(
+        user.email,
+        "friend"
+    );
+
+    return;
+}
+
+
+// ----------------------------------------
+// VERIFIED USER WITH NO ROLE
+// ----------------------------------------
+
+if (!assignedRole) {
+
+    await createOrCheckSignupRequest(user);
+
+    return;
+}
+
+
+// ----------------------------------------
+// UNKNOWN ROLE
+// ----------------------------------------
+
+console.warn(
+    "Unknown Firebase role:",
+    assignedRole
+);
+
+await auth.signOut();
+
+errorLabel.innerText =
+    "INVALID SECURITY ROLE";
+
+errorLabel.style.color =
+    "#ff003c";
+
+        // ----------------------------------------
+        // NO ROLE = PENDING USER
+        // ----------------------------------------
+
+        if (!assignedRole) {
+
+            await handlePendingUser(user);
+
+            return;
+        }
+
+
+        // ----------------------------------------
+        // ONLY ACCEPT KNOWN ROLES
+        // ----------------------------------------
+
+        if (
+            assignedRole !== "admin" &&
+            assignedRole !== "friend"
+        ) {
+
+            console.warn(
+                "Unknown Firebase role:",
+                assignedRole
+            );
+
+            await handlePendingUser(user);
+
+            return;
+        }
+
+
+        // ----------------------------------------
+        // VALID USER
+        // ----------------------------------------
+
+        transitionToDashboard(
+            user.email,
+            assignedRole
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Authentication exception:",
+            error
+        );
+
+        errorLabel.style.color = "#ff003c";
+
+        switch (error.code) {
+
+            case "auth/invalid-credential":
+            case "auth/user-not-found":
+            case "auth/wrong-password":
+
+                errorLabel.innerText =
+                    "ACCESS REJECTED: Invalid operator ID or passcode.";
+
+                break;
+
+            case "auth/user-disabled":
+
+                errorLabel.innerText =
+                    "ACCESS REJECTED: Operator account disabled.";
+
+                break;
+
+            case "auth/too-many-requests":
+
+                errorLabel.innerText =
+                    "ACCESS TEMPORARILY LOCKED: Too many attempts.";
+
+                break;
+
+            default:
+
+                errorLabel.innerText =
+                    "ACCESS REJECTED: " +
+                    (error.message || "Authentication failed.");
+        }
+    }
+});
+
+        document.getElementById('logout-trigger').addEventListener('click', () => {
+            if (auth) auth.signOut().then(() => { location.reload(); });
         });
 
-        // ============================================================
-        // VERIFICATION SCREEN
-        // ============================================================
+        async function handlePendingUser(user) {
 
-        document.getElementById("verification-login").addEventListener("click", () => {
-            document.getElementById("verification-overlay").style.display = "none";
-            document.getElementById("login-overlay").style.display = "flex";
-        });
+    try {
 
-        // ============================================================
-        // CREATE / UPDATE SIGNUP REQUEST
-        //
-        // Called only after successful email verification.
-        // ============================================================
+        const snapshot =
+            await database
+                .ref("signupRequests/" + user.uid)
+                .once("value");
 
-        async function createOrCheckSignupRequest(user) {
-            const pendingRaw =
-                sessionStorage.getItem("nbk_pending_signup");
+        const request =
+            snapshot.val();
 
-            let storedName = user.displayName || "";
 
-            if (pendingRaw) {
-                try {
-                    const pending = JSON.parse(pendingRaw);
+        // ------------------------------------
+        // NO REQUEST RECORD
+        // ------------------------------------
 
-                    if (pending.uid === user.uid && pending.name) {
-                        storedName = pending.name;
-                    }
-                } catch (e) {
-                    console.warn("Invalid pending signup data.");
-                }
-            }
+        if (!request) {
 
-            const requestRef =
-                database.ref("signupRequests/" + user.uid);
-
-            const snapshot =
-                await requestRef.once("value");
-
-            const existingRequest = snapshot.val();
-
-            if (!existingRequest) {
-                await requestRef.set({
-                    name: storedName,
-                    email: user.email,
-                    status: "pending",
-                    requestedAt: firebase.database.ServerValue.TIMESTAMP
-                });
-
-                console.log("New access request created.");
-            }
-
-            sessionStorage.removeItem("nbk_pending_signup");
+            console.warn(
+                "Authenticated user has no signup request."
+            );
 
             await auth.signOut();
 
-            document.getElementById("login-overlay").style.display = "none";
-            document.getElementById("pending-overlay").style.display = "flex";
+            errorLabel.innerText =
+                "ACCESS REQUEST NOT FOUND";
+
+            errorLabel.style.color =
+                "#ff003c";
+
+            return;
         }
 
-        // ============================================================
-        // LOGIN
-        // ============================================================
 
-        document.getElementById("login-trigger").addEventListener("click", async () => {
-            const email =
-                document.getElementById("email").value.trim().toLowerCase();
+        // ------------------------------------
+        // REJECTED
+        // ------------------------------------
 
-            const pass =
-                document.getElementById("password").value;
+        if (request.status === "rejected") {
 
-            if (!email || !pass) {
-                showLoginMessage("CREDENTIALS REQUIRED");
-                return;
-            }
+            await auth.signOut();
 
-            if (!auth || !database) {
-                showLoginMessage("AUTHENTICATION ENGINE OFFLINE");
-                return;
-            }
+            document.getElementById("login-overlay")
+                .style.display = "flex";
 
-            showLoginMessage(
-                "TRANSMITTING SECURE TOKENS...",
-                "#00f3ff"
+            errorLabel.innerText =
+                "ACCESS REQUEST REJECTED";
+
+            errorLabel.style.color =
+                "#ff003c";
+
+            return;
+        }
+
+
+        // ------------------------------------
+        // APPROVED BUT CLAIM NOT YET UPDATED
+        // ------------------------------------
+
+        if (request.status === "approved") {
+
+            document.getElementById("login-overlay")
+                .style.display = "flex";
+
+            errorLabel.innerText =
+                "ACCESS APPROVED — ROLE ACTIVATION PENDING";
+
+            errorLabel.style.color =
+                "#00f3ff";
+
+            return;
+        }
+
+
+        // ------------------------------------
+        // PENDING
+        // ------------------------------------
+
+        document.getElementById("login-overlay")
+            .style.display = "none";
+
+        document.getElementById("pending-overlay")
+            .style.display = "flex";
+
+
+    } catch (error) {
+
+        console.error(
+            "Pending user check failed:",
+            error
+        );
+
+        errorLabel.innerText =
+            "SECURITY STATUS CHECK FAILED";
+
+        errorLabel.style.color =
+            "#ff003c";
+    }
+}
+
+        // ==================================================
+// ADMIN — LOAD ACCESS REQUESTS
+// ==================================================
+
+function loadAccessRequests() {
+
+    if (!database) {
+        console.error(
+            "Realtime Database is not initialized."
+        );
+
+        return;
+    }
+
+
+    const requestsRef =
+        database.ref("signupRequests");
+
+
+    requestsRef.on(
+        "value",
+        (snapshot) => {
+
+            const requests =
+                snapshot.val() || {};
+
+            renderAccessRequests(requests);
+
+        },
+        (error) => {
+
+            console.error(
+                "Failed to load access requests:",
+                error
             );
 
-            try {
-                const userCredential =
-                    await auth.signInWithEmailAndPassword(email, pass);
-
-                const user = userCredential.user;
-
-                console.log("Authenticated user:", user.email);
-                console.log("Firebase UID:", user.uid);
-
-                // Force-refresh because the Admin SDK may have assigned
-                // the role since the browser's previous token was issued.
-                const idTokenResult =
-                    await user.getIdTokenResult(true);
-
-                const claims = idTokenResult.claims || {};
-
-                console.log("Firebase custom claims:", claims);
-
-                const assignedRole =
-                    claims.role ||
-                    (claims.admin === true ? "admin" : null);
-
-                console.log("Assigned role:", assignedRole);
-
-                // ----------------------------------------------------
-                // ADMIN
-                // ----------------------------------------------------
-
-                if (assignedRole === "admin") {
-                    console.log("ROOT ADMIN AUTHENTICATED");
-
-                    transitionToDashboard(
-                        user.email,
-                        "admin"
-                    );
-
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // ALL NON-ADMIN USERS REQUIRE EMAIL VERIFICATION
-                // ----------------------------------------------------
-
-                if (!user.emailVerified) {
-                    console.warn(
-                        "Email is not verified:",
-                        user.email
-                    );
-
-                    showLoginMessage(
-                        "EMAIL VERIFICATION REQUIRED"
-                    );
-
-                    await auth.signOut();
-
-                    document.getElementById("verification-overlay").style.display = "flex";
-                    document.getElementById("login-overlay").style.display = "none";
-
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // GUEST / FRIEND
-                // ----------------------------------------------------
-
-                if (
-                    assignedRole === "guest" ||
-                    assignedRole === "friend"
-                ) {
-                    transitionToDashboard(
-                        user.email,
-                        assignedRole
-                    );
-
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // NO ROLE = VERIFIED BUT NOT APPROVED
-                // ----------------------------------------------------
-
-                if (!assignedRole) {
-                    console.log(
-                        "Verified account has no role. Checking request."
-                    );
-
-                    await handlePendingUser(user);
-
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // UNKNOWN ROLE
-                // ----------------------------------------------------
-
-                console.error(
-                    "Unknown Firebase role:",
-                    assignedRole
-                );
-
-                await auth.signOut();
-
-                showLoginMessage(
-                    "INVALID SECURITY ROLE"
-                );
-
-            } catch (error) {
-                console.error(
-                    "Authentication exception:",
-                    error
-                );
-
-                errorLabel.style.color = "#ff003c";
-
-                switch (error.code) {
-                    case "auth/invalid-credential":
-                    case "auth/user-not-found":
-                    case "auth/wrong-password":
-                        errorLabel.innerText =
-                            "ACCESS REJECTED: Invalid operator ID or passcode.";
-                        break;
-
-                    case "auth/user-disabled":
-                        errorLabel.innerText =
-                            "ACCESS REJECTED: Operator account disabled.";
-                        break;
-
-                    case "auth/too-many-requests":
-                        errorLabel.innerText =
-                            "ACCESS TEMPORARILY LOCKED: Too many attempts.";
-                        break;
-
-                    default:
-                        errorLabel.innerText =
-                            "ACCESS REJECTED: " +
-                            (error.message || "Authentication failed.");
-                }
-            }
-        });
-
-        // ============================================================
-        // PENDING / APPROVAL STATUS
-        // ============================================================
-
-        async function handlePendingUser(user) {
-            try {
-                const snapshot =
-                    await database
-                        .ref("signupRequests/" + user.uid)
-                        .once("value");
-
-                const request = snapshot.val();
-
-                // ----------------------------------------------------
-                // No request yet
-                //
-                // If this is a newly verified account, create the
-                // request now.
-                // ----------------------------------------------------
-
-                if (!request) {
-                    await createOrCheckSignupRequest(user);
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // REJECTED
-                // ----------------------------------------------------
-
-                if (request.status === "rejected") {
-                    await auth.signOut();
-
-                    document.getElementById("pending-overlay").style.display = "none";
-                    document.getElementById("login-overlay").style.display = "flex";
-
-                    showLoginMessage(
-                        "ACCESS REQUEST REJECTED"
-                    );
-
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // APPROVED BUT ROLE NOT YET REFLECTED IN TOKEN
-                // ----------------------------------------------------
-
-                if (request.status === "approved") {
-                    await user.getIdToken(true);
-
-                    showLoginMessage(
-                        "ACCESS APPROVED — ROLE ACTIVATION PENDING",
-                        "#00f3ff"
-                    );
-
-                    await auth.signOut();
-                    return;
-                }
-
-                // ----------------------------------------------------
-                // PENDING
-                // ----------------------------------------------------
-
-                await auth.signOut();
-
-                document.getElementById("login-overlay").style.display = "none";
-                document.getElementById("pending-overlay").style.display = "flex";
-
-            } catch (error) {
-                console.error(
-                    "Pending user check failed:",
-                    error
-                );
-
-                showLoginMessage(
-                    "SECURITY STATUS CHECK FAILED"
-                );
-            }
-        }
-
-        // ============================================================
-        // LOGOUT
-        // ============================================================
-
-        document.getElementById("logout-trigger").addEventListener("click", async () => {
-            await signOutAndReturnToLogin();
-            location.reload();
-        });
-
-        document.getElementById("pending-logout").addEventListener("click", async () => {
-            await signOutAndReturnToLogin();
-        });
-
-        // ============================================================
-        // ADMIN — LOAD ACCESS REQUESTS
-        // ============================================================
-
-        function loadAccessRequests() {
-            if (!database) {
-                console.error(
-                    "Realtime Database is not initialized."
-                );
-                return;
-            }
-
-            const requestsRef =
-                database.ref("signupRequests");
-
-            requestsRef.on(
-                "value",
-                snapshot => {
-                    const requests =
-                        snapshot.val() || {};
-
-                    renderAccessRequests(requests);
-                },
-                error => {
-                    console.error(
-                        "Failed to load access requests:",
-                        error
-                    );
-
-                    const container =
-                        document.getElementById(
-                            "access-request-list"
-                        );
-
-                    if (container) {
-                        container.innerHTML = `
-                            <div class="requests-empty"
-                                 style="color:#ff003c;">
-                                ACCESS REQUEST MATRIX OFFLINE
-                            </div>
-                        `;
-                    }
-                }
-            );
-        }
-
-        // ============================================================
-        // ADMIN — RENDER REQUESTS
-        // ============================================================
-
-        function renderAccessRequests(requests) {
             const container =
                 document.getElementById(
                     "access-request-list"
                 );
 
-            const countLabel =
-                document.getElementById(
-                    "request-count"
+            if (container) {
+
+                container.innerHTML = `
+                    <div class="requests-empty"
+                         style="color:#ff003c;">
+                        ACCESS REQUEST MATRIX OFFLINE
+                    </div>
+                `;
+            }
+        }
+    );
+}
+
+
+// ==================================================
+// ADMIN — RENDER ACCESS REQUESTS
+// ==================================================
+
+function renderAccessRequests(requests) {
+
+    const container =
+        document.getElementById(
+            "access-request-list"
+        );
+
+    const countLabel =
+        document.getElementById(
+            "request-count"
+        );
+
+    if (!container || !countLabel) {
+        return;
+    }
+
+    const pendingRequests =
+        Object.entries(requests)
+            .filter(([uid, request]) =>
+                request &&
+                request.status === "pending"
+            )
+            .sort((a, b) =>
+                (b[1].requestedAt || 0) -
+                (a[1].requestedAt || 0)
+            );
+
+    countLabel.innerText =
+        pendingRequests.length;
+
+    if (pendingRequests.length === 0) {
+        container.innerHTML = `
+            <div class="requests-empty">
+                NO PENDING ACCESS REQUESTS
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = "";
+
+    pendingRequests.forEach(([uid, request]) => {
+
+        const card =
+            document.createElement("div");
+
+        card.className = "request-card";
+
+        const requestedDate =
+            request.requestedAt
+                ? new Date(request.requestedAt).toLocaleString()
+                : "UNKNOWN";
+
+        card.innerHTML = `
+            <div class="request-card-header">
+                <div>
+                    <div class="request-name">
+                        ${escapeHtml(
+                            request.name ||
+                            "UNKNOWN OPERATOR"
+                        )}
+                    </div>
+
+                    <div class="request-email">
+                        ${escapeHtml(
+                            request.email ||
+                            "NO EMAIL"
+                        )}
+                    </div>
+                </div>
+
+                <div class="request-status">
+                    STATUS: PENDING
+                </div>
+            </div>
+
+            <div class="request-meta">
+                <div>
+                    UID:
+                    ${escapeHtml(uid)}
+                </div>
+
+                <div>
+                    REQUESTED:
+                    ${escapeHtml(requestedDate)}
+                </div>
+
+                <div>
+                    EMAIL: VERIFIED
+                </div>
+            </div>
+
+            <div class="request-clearance-label">
+                GRANT CLEARANCE
+            </div>
+
+            <select
+                class="request-role-select"
+                data-role-select="true"
+                data-uid="${escapeHtml(uid)}"
+                aria-label="Select clearance for ${escapeHtml(request.email || uid)}">
+                <option value="guest">GUEST</option>
+                <option value="friend">FRIEND</option>
+            </select>
+
+            <div class="request-actions">
+                <button
+                    class="request-btn approve-btn"
+                    data-action="approve"
+                    data-uid="${escapeHtml(uid)}">
+                    APPROVE
+                </button>
+
+                <button
+                    class="request-btn reject-btn"
+                    data-action="reject"
+                    data-uid="${escapeHtml(uid)}">
+                    REJECT
+                </button>
+            </div>
+        `;
+
+        container.appendChild(card);
+    });
+}
+
+
+// ==================================================
+// SECURITY — HTML ESCAPING
+// ==================================================
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ==================================================
+// ADMIN — APPROVE / REJECT
+// ==================================================
+
+document
+    .getElementById("access-request-list")
+    .addEventListener(
+        "click",
+        async (event) => {
+
+            const button =
+                event.target.closest(
+                    "button[data-action]"
                 );
 
-            if (!container || !countLabel) {
+            if (!button) {
                 return;
             }
 
-            const pendingRequests =
-                Object.entries(requests)
-                    .filter(([uid, request]) =>
-                        request &&
-                        request.status === "pending"
+            const action =
+                button.dataset.action;
+
+            const uid =
+                button.dataset.uid;
+
+            if (!uid) {
+                return;
+            }
+
+            const card =
+                button.closest(
+                    ".request-card"
+                );
+
+            // --------------------------------------------------
+            // APPROVAL
+            // --------------------------------------------------
+
+            if (action === "approve") {
+
+                const roleSelect =
+                    card
+                        ? card.querySelector(
+                            "select[data-role-select='true']"
+                        )
+                        : null;
+
+                const selectedRole =
+                    roleSelect
+                        ? roleSelect.value
+                        : "guest";
+
+                // Defense in depth: the UI can only request roles
+                // that the trusted processor is allowed to assign.
+                if (
+                    selectedRole !== "guest" &&
+                    selectedRole !== "friend"
+                ) {
+                    alert(
+                        "INVALID CLEARANCE SELECTION"
+                    );
+                    return;
+                }
+
+                const roleLabel =
+                    selectedRole === "guest"
+                        ? "GUEST"
+                        : "FRIEND";
+
+                const confirmed =
+                    confirm(
+                        `Approve this user as ${roleLabel}?\n\n` +
+                        "The request will be marked approved.\n" +
+                        "The Firebase role will be assigned by the trusted server-side processor."
                     );
 
-            countLabel.innerText =
-                pendingRequests.length;
-
-            if (pendingRequests.length === 0) {
-                container.innerHTML = `
-                    <div class="requests-empty">
-                        NO PENDING ACCESS REQUESTS
-                    </div>
-                `;
-                return;
+                if (!confirmed) {
+                    return;
+                }
             }
 
-            container.innerHTML = "";
+            // --------------------------------------------------
+            // REJECTION
+            // --------------------------------------------------
 
-            pendingRequests.forEach(([uid, request]) => {
-                const card =
-                    document.createElement("div");
+            if (action === "reject") {
 
-                card.className =
-                    "request-card";
+                const confirmed =
+                    confirm(
+                        "Reject this access request?\n\n" +
+                        "The user will not receive NEXUS access."
+                    );
 
-                const requestedDate =
-                    request.requestedAt
-                        ? new Date(
-                            request.requestedAt
-                        ).toLocaleString()
-                        : "UNKNOWN";
+                if (!confirmed) {
+                    return;
+                }
+            }
 
-                card.innerHTML = `
-                    <div class="request-card-header">
-                        <div>
-                            <div class="request-name">
-                                ${escapeHtml(
-                                    request.name ||
-                                    "UNKNOWN OPERATOR"
-                                )}
-                            </div>
+            if (card) {
+                card.classList.add(
+                    "request-processing"
+                );
 
-                            <div class="request-email">
-                                ${escapeHtml(
-                                    request.email ||
-                                    "NO EMAIL"
-                                )}
-                            </div>
-                        </div>
+                card
+                    .querySelectorAll(
+                        "button, select"
+                    )
+                    .forEach(control => {
+                        control.disabled = true;
+                    });
+            }
 
-                        <div class="request-status">
-                            STATUS: PENDING
-                        </div>
-                    </div>
+            try {
 
-                    <div class="request-meta">
-                        <div>
-                            UID:
-                            ${escapeHtml(uid)}
-                        </div>
+                const updateData = {};
 
-                        <div>
-                            REQUESTED:
-                            ${escapeHtml(requestedDate)}
-                        </div>
+                if (action === "approve") {
 
-                        <div>
-                            EMAIL:
-                            VERIFIED
-                        </div>
-                    </div>
-
-                    <div class="request-actions"
-                         style="grid-template-columns: 1fr 1fr 1fr;">
-
-                        <button
-                            class="request-btn approve-btn"
-                            data-action="approve"
-                            data-role="guest"
-                            data-uid="${escapeHtml(uid)}">
-                            APPROVE GUEST
-                        </button>
-
-                        <button
-                            class="request-btn approve-btn"
-                            data-action="approve"
-                            data-role="friend"
-                            data-uid="${escapeHtml(uid)}">
-                            APPROVE FRIEND
-                        </button>
-
-                        <button
-                            class="request-btn reject-btn"
-                            data-action="reject"
-                            data-uid="${escapeHtml(uid)}">
-                            REJECT
-                        </button>
-
-                    </div>
-                `;
-
-                container.appendChild(card);
-            });
-        }
-
-        // ============================================================
-        // ADMIN — APPROVE / REJECT
-        //
-        // The browser only writes the approval request.
-        // The Cloud Shell/Admin SDK processor is responsible for
-        // converting approvedRole into the Firebase custom claim.
-        // ============================================================
-
-        document
-            .getElementById("access-request-list")
-            .addEventListener(
-                "click",
-                async event => {
-
-                    const button =
-                        event.target.closest(
-                            "button[data-action]"
-                        );
-
-                    if (!button) {
-                        return;
-                    }
-
-                    const action =
-                        button.dataset.action;
-
-                    const uid =
-                        button.dataset.uid;
+                    const roleSelect =
+                        card
+                            ? card.querySelector(
+                                "select[data-role-select='true']"
+                            )
+                            : null;
 
                     const selectedRole =
-                        button.dataset.role;
+                        roleSelect
+                            ? roleSelect.value
+                            : null;
 
-                    if (!uid) {
-                        return;
-                    }
-
-                    const card =
-                        button.closest(
-                            ".request-card"
-                        );
-
-                    // ------------------------------------------------
-                    // APPROVAL
-                    // ------------------------------------------------
-
-                    if (action === "approve") {
-
-                        if (
-                            selectedRole !== "guest" &&
-                            selectedRole !== "friend"
-                        ) {
-                            alert(
-                                "Invalid approval role."
-                            );
-                            return;
-                        }
-
-                        const roleLabel =
-                            selectedRole === "guest"
-                                ? "GUEST"
-                                : "FRIEND";
-
-                        const confirmed =
-                            confirm(
-                                `Approve this user as ${roleLabel}?\n\n` +
-                                "The request will be marked approved.\n" +
-                                "The server-side role processor will assign the Firebase claim."
-                            );
-
-                        if (!confirmed) {
-                            return;
-                        }
-                    }
-
-                    // ------------------------------------------------
-                    // REJECTION
-                    // ------------------------------------------------
-
-                    if (action === "reject") {
-
-                        const confirmed =
-                            confirm(
-                                "Reject this access request?"
-                            );
-
-                        if (!confirmed) {
-                            return;
-                        }
-                    }
-
-                    if (card) {
-                        card.classList.add(
-                            "request-processing"
+                    if (
+                        selectedRole !== "guest" &&
+                        selectedRole !== "friend"
+                    ) {
+                        throw new Error(
+                            "Invalid approval role."
                         );
                     }
 
-                    try {
-                        const updateData = {};
+                    updateData.status =
+                        "approved";
 
-                        if (action === "approve") {
-                            updateData.status = "approved";
-                            updateData.approvedRole = selectedRole;
-                            updateData.approvedAt =
-                                firebase.database.ServerValue.TIMESTAMP;
+                    updateData.approvedRole =
+                        selectedRole;
 
-                            // If this request had previously been processed,
-                            // invalidate the old processor marker so that a
-                            // deliberate role change can be processed again.
-                            updateData.roleAssigned = false;
-                        }
+                    updateData.approvedAt =
+                        firebase.database
+                            .ServerValue
+                            .TIMESTAMP;
 
-                        if (action === "reject") {
-                            updateData.status = "rejected";
-                            updateData.rejectedAt =
-                                firebase.database.ServerValue.TIMESTAMP;
-                        }
+                    // Force the processor to reconcile the requested
+                    // role with the current Firebase custom claim.
+                    updateData.roleAssigned =
+                        false;
 
-                        await database
-                            .ref("signupRequests/" + uid)
-                            .update(updateData);
-
-                        console.log(
-                            "Access request updated:",
-                            uid,
-                            action,
-                            selectedRole || ""
-                        );
-
-                    } catch (error) {
-                        console.error(
-                            "Failed to update access request:",
-                            error
-                        );
-
-                        if (card) {
-                            card.classList.remove(
-                                "request-processing"
-                            );
-                        }
-
-                        alert(
-                            "REQUEST UPDATE FAILED:\n\n" +
-                            error.message
-                        );
-                    }
+                    updateData.roleAssignmentBlocked =
+                        null;
                 }
-            );
 
-        // ============================================================
-        // DASHBOARD
-        // ============================================================
+                if (action === "reject") {
 
-        function transitionToDashboard(email, role) {
+                    updateData.status =
+                        "rejected";
 
-            console.log(
-                "Opening dashboard with role:",
-                role
-            );
+                    updateData.rejectedAt =
+                        firebase.database
+                            .ServerValue
+                            .TIMESTAMP;
+                }
 
-            document.getElementById("login-overlay").style.display = "none";
-            document.getElementById("signup-overlay").style.display = "none";
-            document.getElementById("pending-overlay").style.display = "none";
-            document.getElementById("verification-overlay").style.display = "none";
+                await database
+                    .ref(
+                        "signupRequests/" + uid
+                    )
+                    .update(updateData);
 
-            document.getElementById("dashboard").style.display = "block";
+                console.log(
+                    "Access request updated:",
+                    uid,
+                    action,
+                    updateData.approvedRole || ""
+                );
 
-            document.getElementById("user-display").innerText =
-                (email || "").toUpperCase();
+                // The live database listener will refresh the card.
 
-            const clearanceLabel =
-                document.getElementById("user-clearance");
-
-            const adminPanel =
-                document.getElementById("admin-panel");
-
-            // Hide admin controls first.
-            adminPanel.style.display = "none";
-
-            // --------------------------------------------------------
-            // ROLE DISPLAY
-            // --------------------------------------------------------
-
-            if (role === "admin") {
-                clearanceLabel.innerText =
-                    ROLE_LABELS.admin;
-
-                clearanceLabel.style.color =
-                    "var(--neon-red)";
-
-                adminPanel.style.display =
-                    "block";
-
-            } else if (role === "friend") {
-                clearanceLabel.innerText =
-                    ROLE_LABELS.friend;
-
-                clearanceLabel.style.color =
-                    "var(--neon-cyan)";
-
-            } else if (role === "guest") {
-                clearanceLabel.innerText =
-                    ROLE_LABELS.guest;
-
-                clearanceLabel.style.color =
-                    "var(--neon-purple)";
-
-            } else {
-                clearanceLabel.innerText =
-                    "UNKNOWN";
-
-                clearanceLabel.style.color =
-                    "var(--neon-red)";
+            } catch (error) {
 
                 console.error(
-                    "Unexpected dashboard role:",
-                    role
+                    "Failed to update access request:",
+                    error
+                );
+
+                if (card) {
+                    card.classList.remove(
+                        "request-processing"
+                    );
+
+                    card
+                        .querySelectorAll(
+                            "button, select"
+                        )
+                        .forEach(control => {
+                            control.disabled = false;
+                        });
+                }
+
+                alert(
+                    "REQUEST UPDATE FAILED:\n\n" +
+                    error.message
                 );
             }
+        }
+    );
 
-            // --------------------------------------------------------
-            // SERVER ACCESS MATRIX
-            // --------------------------------------------------------
+// --- 4. DYNAMIC ROLE-BASED GRAPHICS VIEW ---
+        function transitionToDashboard(email, role) {
+            document.getElementById('login-overlay').style.display = 'none';
+            document.getElementById('dashboard').style.display = 'block';
+            document.getElementById('user-display').innerText = email.toUpperCase();
+            
+            const clearanceLabel = document.getElementById('user-clearance');
+            
+            if (role === "admin") {
 
-            const grid =
-                document.getElementById(
-                    "server-grid"
-                );
+    clearanceLabel.innerText =
+        "ROOT ADMIN";
 
-            grid.innerHTML = "";
+    clearanceLabel.style.color =
+        "var(--neon-red)";
+
+    document.getElementById(
+        "admin-panel"
+    ).style.display = "block";
+
+
+    // ------------------------------------------
+    // START LIVE ACCESS REQUEST MONITOR
+    // ------------------------------------------
+
+    loadAccessRequests();
+}
+
+            const grid = document.getElementById('server-grid');
+            grid.innerHTML = ""; 
 
             servers.forEach(server => {
+                let isAuthorized = false;
 
-                const userLevel =
-                    ROLE_LEVEL[role] || 0;
+                if (role === "admin") isAuthorized = true;
+                else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isAuthorized = true;
+                else if (role === "guest" && server.minRole === "guest") isAuthorized = true;
 
-                const requiredLevel =
-                    ROLE_LEVEL[server.minRole] || 999;
-
-                const isAuthorized =
-                    userLevel >= requiredLevel;
-
-                const card =
-                    document.createElement("div");
-
-                card.className =
-                    `card ${
-                        isAuthorized
-                            ? "unlocked"
-                            : "locked"
-                    }`;
-
+                const card = document.createElement('div');
+                card.className = `card ${isAuthorized ? "unlocked" : "locked"}`;
                 card.innerHTML = `
-                    <div class="lock-indicator">
-                        ${
-                            isAuthorized
-                                ? "ONLINE // ⚡"
-                                : "RESTRICTED // 🔒"
-                        }
-                    </div>
-
+                    <div class="lock-indicator">${isAuthorized ? "ONLINE // ⚡" : "RESTRICTED // 🔒"}</div>
                     <div>
-                        <h3>
-                            ${escapeHtml(server.name)}
-                        </h3>
-
-                        <p>
-                            ${escapeHtml(server.desc)}
-                        </p>
+                        <h3>${server.name}</h3>
+                        <p>${server.desc}</p>
                     </div>
-
-                    <a
-                        href="${escapeHtml(server.url)}"
-                        class="server-link"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        ${
-                            isAuthorized
-                                ? ""
-                                : "aria-disabled=\"true\""
-                        }
-                    >
-                        ${
-                            isAuthorized
-                                ? "Establish Matrix Link"
-                                : "Access Denied"
-                        }
+                    <a href="${server.url}" class="server-link" target="_blank">
+                        ${isAuthorized ? "Establish Matrix Link" : "Access Denied"}
                     </a>
                 `;
-
                 grid.appendChild(card);
             });
-
-            // --------------------------------------------------------
-            // ADMIN REQUEST MONITOR
-            // --------------------------------------------------------
-
-            if (role === "admin") {
-                loadAccessRequests();
-            }
         }
     </script>
 
