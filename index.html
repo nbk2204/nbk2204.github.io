@@ -1,660 +1,898 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NBK NEXUS // Secure Command Bridge</title>
-    <style>
-        :root {
-            --bg-color: #050212;
-            --panel-bg: rgba(15, 8, 28, 0.75);
-            --neon-purple: #bc13fe;
-            --neon-cyan: #00f3ff;
-            --neon-pink: #ff007f;
-            --neon-red: #ff003c;
-            --text-main: #e2daf0;
-            --text-muted: #a496c3;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NBK NEXUS // Secure Command Bridge</title>
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            min-height: 100vh;
-            overflow-x: hidden;
-            background-image: 
-                radial-gradient(circle at 15% 20%, rgba(188, 19, 254, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 85% 75%, rgba(0, 243, 255, 0.1) 0%, transparent 45%);
-            background-attachment: fixed;
-        }
-
-        #login-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(4, 2, 10, 0.98);
-            z-index: 99999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            backdrop-filter: blur(15px);
-        }
-
-        .login-box {
-            background: var(--panel-bg);
-            border: 1px solid var(--neon-cyan);
-            padding: 45px 35px;
-            width: 380px;
-            text-align: center;
-            box-shadow: 0 0 35px rgba(0, 243, 255, 0.15);
-            position: relative;
-            border-radius: 12px;
-        }
-
-        .login-box::before {
-            content: "SECURE ENDPOINT VALIDATION";
-            position: absolute;
-            top: -10px; left: 50%;
-            transform: translateX(-50%);
-            background: var(--bg-color);
-            padding: 0 15px;
-            color: var(--neon-cyan);
-            font-size: 0.65rem;
-            font-family: monospace;
-            letter-spacing: 3px;
-            white-space: nowrap;
-        }
-
-        .login-box h2 {
-            font-size: 1.6rem;
-            letter-spacing: 2px;
-            margin-bottom: 30px;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
-        }
-
-        .input-group { position: relative; margin-bottom: 20px; }
-
-        input {
-            width: 100%;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(0, 243, 255, 0.25);
-            padding: 14px 16px;
-            color: #fff;
-            outline: none;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-        }
-
-        input:focus {
-            border-color: var(--neon-purple);
-            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
-        }
-
-        .nexus-btn {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, var(--neon-purple), #8000ff);
-            border: none;
-            color: #fff;
-            font-weight: bold;
-            font-size: 0.95rem;
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            border-radius: 6px;
-            box-shadow: 0 0 15px rgba(188, 19, 254, 0.3);
-        }
-
-        #error-msg { font-size: 0.85rem; margin-top: 20px; font-weight: bold; font-family: monospace; }
-
-        #dashboard { display: none; max-width: 1250px; margin: 0 auto; padding: 40px 20px; }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(226, 218, 240, 0.1);
-            padding-bottom: 25px;
-            margin-bottom: 35px;
-        }
-
-        header h1 { font-size: 2.2rem; text-transform: uppercase; letter-spacing: 5px; text-shadow: 0 0 15px var(--neon-purple); }
-
-        .operator-meta { margin-top: 6px; font-size: 0.85rem; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
-        .operator-meta span { color: #fff; font-weight: bold; }
-
-        .logout-btn {
-            background: rgba(30, 15, 55, 0.6);
-            border: 1px solid rgba(188, 19, 254, 0.4);
-            color: #fff;
-            padding: 10px 20px;
-            cursor: pointer;
-            border-radius: 4px;
-            font-weight: bold;
-            text-transform: uppercase;
-            font-size: 0.8rem;
-            letter-spacing: 1px;
-        }
-
-        .admin-controls {
-            display: none;
-            background: rgba(255, 0, 60, 0.06);
-            border: 1px solid var(--neon-red);
-            padding: 16px 20px;
-            margin-bottom: 35px;
-            color: #ff99ae;
-            font-size: 0.9rem;
-            border-radius: 8px;
-            font-family: monospace;
-        }
-
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 30px; }
-
-        .card {
-            background: var(--panel-bg);
-            border: 1px solid rgba(188, 19, 254, 0.2);
-            padding: 30px;
-            border-radius: 12px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            overflow: hidden;
-            backdrop-filter: blur(10px);
-            min-height: 240px;
-        }
-
-        .card.unlocked {
-            border-color: rgba(188, 19, 254, 0.5);
-            box-shadow: 0 0 15px rgba(188, 19, 254, 0.12);
-            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        }
-
-        .card.unlocked::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 3px;
-            background: linear-gradient(90deg, var(--neon-purple), var(--neon-cyan));
-        }
-
-        .card.unlocked:hover { transform: translateY(-5px); border-color: var(--neon-cyan); box-shadow: 0 0 25px var(--neon-cyan); }
-        .card.locked { filter: grayscale(100%) brightness(0.32); border: 1px dashed rgba(255, 255, 255, 0.15); cursor: not-allowed; }
-        .card h3 { font-size: 1.25rem; letter-spacing: 1px; margin-bottom: 12px; }
-        .card.unlocked h3 { text-shadow: 0 0 8px rgba(188, 19, 254, 0.4); }
-        .card p { color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 25px; }
-
-        .lock-indicator { position: absolute; top: 20px; right: 20px; font-size: 1.1rem; font-family: monospace; }
-        .card.unlocked .lock-indicator { color: var(--neon-cyan); text-shadow: 0 0 8px var(--neon-cyan); }
-        .card.locked .lock-indicator { color: #555; }
-
-        .server-link {
-            display: block; text-align: center; padding: 12px; background: rgba(0, 243, 255, 0.06);
-            color: var(--neon-cyan); text-decoration: none; border: 1px solid var(--neon-cyan);
-            font-weight: bold; letter-spacing: 2px; text-transform: uppercase; font-size: 0.85rem; border-radius: 6px;
-        }
-
-        .card.unlocked .server-link:hover { background: var(--neon-cyan); color: #050212; box-shadow: 0 0 15px var(--neon-cyan); }
-        .card.locked .server-link { pointer-events: none; background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.2); }
-        /* ==========================================
-   ACCESS REQUESTS ADMIN CONSOLE
-   ========================================== */
-
-.access-requests {
-    margin-top: 25px;
-    border-top: 1px solid rgba(255, 0, 60, 0.25);
-    padding-top: 25px;
+<style>
+:root {
+    --bg-color: #050212;
+    --panel-bg: rgba(15, 8, 28, 0.78);
+    --neon-purple: #bc13fe;
+    --neon-cyan: #00f3ff;
+    --neon-pink: #ff007f;
+    --neon-red: #ff003c;
+    --text-main: #e2daf0;
+    --text-muted: #a496c3;
+    --green: #00ff88;
+    --yellow: #ffd166;
 }
 
-.access-requests-title {
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: "Segoe UI", system-ui, sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+        radial-gradient(
+            circle at 15% 20%,
+            rgba(188, 19, 254, 0.12) 0%,
+            transparent 45%
+        ),
+        radial-gradient(
+            circle at 85% 75%,
+            rgba(0, 243, 255, 0.10) 0%,
+            transparent 45%
+        );
+    background-attachment: fixed;
+}
+
+button,
+input,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+#login-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(4, 2, 10, 0.98);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(15px);
+}
+
+.login-box {
+    width: min(420px, calc(100% - 30px));
+    background: var(--panel-bg);
+    border: 1px solid var(--neon-cyan);
+    padding: 40px 35px;
+    text-align: center;
+    box-shadow: 0 0 35px rgba(0, 243, 255, 0.15);
+    border-radius: 12px;
+}
+
+.login-box h2 {
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    margin-bottom: 25px;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+}
+
+.login-mode {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.login-mode button {
+    flex: 1;
+    padding: 10px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    border: 1px solid rgba(0,243,255,0.2);
+    border-radius: 5px;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.login-mode button.active {
+    color: #fff;
+    border-color: var(--neon-cyan);
+    background: rgba(0,243,255,0.08);
+}
+
+.input-group {
+    margin-bottom: 15px;
+}
+
+input,
+select {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(0,243,255,0.25);
+    padding: 13px 15px;
+    color: #fff;
+    outline: none;
+    border-radius: 6px;
+    font-size: 0.92rem;
+}
+
+select option {
+    background: #120a20;
+    color: #fff;
+}
+
+input:focus,
+select:focus {
+    border-color: var(--neon-purple);
+    box-shadow: 0 0 15px rgba(188,19,254,0.3);
+}
+
+.nexus-btn {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(
+        135deg,
+        var(--neon-purple),
+        #8000ff
+    );
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 6px;
+}
+
+.nexus-btn:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+#error-msg {
+    font-size: 0.82rem;
+    margin-top: 18px;
+    font-weight: bold;
+    font-family: monospace;
+    line-height: 1.5;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* =========================================================
+   DASHBOARD
+   ========================================================= */
+
+#dashboard {
+    display: none;
+    max-width: 1250px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(226,218,240,0.1);
+    padding-bottom: 25px;
+    margin-bottom: 35px;
+    gap: 20px;
+}
+
+header h1 {
+    font-size: 2.2rem;
+    text-transform: uppercase;
+    letter-spacing: 5px;
+    text-shadow: 0 0 15px var(--neon-purple);
+}
+
+.operator-meta {
+    margin-top: 6px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.operator-meta span {
+    color: #fff;
+    font-weight: bold;
+}
+
+.logout-btn {
+    background: rgba(30,15,55,0.6);
+    border: 1px solid rgba(188,19,254,0.4);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+.admin-warning {
+    display: none;
+    background: rgba(255,0,60,0.06);
+    border: 1px solid var(--neon-red);
+    padding: 16px 20px;
+    margin-bottom: 30px;
+    color: #ff99ae;
+    font-size: 0.85rem;
+    border-radius: 8px;
+    font-family: monospace;
+}
+
+/* =========================================================
+   SERVER CARDS
+   ========================================================= */
+
+.grid {
+    display: grid;
+    grid-template-columns:
+        repeat(auto-fit, minmax(330px, 1fr));
+    gap: 30px;
+}
+
+.card {
+    background: var(--panel-bg);
+    border: 1px solid rgba(188,19,254,0.2);
+    padding: 30px;
+    border-radius: 12px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 240px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.card.unlocked {
+    border-color: rgba(188,19,254,0.5);
+    box-shadow: 0 0 15px rgba(188,19,254,0.12);
+}
+
+.card.unlocked::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background:
+        linear-gradient(
+            90deg,
+            var(--neon-purple),
+            var(--neon-cyan)
+        );
+}
+
+.card.locked {
+    filter: grayscale(100%) brightness(0.32);
+    border: 1px dashed rgba(255,255,255,0.15);
+}
+
+.card h3 {
+    font-size: 1.25rem;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+}
+
+.card p {
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.5;
+    margin-bottom: 25px;
+}
+
+.lock-indicator {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 0.85rem;
+    font-family: monospace;
+}
+
+.card.unlocked .lock-indicator {
+    color: var(--neon-cyan);
+}
+
+.card.locked .lock-indicator {
+    color: #555;
+}
+
+.server-link {
+    width: 100%;
+    display: block;
+    text-align: center;
+    padding: 12px;
+    background: rgba(0,243,255,0.06);
+    color: var(--neon-cyan);
+    border: 1px solid var(--neon-cyan);
+    font-weight: bold;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    border-radius: 6px;
+}
+
+.card.locked .server-link {
+    border-color: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.2);
+    pointer-events: none;
+}
+
+.server-link:disabled {
+    opacity: 0.5;
+    cursor: wait;
+}
+
+/* =========================================================
+   SECURITY OPS
+   ========================================================= */
+
+#security-ops {
+    display: none;
+    margin-top: 35px;
+    background: var(--panel-bg);
+    border: 1px solid var(--neon-red);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.security-header {
+    padding: 22px 25px;
+    background: rgba(255,0,60,0.05);
+    border-bottom: 1px solid rgba(255,0,60,0.2);
+}
+
+.security-header h2 {
     color: var(--neon-red);
     font-family: monospace;
     letter-spacing: 2px;
-    font-size: 0.95rem;
+    font-size: 1rem;
 }
 
-.request-count {
-    background: var(--neon-red);
-    color: #fff;
-    min-width: 25px;
-    height: 25px;
-    border-radius: 50%;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    font-size: 0.75rem;
-    box-shadow: 0 0 10px rgba(255, 0, 60, 0.4);
-}
-
-.requests-empty {
+.security-header p {
     color: var(--text-muted);
     font-family: monospace;
-    font-size: 0.8rem;
-    padding: 20px;
-    border: 1px dashed rgba(255, 255, 255, 0.12);
-    text-align: center;
+    font-size: 0.75rem;
+    margin-top: 7px;
 }
+
+.security-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 15px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.security-tab {
+    padding: 10px 15px;
+    background: rgba(255,255,255,0.03);
+    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.security-tab.active {
+    color: var(--neon-cyan);
+    border-color: var(--neon-cyan);
+    background: rgba(0,243,255,0.06);
+}
+
+.security-panel {
+    padding: 20px;
+}
+
+.ops-status {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.75rem;
+    margin-bottom: 15px;
+}
+
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 700px;
+}
+
+.user-table th,
+.user-table td {
+    padding: 13px 10px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-family: monospace;
+    font-size: 0.75rem;
+}
+
+.user-table th {
+    color: var(--neon-cyan);
+    letter-spacing: 1px;
+}
+
+.user-table td {
+    color: var(--text-main);
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    letter-spacing: 1px;
+    font-weight: bold;
+}
+
+.role-admin {
+    color: #fff;
+    background: rgba(255,0,60,0.2);
+    border: 1px solid var(--neon-red);
+}
+
+.role-friend {
+    color: var(--neon-cyan);
+    background: rgba(0,243,255,0.08);
+    border: 1px solid var(--neon-cyan);
+}
+
+.role-guest {
+    color: var(--neon-purple);
+    background: rgba(188,19,254,0.08);
+    border: 1px solid var(--neon-purple);
+}
+
+/* =========================================================
+   ACCESS REQUESTS
+   ========================================================= */
 
 .request-card {
-    background: rgba(5, 2, 18, 0.75);
-    border: 1px solid rgba(255, 0, 60, 0.25);
+    background: rgba(5,2,18,0.75);
+    border: 1px solid rgba(255,0,60,0.25);
     border-radius: 10px;
-    padding: 22px;
+    padding: 20px;
     margin-bottom: 15px;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-.request-card:hover {
-    border-color: rgba(0, 243, 255, 0.35);
-    box-shadow: 0 0 18px rgba(0, 243, 255, 0.06);
+.request-card.processing {
+    opacity: 0.55;
+    pointer-events: none;
 }
 
-.request-card-header {
+.request-header {
     display: flex;
     justify-content: space-between;
-    align-items: flex-start;
     gap: 15px;
-    margin-bottom: 18px;
+    margin-bottom: 15px;
 }
 
 .request-name {
     color: #fff;
     font-weight: bold;
-    font-size: 1.05rem;
     letter-spacing: 1px;
 }
 
 .request-email {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     margin-top: 5px;
     word-break: break-all;
 }
 
 .request-status {
-    color: #ffd166;
     font-family: monospace;
+    color: var(--yellow);
     font-size: 0.7rem;
-    letter-spacing: 1px;
-    white-space: nowrap;
 }
 
 .request-meta {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    grid-template-columns:
+        repeat(auto-fit, minmax(200px, 1fr));
     gap: 8px;
-    margin-bottom: 18px;
-    font-family: monospace;
-    font-size: 0.72rem;
     color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.7rem;
+    margin-bottom: 18px;
 }
 
-.request-clearance-label {
+.request-clearance {
+    margin-bottom: 15px;
+}
+
+.request-clearance label {
+    display: block;
     color: var(--text-muted);
     font-family: monospace;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     letter-spacing: 1px;
     margin-bottom: 7px;
-    text-transform: uppercase;
-}
-
-.request-role-select {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(0, 243, 255, 0.3);
-    color: #fff;
-    padding: 11px 12px;
-    border-radius: 5px;
-    outline: none;
-    font-family: monospace;
-    font-size: 0.78rem;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
-    cursor: pointer;
-}
-
-.request-role-select:focus {
-    border-color: var(--neon-cyan);
-    box-shadow: 0 0 12px rgba(0, 243, 255, 0.15);
-}
-
-.request-role-select option {
-    background: #100820;
-    color: #fff;
 }
 
 .request-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
     gap: 10px;
 }
 
-.request-btn {
-    border: none;
+.approve-btn,
+.reject-btn {
+    flex: 1;
     padding: 11px;
     border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
     font-family: monospace;
+    font-weight: bold;
     font-size: 0.75rem;
     letter-spacing: 1px;
 }
 
 .approve-btn {
-    background: rgba(0, 243, 255, 0.08);
-    border: 1px solid var(--neon-cyan);
-    color: var(--neon-cyan);
-}
-
-.approve-btn:hover {
-    background: var(--neon-cyan);
-    color: var(--bg-color);
+    color: var(--green);
+    border: 1px solid var(--green);
+    background: rgba(0,255,136,0.05);
 }
 
 .reject-btn {
-    background: rgba(255, 0, 60, 0.08);
+    color: var(--neon-red);
     border: 1px solid var(--neon-red);
-    color: #ff6b88;
+    background: rgba(255,0,60,0.05);
 }
 
-.reject-btn:hover {
-    background: var(--neon-red);
-    color: #fff;
+.empty-message {
+    text-align: center;
+    padding: 25px;
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.75rem;
+    border: 1px dashed rgba(255,255,255,0.1);
 }
 
-.request-btn:disabled,
-.request-role-select:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
+/* =========================================================
+   MOBILE
+   ========================================================= */
 
-.request-processing {
-    opacity: 0.5;
-    pointer-events: none;
+@media(max-width:700px) {
+
+    #dashboard {
+        padding: 25px 12px;
+    }
+
+    header {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    header h1 {
+        font-size: 1.7rem;
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .request-header {
+        flex-direction: column;
+    }
+
+    .request-actions {
+        flex-direction: column;
+    }
 }
-    </style>
+</style>
 </head>
+
 <body>
 
-    <div id="login-overlay">
-        <div class="login-box">
-            <h2>NBK Nexus Terminal</h2>
-            <div class="input-group"><input type="email" id="email" placeholder="OPERATOR IDENTITY (Email)"></div>
-            <div class="input-group"><input type="password" id="password" placeholder="ACCESS CODE (Password)"></div>
-            <button class="nexus-btn" id="login-trigger">Initiate Sequence</button>
-            <button
-    class="nexus-btn"
-    id="signup-open"
-    style="
-        margin-top: 12px;
-        background: transparent;
-        border: 1px solid var(--neon-cyan);
-        color: var(--neon-cyan);
-        box-shadow: none;
-    ">
-    Request Access
-</button>
-            <p id="error-msg" style="color: #7a6e95;">Syncing with unpkg package matrices...</p>
-        </div>
-    </div>
-<div id="signup-overlay" style="
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(4, 2, 10, 0.98);
-    z-index: 99998;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(15px);
-">
+<!-- =======================================================
+     LOGIN / SIGNUP
+     ======================================================= -->
+
+<div id="login-overlay">
+
     <div class="login-box">
 
-        <h2>Request Access</h2>
+        <h2>NBK NEXUS TERMINAL</h2>
 
-        <div class="input-group">
+        <div class="login-mode">
+
+            <button
+                id="login-mode-btn"
+                class="active"
+                type="button">
+                LOGIN
+            </button>
+
+            <button
+                id="signup-mode-btn"
+                type="button">
+                SIGN UP
+            </button>
+
+        </div>
+
+        <div
+            class="input-group hidden"
+            id="name-group">
+
             <input
                 type="text"
-                id="signup-name"
+                id="name"
                 placeholder="OPERATOR NAME">
+
         </div>
 
         <div class="input-group">
+
             <input
                 type="email"
-                id="signup-email"
-                placeholder="EMAIL ADDRESS">
+                id="email"
+                placeholder="OPERATOR IDENTITY (Email)"
+                autocomplete="email">
+
         </div>
 
         <div class="input-group">
-            <input
-                type="password"
-                id="signup-password"
-                placeholder="ACCESS CODE">
-        </div>
 
-        <div class="input-group">
             <input
                 type="password"
-                id="signup-confirm"
-                placeholder="CONFIRM ACCESS CODE">
+                id="password"
+                placeholder="ACCESS CODE (Password)"
+                autocomplete="current-password">
+
         </div>
 
         <button
             class="nexus-btn"
-            id="signup-submit">
-            Submit Access Request
-        </button>
+            id="login-trigger"
+            type="button">
 
-        <button
-            class="nexus-btn"
-            id="signup-cancel"
-            style="
-                margin-top: 12px;
-                background: transparent;
-                border: 1px solid rgba(255,255,255,0.25);
-                box-shadow: none;
-            ">
-            Return to Login
+            INITIATE SEQUENCE
+
         </button>
 
         <p
-            id="signup-msg"
-            style="
-                color: #7a6e95;
-                font-size: 0.85rem;
-                margin-top: 20px;
-                font-weight: bold;
-                font-family: monospace;
-            ">
-            Awaiting registration input...
+            id="error-msg"
+            style="color:#7a6e95;">
+
+            Synchronizing identity core...
+
         </p>
 
     </div>
+
 </div>
 
-    <div id="pending-overlay" style="
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(4, 2, 10, 0.98);
-    z-index: 99997;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(15px);
-">
-    <div class="login-box">
 
-        <h2>Access Pending</h2>
+<!-- =======================================================
+     DASHBOARD
+     ======================================================= -->
 
-        <p style="
-            color: var(--text-muted);
-            line-height: 1.7;
-            margin: 25px 0;
-        ">
-            Your registration request has been received.
-            <br><br>
+<div id="dashboard">
 
-            Email verification and administrator approval
-            are required before NEXUS access is granted.
-        </p>
+    <header>
 
-        <div style="
-            color: var(--neon-cyan);
-            font-family: monospace;
-            letter-spacing: 2px;
-            margin-bottom: 25px;
-        ">
-            STATUS: PENDING APPROVAL
-        </div>
+        <div>
 
-        <button
-            class="nexus-btn"
-            id="pending-logout">
-            Return to Login
-        </button>
+            <h1>NBK NEXUS</h1>
 
-    </div>
-</div>
+            <div class="operator-meta">
 
-    <div id="verification-overlay" style="
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(4, 2, 10, 0.98);
-    z-index: 99997;
-    justify-content: center;
-    align-items: center;
-    backdrop-filter: blur(15px);
-">
-    <div class="login-box">
+                Operator:
+                <span id="user-display">---</span>
 
-        <h2>Verify Identity</h2>
+                //
 
-        <p style="
-            color: var(--text-muted);
-            line-height: 1.7;
-            margin: 25px 0;
-        ">
-            Your NEXUS identity has been created.
-            <br><br>
+                Clearance:
+                <span id="user-clearance">---</span>
 
-            A verification link has been sent
-            to your email address.
-            <br><br>
-
-            Verify your email before requesting
-            NEXUS access.
-        </p>
-
-        <div style="
-            color: var(--neon-cyan);
-            font-family: monospace;
-            letter-spacing: 1px;
-            margin-bottom: 25px;
-        ">
-            STATUS: EMAIL VERIFICATION REQUIRED
-        </div>
-
-        <button
-            class="nexus-btn"
-            id="verification-login">
-            Return To Login
-        </button>
-
-        <p
-            id="verification-msg"
-            style="
-                color: #7a6e95;
-                font-size: 0.85rem;
-                margin-top: 20px;
-                font-family: monospace;
-            ">
-        </p>
-
-    </div>
-</div>
-    
-    <div id="dashboard">
-        <header>
-            <div>
-                <h1>NBK NEXUS</h1>
-                <div class="operator-meta">Operator: <span id="user-display">---</span> // Clearance: <span id="user-clearance">---</span></div>
             </div>
-            <button class="logout-btn" id="logout-trigger">Abort Session</button>
-        </header>
 
-        <div id="admin-panel" class="admin-controls">
+        </div>
 
-    <strong>
-        [⚠️ SYSTEM WARNING] ROOT PRIVILEGES DETECTED:
-    </strong>
+        <button
+            class="logout-btn"
+            id="logout-trigger"
+            type="button">
 
-    Full core matrix operational visibility bypass established.
-    Administrative terminal pipelines are online.
+            ABORT SESSION
+
+        </button>
+
+    </header>
 
 
-    <!-- ==========================================
-         ACCESS REQUESTS
-         ========================================== -->
+    <div
+        class="admin-warning"
+        id="admin-panel">
 
-    <div class="access-requests">
+        <strong>
+            [⚠️ ROOT PRIVILEGES DETECTED]
+        </strong>
 
-        <div class="access-requests-title">
+        Full core matrix operational visibility
+        established.
 
-            <span>
+    </div>
+
+
+    <!-- SERVER MATRIX -->
+
+    <div
+        class="grid"
+        id="server-grid">
+    </div>
+
+
+    <!-- ===================================================
+         SECURITY OPS
+         =================================================== -->
+
+    <section id="security-ops">
+
+        <div class="security-header">
+
+            <h2>
+                SENTINEL SECURITY OPS
+            </h2>
+
+            <p>
+                ROOT ADMINISTRATION // USER
+                AUTHORIZATION MATRIX
+            </p>
+
+        </div>
+
+
+        <div class="security-tabs">
+
+            <button
+                class="security-tab active"
+                data-security-tab="users"
+                type="button">
+
+                USER MATRIX
+
+            </button>
+
+            <button
+                class="security-tab"
+                data-security-tab="requests"
+                type="button">
+
                 ACCESS REQUESTS
-            </span>
 
-            <span
-                id="request-count"
-                class="request-count">
-                0
-            </span>
+            </button>
 
         </div>
 
 
-        <div id="access-request-list">
+        <!-- USER MATRIX -->
 
-            <div class="requests-empty">
-                SCANNING ACCESS REQUEST MATRIX...
+        <div
+            class="security-panel"
+            id="security-users-panel">
+
+            <div
+                class="ops-status"
+                id="users-status">
+
+                Loading authorized user matrix...
+
+            </div>
+
+            <div class="table-wrap">
+
+                <table class="user-table">
+
+                    <thead>
+
+                        <tr>
+
+                            <th>NAME</th>
+                            <th>USER ID</th>
+                            <th>EMAIL</th>
+                            <th>CURRENT ROLE</th>
+
+                        </tr>
+
+                    </thead>
+
+                    <tbody id="security-users-body">
+
+                        <tr>
+                            <td colspan="4">
+                                Loading...
+                            </td>
+                        </tr>
+
+                    </tbody>
+
+                </table>
+
             </div>
 
         </div>
 
-    </div>
+
+        <!-- ACCESS REQUESTS -->
+
+        <div
+            class="security-panel"
+            id="security-requests-panel"
+            style="display:none;">
+
+            <div
+                class="ops-status"
+                id="requests-status">
+
+                SCANNING ACCESS REQUEST MATRIX...
+
+            </div>
+
+            <div id="access-request-list">
+
+                <div class="empty-message">
+                    Loading access requests...
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
 
 </div>
 
-        <div class="grid" id="server-grid"></div>
-    </div>
 
-    <!-- INSERT PART 2 DIRECTLY BELOW THIS ROW -->
-    <!-- 1. LOADING CORE PACKAGES DIRECTLY FROM WHITELISTED UNPKG CDN ASSETS -->
+<!-- =======================================================
+     FIREBASE
+     ======================================================= -->
+
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-auth-compat.js"></script>
+
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-database-compat.js"></script>
 
-    <!-- 2. VANILLA SYSTEM ENGINE PIPELINE (NO MIME SPECS) -->
-    <script>
-        // --- 1. CONFIGURATION CODES ---
-        // Make sure to double-check the physical label matches your Firebase settings exactly
-        const firebaseConfig = {
-            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
+
+<script>
+
+"use strict";
+
+
+/* ==========================================================
+   FIREBASE CONFIGURATION
+
+   KEEP YOUR REAL VALUES HERE.
+   DO NOT PUT SERVER DESTINATION URLS HERE.
+   ========================================================== */
+
+const firebaseConfig = {
+
+    apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
             authDomain: "nbk-nexus.firebaseapp.com",
             projectId: "nbk-nexus",
             storageBucket: "nbk-nexus.firebasestorage.app",
@@ -662,26 +900,36 @@
             appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
             measurementId: "G-FPVH852M59",
             databaseURL: "https://nbk-nexus-default-rtdb.firebaseio.com"
-        };
 
-        const errorLabel = document.getElementById('error-msg');
+};
+
+
+/* ==========================================================
+   FIREBASE INITIALIZATION
+   ========================================================== */
+
+const errorLabel =
+    document.getElementById("error-msg");
 
 let auth = null;
 let database = null;
+let currentUserRole = null;
 
 try {
 
-    firebase.initializeApp(firebaseConfig);
+    firebase.initializeApp(
+        firebaseConfig
+    );
 
     auth = firebase.auth();
 
     database = firebase.database();
 
     errorLabel.innerText =
-        "System Matrix Online. Ready.";
+        "SYSTEM MATRIX ONLINE. READY.";
 
     errorLabel.style.color =
-        "#00ff00";
+        "#00ff88";
 
     console.log(
         "Secure Identity Core Fully Operational."
@@ -691,565 +939,676 @@ try {
         "Realtime Database Core Fully Operational."
     );
 
-} catch (e) {
+} catch (error) {
 
-    console.error(e);
+    console.error(
+        "Firebase initialization failed:",
+        error
+    );
 
     errorLabel.innerText =
-        "CRITICAL BOOT ERROR: " + e.message;
+        "CRITICAL BOOT ERROR: " +
+        error.message;
 
     errorLabel.style.color =
         "#ff003c";
 }
 
-        document
-    .getElementById("verification-login")
-    .addEventListener("click", () => {
 
-        document.getElementById("verification-overlay")
-            .style.display = "none";
+/* ==========================================================
+   LOGIN / SIGNUP MODE
+   ========================================================== */
 
-        document.getElementById("login-overlay")
-            .style.display = "flex";
-    });
-        document
-    .getElementById("signup-open")
-    .addEventListener("click", () => {
+let signupMode = false;
 
-        document.getElementById("login-overlay")
-            .style.display = "none";
+const loginModeBtn =
+    document.getElementById(
+        "login-mode-btn"
+    );
 
-        document.getElementById("signup-overlay")
-            .style.display = "flex";
+const signupModeBtn =
+    document.getElementById(
+        "signup-mode-btn"
+    );
 
-        document.getElementById("signup-msg").innerText =
-            "Awaiting registration input...";
+const nameGroup =
+    document.getElementById(
+        "name-group"
+    );
 
-        document.getElementById("signup-msg").style.color =
+const loginTrigger =
+    document.getElementById(
+        "login-trigger"
+    );
+
+
+loginModeBtn.addEventListener(
+    "click",
+    () => {
+
+        signupMode = false;
+
+        loginModeBtn.classList.add(
+            "active"
+        );
+
+        signupModeBtn.classList.remove(
+            "active"
+        );
+
+        nameGroup.classList.add(
+            "hidden"
+        );
+
+        loginTrigger.innerText =
+            "INITIATE SEQUENCE";
+
+        errorLabel.innerText =
+            "READY FOR AUTHENTICATION.";
+
+        errorLabel.style.color =
             "#7a6e95";
-    });
+    }
+);
+
+
+signupModeBtn.addEventListener(
+    "click",
+    () => {
+
+        signupMode = true;
+
+        signupModeBtn.classList.add(
+            "active"
+        );
+
+        loginModeBtn.classList.remove(
+            "active"
+        );
+
+        nameGroup.classList.remove(
+            "hidden"
+        );
+
+        loginTrigger.innerText =
+            "REQUEST ACCESS";
+
+        errorLabel.innerText =
+            "REGISTRATION REQUEST MODE.";
+
+        errorLabel.style.color =
+            "#7a6e95";
+    }
+);
+
+
+/* ==========================================================
+   UTILITY
+   ========================================================== */
+
+function escapeHtml(value) {
+
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+function showMessage(
+    message,
+    color = "#7a6e95"
+) {
+
+    errorLabel.innerText =
+        message;
+
+    errorLabel.style.color =
+        color;
+}
+
+
+/* ==========================================================
+   SERVER ACCESS MATRIX
+
+   IMPORTANT:
+   THERE ARE NO URLs HERE.
+
+   Only logical IDs are stored in HTML.
+   Actual URLs are stored in RTDB /serverLinks.
+   ========================================================== */
+
+const servers = [
+
+    {
+        id: "public",
+        name: "PUBLIC SECTOR ENTRY",
+        desc:
+            "General purpose public web node and asset access.",
+        minRole: "guest"
+    },
+
+    {
+        id: "media",
+        name: "NEXUS MEDIA ARCHIVE",
+        desc:
+            "Shared multimedia and processing infrastructure.",
+        minRole: "friend"
+    },
+
+    {
+        id: "sentinel",
+        name: "SENTINEL SECURITY OPS",
+        desc:
+            "Administrative user matrix, access approvals and security operations.",
+        minRole: "admin"
+    }
+
+];
+
+
+/* ==========================================================
+   ROLE HIERARCHY
+   ========================================================== */
+
+function roleRank(role) {
+
+    const ranks = {
+
+        guest: 1,
+        friend: 2,
+        admin: 3
+
+    };
+
+    return ranks[role] || 0;
+}
+
+
+function canAccessServer(
+    role,
+    requiredRole
+) {
+
+    return roleRank(role) >=
+        roleRank(requiredRole);
+}
+
+
+/* ==========================================================
+   SIGNUP
+   ========================================================== */
+
+async function registerUser() {
+
+    const name =
         document
-    .getElementById("signup-cancel")
-    .addEventListener("click", () => {
+            .getElementById("name")
+            .value
+            .trim();
 
-        document.getElementById("signup-overlay")
-            .style.display = "none";
-
-        document.getElementById("login-overlay")
-            .style.display = "flex";
-    });
+    const email =
         document
-    .getElementById("signup-submit")
-    .addEventListener("click", async () => {
+            .getElementById("email")
+            .value
+            .trim();
 
-        const name =
-            document.getElementById("signup-name")
-                .value.trim();
-
-        const email =
-            document.getElementById("signup-email")
-                .value.trim()
-                .toLowerCase();
-
-        const password =
-            document.getElementById("signup-password")
-                .value;
-
-        const confirm =
-            document.getElementById("signup-confirm")
-                .value;
-
-        const msg =
-            document.getElementById("signup-msg");
+    const password =
+        document
+            .getElementById("password")
+            .value;
 
 
-        // -------------------------------
-        // VALIDATION
-        // -------------------------------
+    if (!name) {
 
-        if (!name || !email || !password || !confirm) {
+        showMessage(
+            "NAME REQUIRED",
+            "#ff003c"
+        );
 
-            msg.innerText =
-                "ALL REGISTRATION FIELDS REQUIRED";
-
-            msg.style.color =
-                "#ff003c";
-
-            return;
-        }
+        return;
+    }
 
 
-        if (password !== confirm) {
+    if (!email || !password) {
 
-            msg.innerText =
-                "ACCESS CODES DO NOT MATCH";
+        showMessage(
+            "EMAIL AND PASSWORD REQUIRED",
+            "#ff003c"
+        );
 
-            msg.style.color =
-                "#ff003c";
-
-            return;
-        }
-
-
-        if (password.length < 6) {
-
-            msg.innerText =
-                "ACCESS CODE MUST BE AT LEAST 6 CHARACTERS";
-
-            msg.style.color =
-                "#ff003c";
-
-            return;
-        }
+        return;
+    }
 
 
-        msg.innerText =
-            "CREATING SECURE IDENTITY...";
+    if (password.length < 6) {
 
-        msg.style.color =
-            "#00f3ff";
+        showMessage(
+            "PASSWORD MUST CONTAIN AT LEAST 6 CHARACTERS",
+            "#ff003c"
+        );
+
+        return;
+    }
 
 
-        try {
+    loginTrigger.disabled = true;
 
-            // ------------------------------------
-            // CREATE FIREBASE AUTH ACCOUNT
-            // ------------------------------------
+    showMessage(
+        "CREATING SECURE IDENTITY...",
+        "#00f3ff"
+    );
 
-            const credential =
-                await auth.createUserWithEmailAndPassword(
+
+    try {
+
+        const credential =
+            await auth
+                .createUserWithEmailAndPassword(
                     email,
                     password
                 );
 
-            const user =
-                credential.user;
 
+        const user =
+            credential.user;
 
-            // ------------------------------------
-            // UPDATE DISPLAY NAME
-            // ------------------------------------
 
-            await user.updateProfile({
-                displayName: name
-            });
+        await user.updateProfile({
 
+            displayName: name
 
-            // ------------------------------------
-            // SEND EMAIL VERIFICATION
-            // ------------------------------------
+        });
 
-            // ------------------------------------
-// SEND EMAIL VERIFICATION
-// ------------------------------------
 
-await user.sendEmailVerification();
+        await user.sendEmailVerification();
 
-console.log(
-    "Verification email sent to:",
-    user.email
-);
 
-
-// ------------------------------------
-// DO NOT CREATE SIGNUP REQUEST YET
-// ------------------------------------
-
-await auth.signOut();
-
-
-// ------------------------------------
-// SHOW VERIFICATION SCREEN
-// ------------------------------------
-
-document.getElementById("signup-overlay")
-    .style.display = "none";
-
-document.getElementById("verification-overlay")
-    .style.display = "flex";
-
-
-        } catch (error) {
-
-            console.error(
-                "Signup error:",
-                error
-            );
-
-            msg.style.color =
-                "#ff003c";
-
-
-            switch (error.code) {
-
-                case "auth/email-already-in-use":
-
-                    msg.innerText =
-                        "IDENTITY ALREADY REGISTERED";
-
-                    break;
-
-
-                case "auth/invalid-email":
-
-                    msg.innerText =
-                        "INVALID EMAIL ADDRESS";
-
-                    break;
-
-
-                case "auth/weak-password":
-
-                    msg.innerText =
-                        "ACCESS CODE IS TOO WEAK";
-
-                    break;
-
-
-                default:
-
-                    msg.innerText =
-                        "REGISTRATION FAILED: " +
-                        error.message;
-            }
-        }
-    });
-        document
-    .getElementById("pending-logout")
-    .addEventListener("click", async () => {
-
-        if (auth.currentUser) {
-            await auth.signOut();
-        }
-
-        location.reload();
-    });
-
-        // --- 2. SERVERS SECTOR PERMISSIONS MATRIX ---
-        const servers = [
-            { id: 1, name: "PUBLIC SECTOR ENTRY", desc: "General purpose web node hosting basic landing layouts and public asset libraries.", url: "https://google.com", minRole: "guest" },
-            { id: 2, name: "NEXUS MEDIA ARCHIVE", desc: "Shared home automation arrays, multimedia pipelines, and processing matrices.", url: "https://plex.tv", minRole: "friend" },
-            { id: 3, name: "SENTINEL SECURITY OPS", desc: "Administrative backends, configuration terminal access pipelines, and core container logs.", url: "https://amazon.com", minRole: "admin" }
-        ];
-
-        // --- 3. HARDWARE USER EVENT ACTION LISTENERS ---
-document.getElementById('login-trigger').addEventListener('click', async () => {
-
-    const email = document.getElementById('email').value.trim();
-    const pass = document.getElementById('password').value;
-
-    if (!email || !pass) {
-        errorLabel.innerText = "CREDENTIALS REQUIRED";
-        errorLabel.style.color = "#ff003c";
-        return;
-    }
-
-    if (!auth) {
-        errorLabel.innerText = "AUTHENTICATION ENGINE OFFLINE";
-        errorLabel.style.color = "#ff003c";
-        return;
-    }
-
-    errorLabel.innerText = "TRANSMITTING SECURE TOKENS...";
-    errorLabel.style.color = "#00f3ff";
-
-    try {
-
-        // ----------------------------------------
-        // FIREBASE LOGIN
-        // ----------------------------------------
-
-        const userCredential =
-            await auth.signInWithEmailAndPassword(
-                email,
-                pass
-            );
-
-        const user = userCredential.user;
-
-console.log("Authenticated user:", user.email);
-console.log("Firebase UID:", user.uid);
-
-
-// ----------------------------------------
-// GET FRESH CUSTOM CLAIMS FIRST
-// ----------------------------------------
-
-const idTokenResult =
-    await user.getIdTokenResult(true);
-
-const assignedRole =
-    idTokenResult.claims.role || null;
-
-console.log(
-    "Firebase custom claims:",
-    idTokenResult.claims
-);
-
-console.log(
-    "Assigned role:",
-    assignedRole
-);
-
-
-// ----------------------------------------
-// ADMIN CHECK
-// ----------------------------------------
-//
-// Admin role is a server-side custom claim.
-// If role === admin, this is an authorized
-// administrator account.
-//
-
-if (assignedRole === "admin") {
-
-    console.log(
-        "ROOT ADMIN AUTHENTICATED"
-    );
-
-    transitionToDashboard(
-        user.email,
-        "admin"
-    );
-
-    return;
-}
-
-
-// ----------------------------------------
-// NON-ADMIN USERS MUST VERIFY EMAIL
-// ----------------------------------------
-
-if (!user.emailVerified) {
-
-    errorLabel.innerText =
-        "EMAIL VERIFICATION REQUIRED";
-
-    errorLabel.style.color =
-        "#ff003c";
-
-    await auth.signOut();
-
-    return;
-}
-
-
-// ----------------------------------------
-// VERIFIED FRIEND
-// ----------------------------------------
-
-if (assignedRole === "friend") {
-
-    transitionToDashboard(
-        user.email,
-        "friend"
-    );
-
-    return;
-}
-
-
-// ----------------------------------------
-// VERIFIED USER WITH NO ROLE
-// ----------------------------------------
-
-if (!assignedRole) {
-
-    await createOrCheckSignupRequest(user);
-
-    return;
-}
-
-
-// ----------------------------------------
-// UNKNOWN ROLE
-// ----------------------------------------
-
-console.warn(
-    "Unknown Firebase role:",
-    assignedRole
-);
-
-await auth.signOut();
-
-errorLabel.innerText =
-    "INVALID SECURITY ROLE";
-
-errorLabel.style.color =
-    "#ff003c";
-
-        // ----------------------------------------
-        // NO ROLE = PENDING USER
-        // ----------------------------------------
-
-        if (!assignedRole) {
-
-            await handlePendingUser(user);
-
-            return;
-        }
-
-
-        // ----------------------------------------
-        // ONLY ACCEPT KNOWN ROLES
-        // ----------------------------------------
-
-        if (
-            assignedRole !== "admin" &&
-            assignedRole !== "friend"
-        ) {
-
-            console.warn(
-                "Unknown Firebase role:",
-                assignedRole
-            );
-
-            await handlePendingUser(user);
-
-            return;
-        }
-
-
-        // ----------------------------------------
-        // VALID USER
-        // ----------------------------------------
-
-        transitionToDashboard(
-            user.email,
-            assignedRole
+        showMessage(
+            "VERIFICATION EMAIL SENT. CHECK YOUR EMAIL.",
+            "#00ff88"
         );
+
+
+        /*
+         * IMPORTANT:
+         *
+         * We DO NOT create the signup request here.
+         *
+         * The request is created after the user
+         * verifies the email and logs in.
+         */
+
+
+        await auth.signOut();
+
+
+        setTimeout(
+            () => {
+
+                loginModeBtn.click();
+
+            },
+            1500
+        );
+
 
     } catch (error) {
 
         console.error(
-            "Authentication exception:",
+            "Signup failed:",
             error
         );
 
-        errorLabel.style.color = "#ff003c";
+        showMessage(
+            "SIGNUP FAILED: " +
+            error.message,
+            "#ff003c"
+        );
 
-        switch (error.code) {
+    } finally {
 
-            case "auth/invalid-credential":
-            case "auth/user-not-found":
-            case "auth/wrong-password":
+        loginTrigger.disabled = false;
 
-                errorLabel.innerText =
-                    "ACCESS REJECTED: Invalid operator ID or passcode.";
-
-                break;
-
-            case "auth/user-disabled":
-
-                errorLabel.innerText =
-                    "ACCESS REJECTED: Operator account disabled.";
-
-                break;
-
-            case "auth/too-many-requests":
-
-                errorLabel.innerText =
-                    "ACCESS TEMPORARILY LOCKED: Too many attempts.";
-
-                break;
-
-            default:
-
-                errorLabel.innerText =
-                    "ACCESS REJECTED: " +
-                    (error.message || "Authentication failed.");
-        }
     }
-});
+}
 
-        document.getElementById('logout-trigger').addEventListener('click', () => {
-            if (auth) auth.signOut().then(() => { location.reload(); });
-        });
 
-        async function handlePendingUser(user) {
+/* ==========================================================
+   LOGIN
+   ========================================================== */
+
+async function loginUser() {
+
+    const email =
+        document
+            .getElementById("email")
+            .value
+            .trim();
+
+    const password =
+        document
+            .getElementById("password")
+            .value;
+
+
+    if (!email || !password) {
+
+        showMessage(
+            "CREDENTIALS REQUIRED",
+            "#ff003c"
+        );
+
+        return;
+    }
+
+
+    loginTrigger.disabled = true;
+
+
+    showMessage(
+        "TRANSMITTING SECURE TOKENS...",
+        "#00f3ff"
+    );
+
 
     try {
 
+        const credential =
+            await auth
+                .signInWithEmailAndPassword(
+                    email,
+                    password
+                );
+
+
+        const user =
+            credential.user;
+
+
+        /*
+         * ADMIN / ROLE CLAIMS MUST BE REFRESHED.
+         */
+
+        const tokenResult =
+            await user.getIdTokenResult(
+                true
+            );
+
+
+        console.log(
+            "Firebase custom claims:",
+            tokenResult.claims
+        );
+
+
+        /*
+         * SINGLE ROLE SYSTEM:
+         *
+         * role = admin
+         * role = friend
+         * role = guest
+         */
+
+        const assignedRole =
+            tokenResult.claims.role ||
+            null;
+
+
+        console.log(
+            "Assigned role:",
+            assignedRole
+        );
+
+
+        /*
+         * EMAIL MUST BE VERIFIED
+         * before normal access.
+         */
+
+        if (!user.emailVerified) {
+
+            await handleUnverifiedUser(
+                user
+            );
+
+            return;
+        }
+
+
+        /*
+         * ADMIN
+         */
+
+        if (assignedRole === "admin") {
+
+            transitionToDashboard(
+                user.email,
+                "admin"
+            );
+
+            return;
+        }
+
+
+        /*
+         * FRIEND / GUEST
+         */
+
+        if (
+            assignedRole === "friend" ||
+            assignedRole === "guest"
+        ) {
+
+            transitionToDashboard(
+                user.email,
+                assignedRole
+            );
+
+            return;
+        }
+
+
+        /*
+         * VERIFIED BUT NO ROLE
+         *
+         * Check approval request.
+         */
+
+        await handlePendingUser(
+            user
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Authentication error:",
+            error
+        );
+
+        showMessage(
+            "ACCESS REJECTED: " +
+            error.message,
+            "#ff003c"
+        );
+
+    } finally {
+
+        loginTrigger.disabled = false;
+
+    }
+}
+
+
+/* ==========================================================
+   UNVERIFIED USER
+   ========================================================== */
+
+async function handleUnverifiedUser(
+    user
+) {
+
+    showMessage(
+        "EMAIL VERIFICATION REQUIRED.",
+        "#ffd166"
+    );
+
+
+    const resend =
+        confirm(
+            "Your email is not verified.\n\n" +
+            "Click OK to resend the verification email."
+        );
+
+
+    if (resend) {
+
+        try {
+
+            await user.sendEmailVerification();
+
+            showMessage(
+                "VERIFICATION EMAIL SENT.",
+                "#00ff88"
+            );
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+            showMessage(
+                "FAILED TO SEND VERIFICATION EMAIL.",
+                "#ff003c"
+            );
+        }
+    }
+
+
+    await auth.signOut();
+}
+
+
+/* ==========================================================
+   PENDING USER
+   ========================================================== */
+
+async function handlePendingUser(
+    user
+) {
+
+    try {
+
+        const requestRef =
+            database.ref(
+                "signupRequests/" +
+                user.uid
+            );
+
+
         const snapshot =
-            await database
-                .ref("signupRequests/" + user.uid)
-                .once("value");
-
-        const request =
-            snapshot.val();
+            await requestRef.once(
+                "value"
+            );
 
 
-        // ------------------------------------
-        // NO REQUEST RECORD
-        // ------------------------------------
+        if (
+            snapshot.exists()
+        ) {
 
-        if (!request) {
+            const request =
+                snapshot.val();
 
-            console.warn(
-                "Authenticated user has no signup request."
+
+            if (
+                request.status ===
+                "approved"
+            ) {
+
+                showMessage(
+                    "APPROVAL RECORDED. ROLE SYNCHRONIZATION PENDING.",
+                    "#ffd166"
+                );
+
+                await auth.signOut();
+
+                return;
+            }
+
+
+            if (
+                request.status ===
+                "rejected"
+            ) {
+
+                showMessage(
+                    "ACCESS REQUEST REJECTED.",
+                    "#ff003c"
+                );
+
+                await auth.signOut();
+
+                return;
+            }
+
+
+            showMessage(
+                "ACCESS PENDING\n\n" +
+                "Your registration request has been received.\n\n" +
+                "STATUS: PENDING APPROVAL",
+                "#ffd166"
             );
 
             await auth.signOut();
 
-            errorLabel.innerText =
-                "ACCESS REQUEST NOT FOUND";
-
-            errorLabel.style.color =
-                "#ff003c";
-
             return;
         }
 
 
-        // ------------------------------------
-        // REJECTED
-        // ------------------------------------
+        /*
+         * No request exists.
+         *
+         * Create the initial pending request.
+         */
 
-        if (request.status === "rejected") {
-
-            await auth.signOut();
-
-            document.getElementById("login-overlay")
-                .style.display = "flex";
-
-            errorLabel.innerText =
-                "ACCESS REQUEST REJECTED";
-
-            errorLabel.style.color =
-                "#ff003c";
-
-            return;
-        }
+        const storedName =
+            user.displayName ||
+            "Unnamed Operator";
 
 
-        // ------------------------------------
-        // APPROVED BUT CLAIM NOT YET UPDATED
-        // ------------------------------------
+        await requestRef.set({
 
-        if (request.status === "approved") {
+            name:
+                storedName,
 
-            document.getElementById("login-overlay")
-                .style.display = "flex";
+            email:
+                user.email,
 
-            errorLabel.innerText =
-                "ACCESS APPROVED — ROLE ACTIVATION PENDING";
+            status:
+                "pending",
 
-            errorLabel.style.color =
-                "#00f3ff";
+            requestedAt:
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP
 
-            return;
-        }
+        });
 
 
-        // ------------------------------------
-        // PENDING
-        // ------------------------------------
+        showMessage(
+            "ACCESS PENDING\n\n" +
+            "Your registration request has been received.\n\n" +
+            "STATUS: PENDING APPROVAL",
+            "#ffd166"
+        );
 
-        document.getElementById("login-overlay")
-            .style.display = "none";
 
-        document.getElementById("pending-overlay")
-            .style.display = "flex";
+        await auth.signOut();
 
 
     } catch (error) {
@@ -1259,483 +1618,1364 @@ errorLabel.style.color =
             error
         );
 
-        errorLabel.innerText =
-            "SECURITY STATUS CHECK FAILED";
+        console.error(
+            "Firebase error code:",
+            error.code
+        );
 
-        errorLabel.style.color =
-            "#ff003c";
+        console.error(
+            "Firebase error message:",
+            error.message
+        );
+
+
+        showMessage(
+            "SECURITY STATUS CHECK FAILED: " +
+            error.message,
+            "#ff003c"
+        );
+
+
+        await auth.signOut();
     }
 }
 
-        // ==================================================
-// ADMIN — LOAD ACCESS REQUESTS
-// ==================================================
 
-function loadAccessRequests() {
+/* ==========================================================
+   LOGIN BUTTON
+   ========================================================== */
 
-    if (!database) {
-        console.error(
-            "Realtime Database is not initialized."
+loginTrigger.addEventListener(
+    "click",
+    () => {
+
+        if (signupMode) {
+
+            registerUser();
+
+        } else {
+
+            loginUser();
+
+        }
+
+    }
+);
+
+
+/* ==========================================================
+   LOGOUT
+   ========================================================== */
+
+document
+    .getElementById("logout-trigger")
+    .addEventListener(
+        "click",
+        async () => {
+
+            try {
+
+                await auth.signOut();
+
+            } finally {
+
+                location.reload();
+
+            }
+
+        }
+    );
+
+
+/* ==========================================================
+   DASHBOARD
+   ========================================================== */
+
+function transitionToDashboard(
+    email,
+    role
+) {
+
+    currentUserRole =
+        role || "guest";
+
+
+    document
+        .getElementById("login-overlay")
+        .style.display = "none";
+
+
+    document
+        .getElementById("dashboard")
+        .style.display = "block";
+
+
+    document
+        .getElementById("user-display")
+        .innerText =
+            String(email)
+                .toUpperCase();
+
+
+    const clearance =
+        document.getElementById(
+            "user-clearance"
         );
 
-        return;
+
+    const adminPanel =
+        document.getElementById(
+            "admin-panel"
+        );
+
+
+    const securityOps =
+        document.getElementById(
+            "security-ops"
+        );
+
+
+    if (
+        currentUserRole ===
+        "admin"
+    ) {
+
+        clearance.innerText =
+            "ROOT ADMIN";
+
+        clearance.style.color =
+            "var(--neon-red)";
+
+
+        adminPanel.style.display =
+            "block";
+
+
+        securityOps.style.display =
+            "block";
+
+
+        loadSecurityUsers();
+
+        loadAccessRequests();
+
+    } else if (
+        currentUserRole ===
+        "friend"
+    ) {
+
+        clearance.innerText =
+            "PRIVILEGED MEMBER";
+
+        clearance.style.color =
+            "var(--neon-cyan)";
+
+
+        adminPanel.style.display =
+            "none";
+
+
+    } else {
+
+        clearance.innerText =
+            "GUEST USER";
+
+        clearance.style.color =
+            "var(--neon-purple)";
+
+
+        adminPanel.style.display =
+            "none";
+
     }
 
 
-    const requestsRef =
-        database.ref("signupRequests");
+    renderServerCards(
+        currentUserRole
+    );
+}
 
 
-    requestsRef.on(
-        "value",
-        (snapshot) => {
+/* ==========================================================
+   SERVER CARDS
+   ========================================================== */
 
-            const requests =
-                snapshot.val() || {};
+function renderServerCards(
+    role
+) {
 
-            renderAccessRequests(requests);
+    const grid =
+        document.getElementById(
+            "server-grid"
+        );
 
-        },
-        (error) => {
 
-            console.error(
-                "Failed to load access requests:",
-                error
-            );
+    grid.innerHTML = "";
 
-            const container =
-                document.getElementById(
-                    "access-request-list"
+
+    servers.forEach(
+        server => {
+
+            const authorized =
+                canAccessServer(
+                    role,
+                    server.minRole
                 );
 
-            if (container) {
 
-                container.innerHTML = `
-                    <div class="requests-empty"
-                         style="color:#ff003c;">
-                        ACCESS REQUEST MATRIX OFFLINE
-                    </div>
-                `;
-            }
+            const card =
+                document.createElement(
+                    "div"
+                );
+
+
+            card.className =
+                "card " +
+                (
+                    authorized
+                        ? "unlocked"
+                        : "locked"
+                );
+
+
+            const action =
+                authorized
+
+                ? `
+                    <button
+                        type="button"
+                        class="server-link dynamic-server-button"
+                        data-server-id="${escapeHtml(server.id)}">
+
+                        ESTABLISH MATRIX LINK
+
+                    </button>
+                  `
+
+                : `
+                    <span class="server-link">
+                        ACCESS DENIED
+                    </span>
+                  `;
+
+
+            card.innerHTML = `
+
+                <div class="lock-indicator">
+
+                    ${
+                        authorized
+                            ? "ONLINE // ⚡"
+                            : "RESTRICTED // 🔒"
+                    }
+
+                </div>
+
+                <div>
+
+                    <h3>
+                        ${escapeHtml(server.name)}
+                    </h3>
+
+                    <p>
+                        ${escapeHtml(server.desc)}
+                    </p>
+
+                </div>
+
+                ${action}
+
+            `;
+
+
+            grid.appendChild(
+                card
+            );
+
         }
     );
 }
 
 
-// ==================================================
-// ADMIN — RENDER ACCESS REQUESTS
-// ==================================================
+/* ==========================================================
+   SERVER LINK RESOLUTION
+   ==========================================================
 
-function renderAccessRequests(requests) {
+   CRITICAL:
 
-    const container =
+   No destination URLs are stored in this HTML.
+
+   Only server IDs exist here.
+
+   The URL is fetched from:
+
+       /serverLinks/<serverId>
+
+   only after the authorized user clicks.
+   ========================================================== */
+
+document
+    .getElementById("server-grid")
+    .addEventListener(
+        "click",
+        async event => {
+
+            const button =
+                event.target.closest(
+                    "[data-server-id]"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            const serverId =
+                button.dataset.serverId;
+
+
+            /*
+             * SENTINEL IS INTERNAL.
+             *
+             * It does NOT use a serverLinks URL.
+             */
+
+            if (
+                serverId ===
+                "sentinel"
+            ) {
+
+                if (
+                    currentUserRole !==
+                    "admin"
+                ) {
+
+                    return;
+                }
+
+
+                const securityOps =
+                    document.getElementById(
+                        "security-ops"
+                    );
+
+
+                securityOps.style.display =
+                    "block";
+
+
+                securityOps.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start"
+                });
+
+
+                loadSecurityUsers();
+
+                return;
+            }
+
+
+            const server =
+                servers.find(
+                    item =>
+                        item.id ===
+                        serverId
+                );
+
+
+            if (!server) {
+                return;
+            }
+
+
+            if (
+                !canAccessServer(
+                    currentUserRole,
+                    server.minRole
+                )
+            ) {
+
+                return;
+            }
+
+
+            const originalText =
+                button.innerText;
+
+
+            button.disabled =
+                true;
+
+
+            button.innerText =
+                "AUTHORIZING...";
+
+
+            try {
+
+                const snapshot =
+                    await database
+                        .ref(
+                            "serverLinks/" +
+                            serverId
+                        )
+                        .once(
+                            "value"
+                        );
+
+
+                const data =
+                    snapshot.val();
+
+
+                if (
+                    !data ||
+                    typeof data.url !==
+                        "string"
+                ) {
+
+                    throw new Error(
+                        "SERVER LINK UNAVAILABLE"
+                    );
+                }
+
+
+                /*
+                 * Only HTTPS URLs accepted.
+                 */
+
+                if (
+                    !/^https:\/\//i
+                        .test(data.url)
+                ) {
+
+                    throw new Error(
+                        "INVALID SERVER LINK"
+                    );
+                }
+
+
+                /*
+                 * Open destination.
+                 */
+
+                window.open(
+                    data.url,
+                    "_blank",
+                    "noopener,noreferrer"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Server link resolution failed:",
+                    error
+                );
+
+
+                alert(
+                    "SERVER LINK UNAVAILABLE\n\n" +
+                    error.message
+                );
+
+
+            } finally {
+
+                button.disabled =
+                    false;
+
+                button.innerText =
+                    originalText;
+            }
+
+        }
+    );
+
+
+/* ==========================================================
+   SECURITY OPS — USER MATRIX
+   ========================================================== */
+
+let usersListenerStarted =
+    false;
+
+
+function loadSecurityUsers() {
+
+    if (
+        currentUserRole !==
+        "admin"
+    ) {
+
+        return;
+    }
+
+
+    if (
+        usersListenerStarted
+    ) {
+
+        return;
+    }
+
+
+    usersListenerStarted =
+        true;
+
+
+    const status =
+        document.getElementById(
+            "users-status"
+        );
+
+
+    const body =
+        document.getElementById(
+            "security-users-body"
+        );
+
+
+    database
+        .ref("users")
+        .on(
+            "value",
+
+            snapshot => {
+
+                const users =
+                    snapshot.val() ||
+                    {};
+
+
+                const rows =
+                    Object.entries(
+                        users
+                    )
+                    .map(
+                        ([uid, value]) => ({
+                            uid,
+                            ...(value || {})
+                        })
+                    )
+                    .filter(
+                        user =>
+                            user.email
+                    )
+                    .sort(
+                        (a, b) =>
+                            String(
+                                a.name ||
+                                a.email
+                            ).localeCompare(
+                                String(
+                                    b.name ||
+                                    b.email
+                                )
+                            )
+                    );
+
+
+                status.innerText =
+                    rows.length +
+                    " USER RECORD(S) // LIVE AUTHORIZATION MATRIX";
+
+
+                if (
+                    rows.length ===
+                    0
+                ) {
+
+                    body.innerHTML = `
+                        <tr>
+                            <td colspan="4">
+                                NO USER RECORDS FOUND
+                            </td>
+                        </tr>
+                    `;
+
+                    return;
+                }
+
+
+                body.innerHTML =
+                    rows
+                        .map(
+                            user => {
+
+                                const role =
+                                    String(
+                                        user.role ||
+                                        "guest"
+                                    ).toLowerCase();
+
+
+                                const roleClass =
+                                    role ===
+                                    "admin"
+
+                                    ? "role-admin"
+
+                                    : role ===
+                                      "friend"
+
+                                      ? "role-friend"
+
+                                      : "role-guest";
+
+
+                                return `
+
+                                    <tr>
+
+                                        <td>
+                                            ${escapeHtml(
+                                                user.name ||
+                                                "—"
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            ${escapeHtml(
+                                                user.uid
+                                            )}
+                                        </td>
+
+                                        <td>
+                                            ${escapeHtml(
+                                                user.email
+                                            )}
+                                        </td>
+
+                                        <td>
+
+                                            <span
+                                                class="role-badge ${roleClass}">
+
+                                                ${escapeHtml(
+                                                    role.toUpperCase()
+                                                )}
+
+                                            </span>
+
+                                        </td>
+
+                                    </tr>
+
+                                `;
+
+                            }
+                        )
+                        .join("");
+
+            },
+
+            error => {
+
+                console.error(
+                    "User matrix failed:",
+                    error
+                );
+
+
+                status.innerText =
+                    "USER MATRIX OFFLINE: " +
+                    error.message;
+            }
+        );
+}
+
+
+/* ==========================================================
+   SECURITY OPS — ACCESS REQUESTS
+   ========================================================== */
+
+let requestListenerStarted =
+    false;
+
+
+function loadAccessRequests() {
+
+    if (
+        currentUserRole !==
+        "admin"
+    ) {
+
+        return;
+    }
+
+
+    if (
+        requestListenerStarted
+    ) {
+
+        return;
+    }
+
+
+    requestListenerStarted =
+        true;
+
+
+    const list =
         document.getElementById(
             "access-request-list"
         );
 
-    const countLabel =
+
+    const status =
         document.getElementById(
-            "request-count"
+            "requests-status"
         );
 
-    if (!container || !countLabel) {
-        return;
-    }
 
-    const pendingRequests =
-        Object.entries(requests)
-            .filter(([uid, request]) =>
-                request &&
-                request.status === "pending"
-            )
-            .sort((a, b) =>
-                (b[1].requestedAt || 0) -
-                (a[1].requestedAt || 0)
-            );
+    database
+        .ref("signupRequests")
+        .on(
+            "value",
 
-    countLabel.innerText =
-        pendingRequests.length;
+            snapshot => {
 
-    if (pendingRequests.length === 0) {
-        container.innerHTML = `
-            <div class="requests-empty">
-                NO PENDING ACCESS REQUESTS
+                const requests =
+                    snapshot.val() ||
+                    {};
+
+
+                const entries =
+                    Object.entries(
+                        requests
+                    )
+                    .map(
+                        ([uid, request]) => ({
+                            uid,
+                            ...(request || {})
+                        })
+                    )
+                    .sort(
+                        (a, b) =>
+                            Number(
+                                b.requestedAt ||
+                                0
+                            ) -
+                            Number(
+                                a.requestedAt ||
+                                0
+                            )
+                    );
+
+
+                status.innerText =
+                    entries.length +
+                    " REQUEST RECORD(S) // LIVE APPROVAL MATRIX";
+
+
+                if (
+                    entries.length ===
+                    0
+                ) {
+
+                    list.innerHTML = `
+                        <div class="empty-message">
+                            NO ACCESS REQUESTS FOUND
+                        </div>
+                    `;
+
+                    return;
+                }
+
+
+                list.innerHTML =
+                    entries
+                        .map(
+                            request =>
+                                renderRequestCard(
+                                    request
+                                )
+                        )
+                        .join("");
+
+            },
+
+            error => {
+
+                console.error(
+                    "Access requests failed:",
+                    error
+                );
+
+
+                status.innerText =
+                    "ACCESS REQUEST MATRIX OFFLINE: " +
+                    error.message;
+
+            }
+        );
+}
+
+
+/* ==========================================================
+   REQUEST CARD
+   ========================================================== */
+
+function renderRequestCard(
+    request
+) {
+
+    const status =
+        String(
+            request.status ||
+            "pending"
+        ).toLowerCase();
+
+
+    const selectedRole =
+        request.approvedRole ===
+        "friend"
+
+            ? "friend"
+
+            : "guest";
+
+
+    const requestedAt =
+        request.requestedAt
+            ? new Date(
+                Number(
+                    request.requestedAt
+                )
+              ).toLocaleString()
+            : "UNKNOWN";
+
+
+    const statusText =
+        status.toUpperCase();
+
+
+    if (
+        status ===
+        "approved"
+    ) {
+
+        return `
+
+            <div class="request-card">
+
+                <div class="request-header">
+
+                    <div>
+
+                        <div class="request-name">
+                            ${escapeHtml(
+                                request.name ||
+                                "Unnamed User"
+                            )}
+                        </div>
+
+                        <div class="request-email">
+                            ${escapeHtml(
+                                request.email ||
+                                ""
+                            )}
+                        </div>
+
+                    </div>
+
+                    <div class="request-status">
+                        APPROVED
+                    </div>
+
+                </div>
+
+                <div class="request-meta">
+
+                    <div>
+                        UID:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                    <div>
+                        REQUESTED:
+                        ${escapeHtml(requestedAt)}
+                    </div>
+
+                    <div>
+                        ROLE:
+                        ${escapeHtml(
+                            selectedRole.toUpperCase()
+                        )}
+                    </div>
+
+                </div>
+
             </div>
+
         `;
-        return;
     }
 
-    container.innerHTML = "";
 
-    pendingRequests.forEach(([uid, request]) => {
+    if (
+        status ===
+        "rejected"
+    ) {
 
-        const card =
-            document.createElement("div");
+        return `
 
-        card.className = "request-card";
+            <div class="request-card">
 
-        const requestedDate =
-            request.requestedAt
-                ? new Date(request.requestedAt).toLocaleString()
-                : "UNKNOWN";
+                <div class="request-header">
 
-        card.innerHTML = `
-            <div class="request-card-header">
+                    <div>
+
+                        <div class="request-name">
+                            ${escapeHtml(
+                                request.name ||
+                                "Unnamed User"
+                            )}
+                        </div>
+
+                        <div class="request-email">
+                            ${escapeHtml(
+                                request.email ||
+                                ""
+                            )}
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="request-status"
+                        style="color:#ff003c;">
+
+                        REJECTED
+
+                    </div>
+
+                </div>
+
+                <div class="request-meta">
+
+                    <div>
+                        UID:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                    <div>
+                        REQUESTED:
+                        ${escapeHtml(requestedAt)}
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+    }
+
+
+    /*
+     * PENDING
+     */
+
+    return `
+
+        <div
+            class="request-card"
+            data-request-card="${escapeHtml(
+                request.uid
+            )}">
+
+            <div class="request-header">
+
                 <div>
+
                     <div class="request-name">
                         ${escapeHtml(
                             request.name ||
-                            "UNKNOWN OPERATOR"
+                            "Unnamed User"
                         )}
                     </div>
 
                     <div class="request-email">
                         ${escapeHtml(
                             request.email ||
-                            "NO EMAIL"
+                            ""
                         )}
                     </div>
+
                 </div>
 
                 <div class="request-status">
-                    STATUS: PENDING
+                    PENDING
                 </div>
+
             </div>
 
+
             <div class="request-meta">
+
                 <div>
                     UID:
-                    ${escapeHtml(uid)}
+                    ${escapeHtml(request.uid)}
                 </div>
 
                 <div>
                     REQUESTED:
-                    ${escapeHtml(requestedDate)}
+                    ${escapeHtml(requestedAt)}
                 </div>
 
                 <div>
-                    EMAIL: VERIFIED
+                    EMAIL:
+                    VERIFIED
                 </div>
+
             </div>
 
-            <div class="request-clearance-label">
-                GRANT CLEARANCE
+
+            <div class="request-clearance">
+
+                <label>
+                    GRANT CLEARANCE
+                </label>
+
+                <select
+                    class="request-role-select">
+
+                    <option
+                        value="guest"
+                        ${
+                            selectedRole ===
+                            "guest"
+                                ? "selected"
+                                : ""
+                        }>
+
+                        GUEST
+
+                    </option>
+
+                    <option
+                        value="friend"
+                        ${
+                            selectedRole ===
+                            "friend"
+                                ? "selected"
+                                : ""
+                        }>
+
+                        FRIEND
+
+                    </option>
+
+                </select>
+
             </div>
 
-            <select
-                class="request-role-select"
-                data-role-select="true"
-                data-uid="${escapeHtml(uid)}"
-                aria-label="Select clearance for ${escapeHtml(request.email || uid)}">
-                <option value="guest">GUEST</option>
-                <option value="friend">FRIEND</option>
-            </select>
 
             <div class="request-actions">
+
                 <button
-                    class="request-btn approve-btn"
-                    data-action="approve"
-                    data-uid="${escapeHtml(uid)}">
+                    type="button"
+                    class="approve-btn"
+                    onclick="processAccessRequest(
+                        '${escapeHtml(request.uid)}',
+                        'approve',
+                        this
+                    )">
+
                     APPROVE
+
                 </button>
+
 
                 <button
-                    class="request-btn reject-btn"
-                    data-action="reject"
-                    data-uid="${escapeHtml(uid)}">
+                    type="button"
+                    class="reject-btn"
+                    onclick="processAccessRequest(
+                        '${escapeHtml(request.uid)}',
+                        'reject',
+                        this
+                    )">
+
                     REJECT
+
                 </button>
+
             </div>
-        `;
 
-        container.appendChild(card);
-    });
+        </div>
+
+    `;
 }
 
 
-// ==================================================
-// SECURITY — HTML ESCAPING
-// ==================================================
+/* ==========================================================
+   APPROVE / REJECT
+   ========================================================== */
 
-function escapeHtml(value) {
+async function processAccessRequest(
+    uid,
+    action,
+    button
+) {
 
-    return String(value)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+    if (
+        currentUserRole !==
+        "admin"
+    ) {
+
+        alert(
+            "ADMIN PRIVILEGES REQUIRED."
+        );
+
+        return;
+    }
+
+
+    const card =
+        button.closest(
+            ".request-card"
+        );
+
+
+    if (!card) {
+        return;
+    }
+
+
+    const select =
+        card.querySelector(
+            ".request-role-select"
+        );
+
+
+    const selectedRole =
+        select
+            ? select.value
+            : "guest";
+
+
+    /*
+     * Browser-side validation.
+     *
+     * This is NOT the security boundary.
+     * Firebase Rules + Cloud Shell are.
+     */
+
+    if (
+        action === "approve" &&
+        ![
+            "guest",
+            "friend"
+        ].includes(
+            selectedRole
+        )
+    ) {
+
+        alert(
+            "INVALID APPROVAL ROLE."
+        );
+
+        return;
+    }
+
+
+    const confirmation =
+        action === "approve"
+
+            ? confirm(
+                "Approve this request as " +
+                selectedRole.toUpperCase() +
+                "?"
+              )
+
+            : confirm(
+                "Reject this access request?"
+              );
+
+
+    if (!confirmation) {
+        return;
+    }
+
+
+    card.classList.add(
+        "processing"
+    );
+
+
+    try {
+
+        const updateData = {};
+
+
+        if (
+            action ===
+            "approve"
+        ) {
+
+            updateData.status =
+                "approved";
+
+            updateData.approvedRole =
+                selectedRole;
+
+            updateData.approvedAt =
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP;
+
+
+            /*
+             * Force Cloud Shell processor
+             * to reconcile the claim.
+             */
+
+            updateData.roleAssigned =
+                false;
+
+            updateData.roleAssignmentBlocked =
+                null;
+
+        } else {
+
+            updateData.status =
+                "rejected";
+
+            updateData.rejectedAt =
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP;
+
+        }
+
+
+        await database
+            .ref(
+                "signupRequests/" +
+                uid
+            )
+            .update(
+                updateData
+            );
+
+
+        console.log(
+            "Access request updated:",
+            uid,
+            action,
+            updateData.approvedRole ||
+                ""
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Failed to update request:",
+            error
+        );
+
+
+        card.classList.remove(
+            "processing"
+        );
+
+
+        alert(
+            "REQUEST UPDATE FAILED:\n\n" +
+            error.message
+        );
+    }
 }
 
 
-// ==================================================
-// ADMIN — APPROVE / REJECT
-// ==================================================
+/* ==========================================================
+   SECURITY OPS TABS
+   ========================================================== */
 
 document
-    .getElementById("access-request-list")
-    .addEventListener(
-        "click",
-        async (event) => {
+    .querySelectorAll(
+        "[data-security-tab]"
+    )
+    .forEach(
+        tab => {
 
-            const button =
-                event.target.closest(
-                    "button[data-action]"
-                );
+            tab.addEventListener(
+                "click",
+                () => {
 
-            if (!button) {
-                return;
-            }
-
-            const action =
-                button.dataset.action;
-
-            const uid =
-                button.dataset.uid;
-
-            if (!uid) {
-                return;
-            }
-
-            const card =
-                button.closest(
-                    ".request-card"
-                );
-
-            // --------------------------------------------------
-            // APPROVAL
-            // --------------------------------------------------
-
-            if (action === "approve") {
-
-                const roleSelect =
-                    card
-                        ? card.querySelector(
-                            "select[data-role-select='true']"
-                        )
-                        : null;
-
-                const selectedRole =
-                    roleSelect
-                        ? roleSelect.value
-                        : "guest";
-
-                // Defense in depth: the UI can only request roles
-                // that the trusted processor is allowed to assign.
-                if (
-                    selectedRole !== "guest" &&
-                    selectedRole !== "friend"
-                ) {
-                    alert(
-                        "INVALID CLEARANCE SELECTION"
-                    );
-                    return;
-                }
-
-                const roleLabel =
-                    selectedRole === "guest"
-                        ? "GUEST"
-                        : "FRIEND";
-
-                const confirmed =
-                    confirm(
-                        `Approve this user as ${roleLabel}?\n\n` +
-                        "The request will be marked approved.\n" +
-                        "The Firebase role will be assigned by the trusted server-side processor."
-                    );
-
-                if (!confirmed) {
-                    return;
-                }
-            }
-
-            // --------------------------------------------------
-            // REJECTION
-            // --------------------------------------------------
-
-            if (action === "reject") {
-
-                const confirmed =
-                    confirm(
-                        "Reject this access request?\n\n" +
-                        "The user will not receive NEXUS access."
-                    );
-
-                if (!confirmed) {
-                    return;
-                }
-            }
-
-            if (card) {
-                card.classList.add(
-                    "request-processing"
-                );
-
-                card
-                    .querySelectorAll(
-                        "button, select"
-                    )
-                    .forEach(control => {
-                        control.disabled = true;
-                    });
-            }
-
-            try {
-
-                const updateData = {};
-
-                if (action === "approve") {
-
-                    const roleSelect =
-                        card
-                            ? card.querySelector(
-                                "select[data-role-select='true']"
-                            )
-                            : null;
-
-                    const selectedRole =
-                        roleSelect
-                            ? roleSelect.value
-                            : null;
-
-                    if (
-                        selectedRole !== "guest" &&
-                        selectedRole !== "friend"
-                    ) {
-                        throw new Error(
-                            "Invalid approval role."
-                        );
-                    }
-
-                    updateData.status =
-                        "approved";
-
-                    updateData.approvedRole =
-                        selectedRole;
-
-                    updateData.approvedAt =
-                        firebase.database
-                            .ServerValue
-                            .TIMESTAMP;
-
-                    // Force the processor to reconcile the requested
-                    // role with the current Firebase custom claim.
-                    updateData.roleAssigned =
-                        false;
-
-                    updateData.roleAssignmentBlocked =
-                        null;
-                }
-
-                if (action === "reject") {
-
-                    updateData.status =
-                        "rejected";
-
-                    updateData.rejectedAt =
-                        firebase.database
-                            .ServerValue
-                            .TIMESTAMP;
-                }
-
-                await database
-                    .ref(
-                        "signupRequests/" + uid
-                    )
-                    .update(updateData);
-
-                console.log(
-                    "Access request updated:",
-                    uid,
-                    action,
-                    updateData.approvedRole || ""
-                );
-
-                // The live database listener will refresh the card.
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to update access request:",
-                    error
-                );
-
-                if (card) {
-                    card.classList.remove(
-                        "request-processing"
-                    );
-
-                    card
+                    document
                         .querySelectorAll(
-                            "button, select"
+                            "[data-security-tab]"
                         )
-                        .forEach(control => {
-                            control.disabled = false;
-                        });
-                }
+                        .forEach(
+                            item =>
+                                item.classList.remove(
+                                    "active"
+                                )
+                        );
 
-                alert(
-                    "REQUEST UPDATE FAILED:\n\n" +
-                    error.message
-                );
-            }
+
+                    tab.classList.add(
+                        "active"
+                    );
+
+
+                    const users =
+                        tab.dataset.securityTab ===
+                        "users";
+
+
+                    document
+                        .getElementById(
+                            "security-users-panel"
+                        )
+                        .style.display =
+                            users
+                                ? "block"
+                                : "none";
+
+
+                    document
+                        .getElementById(
+                            "security-requests-panel"
+                        )
+                        .style.display =
+                            users
+                                ? "none"
+                                : "block";
+
+                }
+            );
+
         }
     );
 
-// --- 4. DYNAMIC ROLE-BASED GRAPHICS VIEW ---
-        function transitionToDashboard(email, role) {
-            document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('dashboard').style.display = 'block';
-            document.getElementById('user-display').innerText = email.toUpperCase();
-            
-            const clearanceLabel = document.getElementById('user-clearance');
-            
-            if (role === "admin") {
 
-    clearanceLabel.innerText =
-        "ROOT ADMIN";
+/* ==========================================================
+   AUTH STATE MONITOR
+   ========================================================== */
 
-    clearanceLabel.style.color =
-        "var(--neon-red)";
+auth.onAuthStateChanged(
+    user => {
 
-    document.getElementById(
-        "admin-panel"
-    ).style.display = "block";
-
-
-    // ------------------------------------------
-    // START LIVE ACCESS REQUEST MONITOR
-    // ------------------------------------------
-
-    loadAccessRequests();
-}
-
-            const grid = document.getElementById('server-grid');
-            grid.innerHTML = ""; 
-
-            servers.forEach(server => {
-                let isAuthorized = false;
-
-                if (role === "admin") isAuthorized = true;
-                else if (role === "friend" && (server.minRole === "friend" || server.minRole === "guest")) isAuthorized = true;
-                else if (role === "guest" && server.minRole === "guest") isAuthorized = true;
-
-                const card = document.createElement('div');
-                card.className = `card ${isAuthorized ? "unlocked" : "locked"}`;
-                card.innerHTML = `
-                    <div class="lock-indicator">${isAuthorized ? "ONLINE // ⚡" : "RESTRICTED // 🔒"}</div>
-                    <div>
-                        <h3>${server.name}</h3>
-                        <p>${server.desc}</p>
-                    </div>
-                    <a href="${server.url}" class="server-link" target="_blank">
-                        ${isAuthorized ? "Establish Matrix Link" : "Access Denied"}
-                    </a>
-                `;
-                grid.appendChild(card);
-            });
+        if (!user) {
+            return;
         }
-    </script>
+
+        console.log(
+            "Authenticated user:",
+            user.email
+        );
+
+    }
+);
+
+</script>
 
 </body>
 </html>
