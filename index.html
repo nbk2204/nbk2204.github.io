@@ -197,6 +197,139 @@
 
         .card.unlocked .server-link:hover { background: var(--neon-cyan); color: #050212; box-shadow: 0 0 15px var(--neon-cyan); }
         .card.locked .server-link { pointer-events: none; background: rgba(255, 255, 255, 0.03); border-color: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.2); }
+        /* ==========================================
+   ACCESS REQUESTS ADMIN CONSOLE
+   ========================================== */
+
+.access-requests {
+    margin-top: 25px;
+    border-top: 1px solid rgba(255, 0, 60, 0.25);
+    padding-top: 25px;
+}
+
+.access-requests-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+    color: var(--neon-red);
+    font-family: monospace;
+    letter-spacing: 2px;
+    font-size: 0.95rem;
+}
+
+.request-count {
+    background: var(--neon-red);
+    color: #fff;
+    min-width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 0.75rem;
+    box-shadow: 0 0 10px rgba(255, 0, 60, 0.4);
+}
+
+.requests-empty {
+    color: var(--text-muted);
+    font-family: monospace;
+    font-size: 0.8rem;
+    padding: 20px;
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    text-align: center;
+}
+
+.request-card {
+    background: rgba(5, 2, 18, 0.75);
+    border: 1px solid rgba(255, 0, 60, 0.25);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.request-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.request-name {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1rem;
+    letter-spacing: 1px;
+}
+
+.request-email {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 5px;
+    word-break: break-all;
+}
+
+.request-status {
+    color: #ffd166;
+    font-family: monospace;
+    font-size: 0.7rem;
+    letter-spacing: 1px;
+}
+
+.request-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 8px;
+    margin-bottom: 18px;
+    font-family: monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+.request-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.request-btn {
+    border: none;
+    padding: 11px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-family: monospace;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+}
+
+.approve-btn {
+    background: rgba(0, 243, 255, 0.08);
+    border: 1px solid var(--neon-cyan);
+    color: var(--neon-cyan);
+}
+
+.approve-btn:hover {
+    background: var(--neon-cyan);
+    color: var(--bg-color);
+}
+
+.reject-btn {
+    background: rgba(255, 0, 60, 0.08);
+    border: 1px solid var(--neon-red);
+    color: #ff6b88;
+}
+
+.reject-btn:hover {
+    background: var(--neon-red);
+    color: #fff;
+}
+
+.request-processing {
+    opacity: 0.5;
+    pointer-events: none;
+}
     </style>
 </head>
 <body>
@@ -418,8 +551,47 @@
         </header>
 
         <div id="admin-panel" class="admin-controls">
-            <strong>[⚠️ SYSTEM WARNING] ROOT PRIVILEGES DETECTED:</strong> Full core matrix operational visibility bypass established. Administrative terminal pipelines are online.
+
+    <strong>
+        [⚠️ SYSTEM WARNING] ROOT PRIVILEGES DETECTED:
+    </strong>
+
+    Full core matrix operational visibility bypass established.
+    Administrative terminal pipelines are online.
+
+
+    <!-- ==========================================
+         ACCESS REQUESTS
+         ========================================== -->
+
+    <div class="access-requests">
+
+        <div class="access-requests-title">
+
+            <span>
+                ACCESS REQUESTS
+            </span>
+
+            <span
+                id="request-count"
+                class="request-count">
+                0
+            </span>
+
         </div>
+
+
+        <div id="access-request-list">
+
+            <div class="requests-empty">
+                SCANNING ACCESS REQUEST MATRIX...
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
         <div class="grid" id="server-grid"></div>
     </div>
@@ -1047,6 +1219,374 @@ errorLabel.style.color =
             "#ff003c";
     }
 }
+
+        // ==================================================
+// ADMIN — LOAD ACCESS REQUESTS
+// ==================================================
+
+function loadAccessRequests() {
+
+    if (!database) {
+        console.error(
+            "Realtime Database is not initialized."
+        );
+
+        return;
+    }
+
+
+    const requestsRef =
+        database.ref("signupRequests");
+
+
+    requestsRef.on(
+        "value",
+        (snapshot) => {
+
+            const requests =
+                snapshot.val() || {};
+
+            renderAccessRequests(requests);
+
+        },
+        (error) => {
+
+            console.error(
+                "Failed to load access requests:",
+                error
+            );
+
+            const container =
+                document.getElementById(
+                    "access-request-list"
+                );
+
+            if (container) {
+
+                container.innerHTML = `
+                    <div class="requests-empty"
+                         style="color:#ff003c;">
+                        ACCESS REQUEST MATRIX OFFLINE
+                    </div>
+                `;
+            }
+        }
+    );
+}
+
+
+// ==================================================
+// ADMIN — RENDER ACCESS REQUESTS
+// ==================================================
+
+function renderAccessRequests(requests) {
+
+    const container =
+        document.getElementById(
+            "access-request-list"
+        );
+
+    const countLabel =
+        document.getElementById(
+            "request-count"
+        );
+
+
+    if (!container || !countLabel) {
+        return;
+    }
+
+
+    const pendingRequests =
+        Object.entries(requests)
+            .filter(([uid, request]) =>
+                request &&
+                request.status === "pending"
+            );
+
+
+    countLabel.innerText =
+        pendingRequests.length;
+
+
+    if (pendingRequests.length === 0) {
+
+        container.innerHTML = `
+            <div class="requests-empty">
+                NO PENDING ACCESS REQUESTS
+            </div>
+        `;
+
+        return;
+    }
+
+
+    container.innerHTML = "";
+
+
+    pendingRequests.forEach(
+        ([uid, request]) => {
+
+            const card =
+                document.createElement("div");
+
+            card.className =
+                "request-card";
+
+
+            const requestedDate =
+                request.requestedAt
+                    ? new Date(
+                        request.requestedAt
+                    ).toLocaleString()
+                    : "UNKNOWN";
+
+
+            card.innerHTML = `
+
+                <div class="request-card-header">
+
+                    <div>
+
+                        <div class="request-name">
+                            ${escapeHtml(
+                                request.name ||
+                                "UNKNOWN OPERATOR"
+                            )}
+                        </div>
+
+                        <div class="request-email">
+                            ${escapeHtml(
+                                request.email ||
+                                "NO EMAIL"
+                            )}
+                        </div>
+
+                    </div>
+
+                    <div class="request-status">
+                        STATUS: PENDING
+                    </div>
+
+                </div>
+
+
+                <div class="request-meta">
+
+                    <div>
+                        UID:
+                        ${escapeHtml(uid)}
+                    </div>
+
+                    <div>
+                        REQUESTED:
+                        ${escapeHtml(requestedDate)}
+                    </div>
+
+                    <div>
+                        EMAIL:
+                        VERIFIED
+                    </div>
+
+                </div>
+
+
+                <div class="request-actions">
+
+                    <button
+                        class="request-btn approve-btn"
+                        data-action="approve"
+                        data-uid="${escapeHtml(uid)}">
+
+                        APPROVE AS FRIEND
+
+                    </button>
+
+
+                    <button
+                        class="request-btn reject-btn"
+                        data-action="reject"
+                        data-uid="${escapeHtml(uid)}">
+
+                        REJECT
+
+                    </button>
+
+                </div>
+            `;
+
+
+            container.appendChild(card);
+        }
+    );
+}
+
+
+// ==================================================
+// SECURITY — HTML ESCAPING
+// ==================================================
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+
+// ==================================================
+// ADMIN — APPROVE / REJECT
+// ==================================================
+
+document
+    .getElementById("access-request-list")
+    .addEventListener(
+        "click",
+        async (event) => {
+
+            const button =
+                event.target.closest(
+                    "button[data-action]"
+                );
+
+
+            if (!button) {
+                return;
+            }
+
+
+            const action =
+                button.dataset.action;
+
+            const uid =
+                button.dataset.uid;
+
+
+            if (!uid) {
+                return;
+            }
+
+
+            const card =
+                button.closest(
+                    ".request-card"
+                );
+
+
+            // ------------------------------------------
+            // APPROVAL CONFIRMATION
+            // ------------------------------------------
+
+            if (action === "approve") {
+
+                const confirmed =
+                    confirm(
+                        "Approve this user as a FRIEND?\n\n" +
+                        "The request will be marked approved.\n" +
+                        "The Firebase role will be assigned separately."
+                    );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+
+            // ------------------------------------------
+            // REJECTION CONFIRMATION
+            // ------------------------------------------
+
+            if (action === "reject") {
+
+                const confirmed =
+                    confirm(
+                        "Reject this access request?"
+                    );
+
+                if (!confirmed) {
+                    return;
+                }
+            }
+
+
+            if (card) {
+                card.classList.add(
+                    "request-processing"
+                );
+            }
+
+
+            try {
+
+                const updateData = {};
+
+
+                if (action === "approve") {
+
+                    updateData.status =
+                        "approved";
+
+                    updateData.approvedRole =
+                        "friend";
+
+                    updateData.approvedAt =
+                        firebase.database
+                            .ServerValue
+                            .TIMESTAMP;
+                }
+
+
+                if (action === "reject") {
+
+                    updateData.status =
+                        "rejected";
+
+                    updateData.rejectedAt =
+                        firebase.database
+                            .ServerValue
+                            .TIMESTAMP;
+                }
+
+
+                await database
+                    .ref(
+                        "signupRequests/" + uid
+                    )
+                    .update(updateData);
+
+
+                console.log(
+                    "Access request updated:",
+                    uid,
+                    action
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "Failed to update access request:",
+                    error
+                );
+
+
+                if (card) {
+                    card.classList.remove(
+                        "request-processing"
+                    );
+                }
+
+
+                alert(
+                    "REQUEST UPDATE FAILED:\n\n" +
+                    error.message
+                );
+            }
+        }
+    );
         // --- 4. DYNAMIC ROLE-BASED GRAPHICS VIEW ---
         function transitionToDashboard(email, role) {
             document.getElementById('login-overlay').style.display = 'none';
@@ -1056,16 +1596,24 @@ errorLabel.style.color =
             const clearanceLabel = document.getElementById('user-clearance');
             
             if (role === "admin") {
-                clearanceLabel.innerText = "ROOT ADMIN";
-                clearanceLabel.style.color = "var(--neon-red)";
-                document.getElementById('admin-panel').style.display = "block";
-            } else if (role === "friend" || role === "family") {
-                clearanceLabel.innerText = "PRIVILEGED MEMBER";
-                clearanceLabel.style.color = "var(--neon-cyan)";
-            } else {
-                clearanceLabel.innerText = "GUEST USER";
-                clearanceLabel.style.color = "var(--neon-purple)";
-            }
+
+    clearanceLabel.innerText =
+        "ROOT ADMIN";
+
+    clearanceLabel.style.color =
+        "var(--neon-red)";
+
+    document.getElementById(
+        "admin-panel"
+    ).style.display = "block";
+
+
+    // ------------------------------------------
+    // START LIVE ACCESS REQUEST MONITOR
+    // ------------------------------------------
+
+    loadAccessRequests();
+}
 
             const grid = document.getElementById('server-grid');
             grid.innerHTML = ""; 
