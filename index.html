@@ -748,18 +748,60 @@ document.getElementById('login-trigger').addEventListener('click', async () => {
 
         const user = userCredential.user;
 
-        console.log("Authenticated user:", user.email);
-        console.log("Firebase UID:", user.uid);
+console.log("Authenticated user:", user.email);
+console.log("Firebase UID:", user.uid);
+
+
 // ----------------------------------------
-// EMAIL VERIFICATION CHECK
+// GET FRESH CUSTOM CLAIMS FIRST
+// ----------------------------------------
+
+const idTokenResult =
+    await user.getIdTokenResult(true);
+
+const assignedRole =
+    idTokenResult.claims.role || null;
+
+console.log(
+    "Firebase custom claims:",
+    idTokenResult.claims
+);
+
+console.log(
+    "Assigned role:",
+    assignedRole
+);
+
+
+// ----------------------------------------
+// ADMIN CHECK
+// ----------------------------------------
+//
+// Admin role is a server-side custom claim.
+// If role === admin, this is an authorized
+// administrator account.
+//
+
+if (assignedRole === "admin") {
+
+    console.log(
+        "ROOT ADMIN AUTHENTICATED"
+    );
+
+    transitionToDashboard(
+        user.email,
+        "admin"
+    );
+
+    return;
+}
+
+
+// ----------------------------------------
+// NON-ADMIN USERS MUST VERIFY EMAIL
 // ----------------------------------------
 
 if (!user.emailVerified) {
-
-    console.warn(
-        "User email is not verified:",
-        user.email
-    );
 
     errorLabel.innerText =
         "EMAIL VERIFICATION REQUIRED";
@@ -772,25 +814,22 @@ if (!user.emailVerified) {
     return;
 }
 
-        // ----------------------------------------
-        // GET FRESH CUSTOM CLAIMS
-        // ----------------------------------------
 
-        const idTokenResult =
-            await user.getIdTokenResult(true);
+// ----------------------------------------
+// VERIFIED FRIEND
+// ----------------------------------------
 
-        const assignedRole =
-            idTokenResult.claims.role || null;
+if (assignedRole === "friend") {
 
-        console.log(
-            "Firebase custom claims:",
-            idTokenResult.claims
-        );
+    transitionToDashboard(
+        user.email,
+        "friend"
+    );
 
-        console.log(
-            "Assigned role:",
-            assignedRole
-        );
+    return;
+}
+
+
 // ----------------------------------------
 // VERIFIED USER WITH NO ROLE
 // ----------------------------------------
@@ -801,99 +840,24 @@ if (!assignedRole) {
 
     return;
 }
-        async function createOrCheckSignupRequest(user) {
-
-    try {
-
-        const requestRef =
-            database.ref(
-                "signupRequests/" + user.uid
-            );
-
-        const snapshot =
-            await requestRef.once("value");
-
-        // ------------------------------------
-        // REQUEST ALREADY EXISTS
-        // ------------------------------------
-
-        if (snapshot.exists()) {
-
-            const request =
-                snapshot.val();
-
-            console.log(
-                "Existing signup request:",
-                request
-            );
-
-            await handlePendingUser(user);
-
-            return;
-        }
 
 
-        // ------------------------------------
-        // CREATE FIRST APPROVAL REQUEST
-        // ------------------------------------
+// ----------------------------------------
+// UNKNOWN ROLE
+// ----------------------------------------
 
-        await requestRef.set({
+console.warn(
+    "Unknown Firebase role:",
+    assignedRole
+);
 
-            name:
-                user.displayName || "Unknown Operator",
+await auth.signOut();
 
-            email:
-                user.email,
+errorLabel.innerText =
+    "INVALID SECURITY ROLE";
 
-            status:
-                "pending",
-
-            requestedAt:
-                firebase.database.ServerValue.TIMESTAMP
-
-        });
-
-
-        console.log(
-            "Signup approval request created:",
-            user.uid
-        );
-
-
-        // ------------------------------------
-        // SIGN OUT
-        // ------------------------------------
-
-        await auth.signOut();
-
-
-        // ------------------------------------
-        // SHOW PENDING SCREEN
-        // ------------------------------------
-
-        document.getElementById("login-overlay")
-            .style.display = "none";
-
-        document.getElementById("pending-overlay")
-            .style.display = "flex";
-
-
-    } catch (error) {
-
-        console.error(
-            "Failed to create signup request:",
-            error
-        );
-
-        errorLabel.innerText =
-            "FAILED TO CREATE ACCESS REQUEST";
-
-        errorLabel.style.color =
-            "#ff003c";
-
-        await auth.signOut();
-    }
-}
+errorLabel.style.color =
+    "#ff003c";
 
         // ----------------------------------------
         // NO ROLE = PENDING USER
