@@ -383,6 +383,80 @@ header h1 {
     overflow: hidden;
 }
 
+/*
+ * SENTINEL FULL-PAGE VIEW
+ *
+ * Security Ops is an internal application page, not a panel
+ * underneath the server cards.
+ */
+#dashboard.security-page-active {
+    max-width: none;
+    margin: 0;
+    padding: 0;
+}
+
+#dashboard.security-page-active > header,
+#dashboard.security-page-active > #admin-panel,
+#dashboard.security-page-active > #server-grid {
+    display: none !important;
+}
+
+#dashboard.security-page-active #security-ops {
+    display: block !important;
+    min-height: 100vh;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+}
+
+.security-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.security-header-copy {
+    min-width: 0;
+}
+
+.security-back-btn {
+    flex: 0 0 auto;
+    padding: 10px 16px;
+    background: rgba(255,255,255,0.03);
+    color: var(--neon-cyan);
+    border: 1px solid rgba(0,243,255,0.45);
+    border-radius: 5px;
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition:
+        background 0.25s ease,
+        color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+.security-back-btn:hover {
+    background: var(--neon-cyan);
+    color: var(--bg-color);
+    box-shadow: 0 0 18px rgba(0,243,255,0.45);
+    transform: translateY(-1px);
+}
+
+@media (max-width: 650px) {
+    .security-header {
+        align-items: flex-start;
+    }
+
+    .security-back-btn {
+        padding: 8px 11px;
+        font-size: 0.68rem;
+    }
+}
+
 .security-header {
     padding: 22px 25px;
     background: rgba(255,0,60,0.05);
@@ -782,14 +856,27 @@ header h1 {
 
         <div class="security-header">
 
-            <h2>
-                SENTINEL SECURITY OPS
-            </h2>
+            <div class="security-header-copy">
 
-            <p>
-                ROOT ADMINISTRATION // USER
-                AUTHORIZATION MATRIX
-            </p>
+                <h2>
+                    SENTINEL SECURITY OPS
+                </h2>
+
+                <p>
+                    ROOT ADMINISTRATION // USER
+                    AUTHORIZATION MATRIX
+                </p>
+
+            </div>
+
+            <button
+                type="button"
+                id="security-back-btn"
+                class="security-back-btn">
+
+                ← BACK TO NEXUS
+
+            </button>
 
         </div>
 
@@ -1726,6 +1813,35 @@ function transitionToDashboard(
     currentUserRole =
         role || "guest";
 
+    /*
+     * Always start a fresh authenticated session on the
+     * main NEXUS dashboard, never inside Sentinel.
+     */
+    const dashboard =
+        document.getElementById(
+            "dashboard"
+        );
+
+    dashboard.classList.remove(
+        "security-page-active"
+    );
+
+    document
+        .getElementById("security-ops")
+        .style.display = "none";
+
+    if (
+        window.location.hash ===
+        "#sentinel"
+    ) {
+        history.replaceState(
+            {},
+            "",
+            window.location.pathname +
+            window.location.search
+        );
+    }
+
 
     document
         .getElementById("login-overlay")
@@ -1987,24 +2103,7 @@ document
                 }
 
 
-                const securityOps =
-                    document.getElementById(
-                        "security-ops"
-                    );
-
-
-                securityOps.style.display =
-                    "block";
-
-
-                securityOps.scrollIntoView({
-                    behavior: "smooth",
-                    block: "start"
-                });
-
-
-                loadSecurityUsers();
-                loadAccessRequests();
+                openSecurityPage();
 
                 return;
             }
@@ -2129,6 +2228,131 @@ document
 
 
 /* ==========================================================
+   SENTINEL SECURITY OPS — PAGE NAVIGATION
+   ========================================================== */
+
+function openSecurityPage() {
+
+    if (currentUserRole !== "admin") {
+        return;
+    }
+
+    const dashboard =
+        document.getElementById(
+            "dashboard"
+        );
+
+    const securityOps =
+        document.getElementById(
+            "security-ops"
+        );
+
+    dashboard.classList.add(
+        "security-page-active"
+    );
+
+    securityOps.style.display =
+        "block";
+
+    /*
+     * Add a browser-history entry so the browser Back button
+     * also returns to the main NEXUS dashboard.
+     */
+    if (
+        window.location.hash !==
+        "#sentinel"
+    ) {
+        history.pushState(
+            {
+                view: "sentinel"
+            },
+            "",
+            "#sentinel"
+        );
+    }
+
+    loadSecurityUsers();
+    loadAccessRequests();
+}
+
+
+function closeSecurityPage(
+    updateHistory = true
+) {
+
+    const dashboard =
+        document.getElementById(
+            "dashboard"
+        );
+
+    const securityOps =
+        document.getElementById(
+            "security-ops"
+        );
+
+    dashboard.classList.remove(
+        "security-page-active"
+    );
+
+    securityOps.style.display =
+        "none";
+
+    /*
+     * Only remove the hash when this close action was initiated
+     * by the in-app Back button.
+     */
+    if (
+        updateHistory &&
+        window.location.hash ===
+            "#sentinel"
+    ) {
+        history.pushState(
+            {},
+            "",
+            window.location.pathname +
+            window.location.search
+        );
+    }
+}
+
+
+/*
+ * Browser Back button support.
+ */
+window.addEventListener(
+    "popstate",
+    () => {
+
+        if (
+            window.location.hash !==
+            "#sentinel"
+        ) {
+            closeSecurityPage(
+                false
+            );
+        }
+    }
+);
+
+
+/*
+ * In-app Back button.
+ */
+document
+    .getElementById(
+        "security-back-btn"
+    )
+    .addEventListener(
+        "click",
+        () => {
+            closeSecurityPage(
+                true
+            );
+        }
+    );
+
+
+/* ==========================================================
    SECURITY OPS — USER MATRIX
    ========================================================== */
 
@@ -2160,6 +2384,19 @@ function loadSecurityUsers() {
         return;
     }
 
+    /*
+     * IMPORTANT:
+     *
+     * If the live listener is already active, do NOT reset
+     * the table to "LOADING..." when Sentinel is opened again.
+     *
+     * The existing live data remains on screen and Firebase
+     * continues updating it automatically.
+     */
+    if (usersListenerStarted) {
+        return;
+    }
+
     status.innerText =
         "CONNECTING TO AUTHORIZATION MATRIX...";
 
@@ -2170,10 +2407,6 @@ function loadSecurityUsers() {
             </td>
         </tr>
     `;
-
-    if (usersListenerStarted) {
-        return;
-    }
 
     database
         .ref("users")
