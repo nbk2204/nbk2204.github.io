@@ -606,6 +606,84 @@ header h1 {
     border: 1px solid rgba(255,180,0,0.55);
 }
 
+/* =========================================================
+   SENTINEL USER MANAGEMENT
+   ========================================================= */
+
+.role-action-wrap {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    flex-wrap: wrap;
+}
+
+.role-action-select {
+    min-width: 92px;
+    padding: 6px 7px;
+    background: rgba(0,0,0,0.35);
+    color: var(--text-main);
+    border: 1px solid rgba(0,243,255,0.35);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.62rem;
+}
+
+.role-action-btn {
+    padding: 6px 9px;
+    background: rgba(0,243,255,0.06);
+    color: var(--neon-cyan);
+    border: 1px solid rgba(0,243,255,0.45);
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.62rem;
+    font-weight: bold;
+    letter-spacing: 0.6px;
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.role-action-btn:hover:not(:disabled) {
+    background: var(--neon-cyan);
+    color: var(--bg-color);
+    box-shadow: 0 0 14px rgba(0,243,255,0.35);
+    transform: translateY(-1px);
+}
+
+.role-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.role-action-pending {
+    color: #ffcc66;
+    border-color: rgba(255,180,0,0.55);
+    background: rgba(255,180,0,0.06);
+}
+
+.role-action-protected {
+    color: var(--neon-red);
+    border-color: rgba(255,0,60,0.45);
+    background: rgba(255,0,60,0.06);
+}
+
+.role-change-card {
+    border-color: rgba(0,243,255,0.25);
+}
+
+.role-change-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.role-change-actions button {
+    min-width: 110px;
+}
+
 .user-table {
     min-width: 1050px;
 }
@@ -984,6 +1062,12 @@ header h1 {
             </div>
 
             <div class="audit-note">
+                ROLE CHANGE uses a two-step Admin workflow:
+                create pending request, then approve it.
+                The browser never writes the user's role directly.
+            </div>
+
+            <div class="audit-note">
                 DB ROLE is the role stored in Realtime Database.
                 AUTH ROLE is the latest custom-claim role synchronized
                 by the server-side Admin SDK audit script.
@@ -1005,6 +1089,7 @@ header h1 {
                             <th>DB ROLE</th>
                             <th>AUTH ROLE</th>
                             <th>SYNC</th>
+                            <th>ACTION</th>
 
                         </tr>
 
@@ -1013,7 +1098,7 @@ header h1 {
                     <tbody id="security-users-body">
 
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 Loading...
                             </td>
                         </tr>
@@ -1046,6 +1131,23 @@ header h1 {
 
                 <div class="empty-message">
                     Loading access requests...
+                </div>
+
+            </div>
+
+            <div
+                class="ops-status"
+                id="role-change-status"
+                style="margin-top:25px;">
+
+                SCANNING ROLE CHANGE REQUEST MATRIX...
+
+            </div>
+
+            <div id="role-change-request-list">
+
+                <div class="empty-message">
+                    Loading role change requests...
                 </div>
 
             </div>
@@ -2348,6 +2450,7 @@ function openSecurityPage() {
 
     loadSecurityUsers();
     loadAccessRequests();
+    loadRoleChangeRequests();
 }
 
 
@@ -2460,8 +2563,8 @@ function loadSecurityUsers() {
     }
 
     /*
-     * Keep the existing live listener.
-     * Do not reset the table when Sentinel is opened again.
+     * Keep the existing listener.
+     * Reopening Sentinel must never reset the matrix to Loading.
      */
     if (usersListenerStarted) {
         return;
@@ -2472,7 +2575,7 @@ function loadSecurityUsers() {
 
     body.innerHTML = `
         <tr>
-            <td colspan="7">
+            <td colspan="8">
                 LOADING USER RECORDS...
             </td>
         </tr>
@@ -2515,7 +2618,7 @@ function loadSecurityUsers() {
                                 String(
                                     b.name ||
                                     b.email
-                                )
+                            )
                             )
                     );
 
@@ -2538,9 +2641,7 @@ function loadSecurityUsers() {
                                 ""
                             ).toLowerCase();
 
-                        if (
-                            !authRole
-                        ) {
+                        if (!authRole) {
                             pendingCount++;
                         } else if (
                             dbRole ===
@@ -2570,7 +2671,7 @@ function loadSecurityUsers() {
 
                     body.innerHTML = `
                         <tr>
-                            <td colspan="7">
+                            <td colspan="8">
                                 NO USER RECORDS FOUND
                             </td>
                         </tr>
@@ -2600,17 +2701,11 @@ function loadSecurityUsers() {
                                     user.emailVerified === true;
 
                                 const roleClass =
-                                    dbRole ===
-                                    "admin"
-
-                                    ? "role-admin"
-
-                                    : dbRole ===
-                                      "friend"
-
-                                      ? "role-friend"
-
-                                      : "role-guest";
+                                    dbRole === "admin"
+                                        ? "role-admin"
+                                        : dbRole === "friend"
+                                            ? "role-friend"
+                                            : "role-guest";
 
                                 let syncClass =
                                     "sync-pending";
@@ -2620,8 +2715,7 @@ function loadSecurityUsers() {
 
                                 if (
                                     authRole &&
-                                    dbRole ===
-                                    authRole
+                                    dbRole === authRole
                                 ) {
 
                                     syncClass =
@@ -2632,8 +2726,7 @@ function loadSecurityUsers() {
 
                                 } else if (
                                     authRole &&
-                                    dbRole !==
-                                    authRole
+                                    dbRole !== authRole
                                 ) {
 
                                     syncClass =
@@ -2653,10 +2746,113 @@ function loadSecurityUsers() {
                                         ? "VERIFIED"
                                         : "NOT VERIFIED";
 
-                                const disabledText =
-                                    user.authDisabled === true
-                                        ? " // DISABLED"
-                                        : "";
+                                const pendingRequest =
+                                    roleChangeRequestMap[
+                                        user.uid
+                                    ];
+
+                                let actionHtml = "";
+
+                                /*
+                                 * ADMIN accounts are protected.
+                                 */
+                                if (
+                                    dbRole === "admin" ||
+                                    authRole === "admin"
+                                ) {
+
+                                    actionHtml = `
+                                        <span
+                                            class="sync-badge role-action-protected">
+                                            PROTECTED
+                                        </span>
+                                    `;
+
+                                } else if (
+                                    pendingRequest &&
+                                    String(
+                                        pendingRequest.status ||
+                                        ""
+                                    ).toLowerCase() ===
+                                    "pending"
+                                ) {
+
+                                    actionHtml = `
+                                        <span
+                                            class="sync-badge role-action-pending">
+                                            REQUEST PENDING
+                                        </span>
+                                    `;
+
+                                } else if (
+                                    pendingRequest &&
+                                    String(
+                                        pendingRequest.status ||
+                                        ""
+                                    ).toLowerCase() ===
+                                    "approved" &&
+                                    pendingRequest.roleAssigned !== true
+                                ) {
+
+                                    actionHtml = `
+                                        <span
+                                            class="sync-badge role-action-pending">
+                                            PROCESSOR PENDING
+                                        </span>
+                                    `;
+
+                                } else {
+
+                                    const targetRole =
+                                        dbRole === "friend"
+                                            ? "guest"
+                                            : "friend";
+
+                                    actionHtml = `
+                                        <div
+                                            class="role-action-wrap">
+
+                                            <select
+                                                class="role-action-select"
+                                                id="role-target-${escapeHtml(user.uid)}">
+
+                                                <option
+                                                    value="guest"
+                                                    ${
+                                                        targetRole === "guest"
+                                                            ? "selected"
+                                                            : ""
+                                                    }>
+                                                    GUEST
+                                                </option>
+
+                                                <option
+                                                    value="friend"
+                                                    ${
+                                                        targetRole === "friend"
+                                                            ? "selected"
+                                                            : ""
+                                                    }>
+                                                    FRIEND
+                                                </option>
+
+                                            </select>
+
+                                            <button
+                                                type="button"
+                                                class="role-action-btn"
+                                                onclick="requestRoleChange(
+                                                    '${escapeHtml(user.uid)}',
+                                                    this
+                                                )">
+
+                                                REQUEST
+
+                                            </button>
+
+                                        </div>
+                                    `;
+                                }
 
                                 return `
                                     <tr>
@@ -2687,7 +2883,11 @@ function loadSecurityUsers() {
                                                 class="role-badge ${verifiedClass}">
                                                 ${verifiedText}
                                             </span>
-                                            ${disabledText}
+                                            ${
+                                                user.authDisabled === true
+                                                    ? " // DISABLED"
+                                                    : ""
+                                            }
                                         </td>
 
                                         <td>
@@ -2723,6 +2923,10 @@ function loadSecurityUsers() {
                                             </span>
                                         </td>
 
+                                        <td>
+                                            ${actionHtml}
+                                        </td>
+
                                     </tr>
                                 `;
                             }
@@ -2747,7 +2951,7 @@ function loadSecurityUsers() {
 
                 body.innerHTML = `
                     <tr>
-                        <td colspan="7">
+                        <td colspan="8">
                             USER MATRIX OFFLINE
                         </td>
                     </tr>
@@ -3359,6 +3563,875 @@ async function processAccessRequest(
             error.message
         );
     }
+}
+
+
+/* ==========================================================
+   SENTINEL — ROLE CHANGE REQUESTS
+   ========================================================== */
+
+let roleChangeRequestListenerStarted =
+    false;
+
+let roleChangeRequestMap =
+    {};
+
+function loadRoleChangeRequests() {
+
+    if (
+        currentUserRole !==
+        "admin"
+    ) {
+        return;
+    }
+
+    if (
+        roleChangeRequestListenerStarted
+    ) {
+        return;
+    }
+
+    roleChangeRequestListenerStarted =
+        true;
+
+    const list =
+        document.getElementById(
+            "role-change-request-list"
+        );
+
+    const status =
+        document.getElementById(
+            "role-change-status"
+        );
+
+    database
+        .ref("roleChangeRequests")
+        .on(
+            "value",
+
+            snapshot => {
+
+                roleChangeRequestMap =
+                    snapshot.val() ||
+                    {};
+
+                const entries =
+                    Object.entries(
+                        roleChangeRequestMap
+                    )
+                    .map(
+                        ([uid, request]) => ({
+                            uid,
+                            ...(request || {})
+                        })
+                    )
+                    .sort(
+                        (a, b) =>
+                            Number(
+                                b.requestedAt ||
+                                0
+                            ) -
+                            Number(
+                                a.requestedAt ||
+                                0
+                            )
+                    );
+
+                const pendingCount =
+                    entries.filter(
+                        request =>
+                            String(
+                                request.status ||
+                                ""
+                            ).toLowerCase() ===
+                            "pending"
+                    ).length;
+
+                status.innerText =
+                    entries.length +
+                    " ROLE CHANGE REQUEST(S) // " +
+                    pendingCount +
+                    " PENDING";
+
+                if (
+                    entries.length ===
+                    0
+                ) {
+
+                    list.innerHTML = `
+                        <div class="empty-message">
+                            NO ROLE CHANGE REQUESTS FOUND
+                        </div>
+                    `;
+
+                } else {
+
+                    list.innerHTML =
+                        entries
+                            .map(
+                                request =>
+                                    renderRoleChangeRequestCard(
+                                        request
+                                    )
+                            )
+                            .join("");
+                }
+
+                /*
+                 * Re-render User Matrix so REQUEST PENDING /
+                 * REQUEST controls stay synchronized.
+                 */
+                if (
+                    usersListenerStarted
+                ) {
+                    database
+                        .ref("users")
+                        .once(
+                            "value"
+                        )
+                        .then(
+                            snapshot => {
+
+                                /*
+                                 * The main users listener is
+                                 * still authoritative. Trigger
+                                 * its callback safely by updating
+                                 * only if the current data exists.
+                                 */
+                                renderSecurityUsersFromSnapshot(
+                                    snapshot
+                                );
+                            }
+                        )
+                        .catch(
+                            error =>
+                                console.error(
+                                    "User matrix refresh failed:",
+                                    error
+                                )
+                        );
+                }
+
+            },
+
+            error => {
+
+                roleChangeRequestListenerStarted =
+                    false;
+
+                console.error(
+                    "Role change requests failed:",
+                    error
+                );
+
+                status.innerText =
+                    "ROLE CHANGE MATRIX OFFLINE: " +
+                    error.message;
+            }
+        );
+}
+
+
+function renderRoleChangeRequestCard(
+    request
+) {
+
+    const status =
+        String(
+            request.status ||
+            "pending"
+        ).toLowerCase();
+
+    const requestedAt =
+        request.requestedAt
+            ? new Date(
+                Number(
+                    request.requestedAt
+                )
+              ).toLocaleString()
+            : "UNKNOWN";
+
+    const requestedRole =
+        String(
+            request.requestedRole ||
+            ""
+        ).toLowerCase();
+
+    const requestedBy =
+        request.requestedBy ||
+        "UNKNOWN";
+
+    const roleText =
+        requestedRole.toUpperCase();
+
+    if (
+        status ===
+        "approved"
+    ) {
+
+        return `
+            <div class="request-card role-change-card">
+
+                <div class="request-header">
+
+                    <div>
+
+                        <div class="request-name">
+                            ROLE CHANGE
+                        </div>
+
+                        <div class="request-email">
+                            UID:
+                            ${escapeHtml(request.uid)}
+                        </div>
+
+                    </div>
+
+                    <div class="request-status">
+                        APPROVED
+                    </div>
+
+                </div>
+
+                <div class="request-meta">
+
+                    <div>
+                        TARGET:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                    <div>
+                        ROLE:
+                        ${escapeHtml(roleText)}
+                    </div>
+
+                    <div>
+                        REQUESTED:
+                        ${escapeHtml(requestedAt)}
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    }
+
+    if (
+        status ===
+        "rejected"
+    ) {
+
+        return `
+            <div class="request-card role-change-card">
+
+                <div class="request-header">
+
+                    <div>
+
+                        <div class="request-name">
+                            ROLE CHANGE
+                        </div>
+
+                        <div class="request-email">
+                            UID:
+                            ${escapeHtml(request.uid)}
+                        </div>
+
+                    </div>
+
+                    <div
+                        class="request-status"
+                        style="color:#ff003c;">
+
+                        REJECTED
+
+                    </div>
+
+                </div>
+
+                <div class="request-meta">
+
+                    <div>
+                        TARGET:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                    <div>
+                        ROLE:
+                        ${escapeHtml(roleText)}
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+    }
+
+    return `
+        <div
+            class="request-card role-change-card"
+            data-role-change-card="${escapeHtml(request.uid)}">
+
+            <div class="request-header">
+
+                <div>
+
+                    <div class="request-name">
+                        ROLE CHANGE REQUEST
+                    </div>
+
+                    <div class="request-email">
+                        TARGET UID:
+                        ${escapeHtml(request.uid)}
+                    </div>
+
+                </div>
+
+                <div class="request-status">
+                    PENDING
+                </div>
+
+            </div>
+
+            <div class="request-meta">
+
+                <div>
+                    REQUESTED ROLE:
+                    ${escapeHtml(roleText)}
+                </div>
+
+                <div>
+                    REQUESTED BY:
+                    ${escapeHtml(requestedBy)}
+                </div>
+
+                <div>
+                    REQUESTED:
+                    ${escapeHtml(requestedAt)}
+                </div>
+
+            </div>
+
+            <div class="role-change-actions">
+
+                <button
+                    type="button"
+                    class="approve-btn"
+                    onclick="processRoleChangeRequest(
+                        '${escapeHtml(request.uid)}',
+                        'approve',
+                        this
+                    )">
+
+                    APPROVE
+
+                </button>
+
+                <button
+                    type="button"
+                    class="reject-btn"
+                    onclick="processRoleChangeRequest(
+                        '${escapeHtml(request.uid)}',
+                        'reject',
+                        this
+                    )">
+
+                    REJECT
+
+                </button>
+
+            </div>
+
+        </div>
+    `;
+}
+
+
+async function requestRoleChange(
+    uid,
+    button
+) {
+
+    if (
+        currentUserRole !==
+        "admin"
+    ) {
+
+        alert(
+            "ADMIN PRIVILEGES REQUIRED."
+        );
+
+        return;
+    }
+
+    const select =
+        document.getElementById(
+            "role-target-" +
+            uid
+        );
+
+    if (!select) {
+        return;
+    }
+
+    const requestedRole =
+        String(
+            select.value ||
+            ""
+        ).toLowerCase();
+
+    if (
+        ![
+            "guest",
+            "friend"
+        ].includes(
+            requestedRole
+        )
+    ) {
+
+        alert(
+            "INVALID ROLE."
+        );
+
+        return;
+    }
+
+    if (
+        roleChangeRequestMap[uid] &&
+        String(
+            roleChangeRequestMap[uid].status ||
+            ""
+        ).toLowerCase() ===
+        "pending"
+    ) {
+
+        alert(
+            "A role change request is already pending."
+        );
+
+        return;
+    }
+
+    const confirmation =
+        confirm(
+            "Create a role change request for this user?\n\n" +
+            "Target UID: " +
+            uid +
+            "\n" +
+            "Requested role: " +
+            requestedRole.toUpperCase() +
+            "\n\n" +
+            "The request will require explicit approval."
+        );
+
+    if (!confirmation) {
+        return;
+    }
+
+    const originalText =
+        button.innerText;
+
+    button.disabled =
+        true;
+
+    button.innerText =
+        "CREATING...";
+
+    try {
+
+        /*
+         * IMPORTANT:
+         *
+         * The browser creates ONLY a PENDING request.
+         *
+         * It does not modify /users/{uid}/role.
+         *
+         * It does not modify Firebase Auth claims.
+         */
+        await database
+            .ref(
+                "roleChangeRequests/" +
+                uid
+            )
+            .set({
+
+                status:
+                    "pending",
+
+                requestedRole:
+                    requestedRole,
+
+                requestedBy:
+                    firebase.auth()
+                        .currentUser
+                        .uid,
+
+                requestedAt:
+                    firebase
+                        .database
+                        .ServerValue
+                        .TIMESTAMP
+
+            });
+
+        console.log(
+            "Role change request created:",
+            uid,
+            requestedRole
+        );
+
+    } catch (error) {
+
+        console.error(
+            "Role change request failed:",
+            error
+        );
+
+        alert(
+            "ROLE CHANGE REQUEST FAILED:\n\n" +
+            error.message
+        );
+
+    } finally {
+
+        button.disabled =
+            false;
+
+        button.innerText =
+            originalText;
+    }
+}
+
+
+async function processRoleChangeRequest(
+    uid,
+    action,
+    button
+) {
+
+    if (
+        currentUserRole !==
+        "admin"
+    ) {
+
+        alert(
+            "ADMIN PRIVILEGES REQUIRED."
+        );
+
+        return;
+    }
+
+    const request =
+        roleChangeRequestMap[uid];
+
+    if (!request) {
+
+        alert(
+            "ROLE CHANGE REQUEST NOT FOUND."
+        );
+
+        return;
+    }
+
+    const requestedRole =
+        String(
+            request.requestedRole ||
+            ""
+        ).toLowerCase();
+
+    if (
+        action === "approve" &&
+        ![
+            "guest",
+            "friend"
+        ].includes(
+            requestedRole
+        )
+    ) {
+
+        alert(
+            "INVALID ROLE CHANGE REQUEST."
+        );
+
+        return;
+    }
+
+    const confirmation =
+        action === "approve"
+
+            ? confirm(
+                "APPROVE ROLE CHANGE?\n\n" +
+                "UID: " +
+                uid +
+                "\n" +
+                "New role: " +
+                requestedRole.toUpperCase() +
+                "\n\n" +
+                "The Admin SDK processor will apply the role."
+              )
+
+            : confirm(
+                "REJECT THIS ROLE CHANGE REQUEST?"
+              );
+
+    if (!confirmation) {
+        return;
+    }
+
+    const card =
+        button.closest(
+            ".role-change-card"
+        );
+
+    if (card) {
+        card.classList.add(
+            "processing"
+        );
+    }
+
+    try {
+
+        const updateData = {
+
+            status:
+                action === "approve"
+                    ? "approved"
+                    : "rejected",
+
+            reviewedBy:
+                firebase.auth()
+                    .currentUser
+                    .uid,
+
+            reviewedAt:
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP
+
+        };
+
+        if (
+            action === "approve"
+        ) {
+            updateData.approvedAt =
+                firebase
+                    .database
+                    .ServerValue
+                    .TIMESTAMP;
+        }
+
+        await database
+            .ref(
+                "roleChangeRequests/" +
+                uid
+            )
+            .update(
+                updateData
+            );
+
+        console.log(
+            "Role change request reviewed:",
+            uid,
+            action
+        );
+
+    } catch (error) {
+
+        if (card) {
+            card.classList.remove(
+                "processing"
+            );
+        }
+
+        console.error(
+            "Role change review failed:",
+            error
+        );
+
+        alert(
+            "ROLE CHANGE REVIEW FAILED:\n\n" +
+            error.message
+        );
+    }
+}
+
+
+/*
+ * Re-render the User Matrix from a supplied snapshot.
+ *
+ * This function is intentionally small: it asks the existing
+ * users listener to refresh its DOM by reusing the same rendering
+ * logic through a temporary event. To avoid duplicate listeners,
+ * we simply reload the current users data through the existing
+ * listener's normal callback by updating the body from snapshot.
+ */
+function renderSecurityUsersFromSnapshot(
+    snapshot
+) {
+
+    const body =
+        document.getElementById(
+            "security-users-body"
+        );
+
+    if (!body) {
+        return;
+    }
+
+    const status =
+        document.getElementById(
+            "users-status"
+        );
+
+    const users =
+        snapshot.val() ||
+        {};
+
+    const rows =
+        Object.entries(
+            users
+        )
+        .map(
+            ([uid, value]) => ({
+                uid,
+                ...(value || {})
+            })
+        )
+        .filter(
+            user =>
+                user.email
+        )
+        .sort(
+            (a, b) =>
+                String(
+                    a.name ||
+                    a.email
+                ).localeCompare(
+                    String(
+                        b.name ||
+                        b.email
+                    )
+                )
+        );
+
+    if (
+        rows.length ===
+        0
+    ) {
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="8">
+                    NO USER RECORDS FOUND
+                </td>
+            </tr>
+        `;
+
+        return;
+    }
+
+    /*
+     * The easiest safe way to refresh the action column is
+     * to temporarily rebuild the matrix using the same current
+     * DOM state. We trigger a value event only through Firebase's
+     * existing listener; this function therefore only handles
+     * the action status if the table is already present.
+     */
+    rows.forEach(
+        user => {
+
+            const pending =
+                roleChangeRequestMap[
+                    user.uid
+                ];
+
+            const actionCell =
+                Array.from(
+                    body.querySelectorAll(
+                        "tr"
+                    )
+                )
+                .find(
+                    row =>
+                        row.children[1] &&
+                        row.children[1]
+                            .textContent
+                            .trim() ===
+                        user.uid
+                );
+
+            if (!actionCell) {
+                return;
+            }
+
+            const actionTd =
+                actionCell.children[7];
+
+            if (!actionTd) {
+                return;
+            }
+
+            const dbRole =
+                String(
+                    user.role ||
+                    "guest"
+                ).toLowerCase();
+
+            const authRole =
+                String(
+                    user.authRole ||
+                    ""
+                ).toLowerCase();
+
+            if (
+                dbRole === "admin" ||
+                authRole === "admin"
+            ) {
+
+                actionTd.innerHTML = `
+                    <span
+                        class="sync-badge role-action-protected">
+                        PROTECTED
+                    </span>
+                `;
+
+            } else if (
+                pending &&
+                String(
+                    pending.status ||
+                    ""
+                ).toLowerCase() ===
+                "pending"
+            ) {
+
+                actionTd.innerHTML = `
+                    <span
+                        class="sync-badge role-action-pending">
+                        REQUEST PENDING
+                    </span>
+                `;
+
+            } else if (
+                pending &&
+                String(
+                    pending.status ||
+                    ""
+                ).toLowerCase() ===
+                "approved" &&
+                pending.roleAssigned !== true
+            ) {
+
+                actionTd.innerHTML = `
+                    <span
+                        class="sync-badge role-action-pending">
+                        PROCESSOR PENDING
+                    </span>
+                `;
+
+            }
+        }
+    );
 }
 
 
