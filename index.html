@@ -5496,6 +5496,54 @@ async function checkSystemPath(label, path) {
     }
 }
 
+/*
+ * SERVER LINKS STATUS
+ *
+ * The root /serverLinks path is intentionally protected by
+ * the root .read=false rule. Admins are permitted to read the
+ * individual configured children such as /public and /media.
+ * Therefore the health check must NOT read /serverLinks itself.
+ */
+async function checkServerLinksStatus() {
+
+    try {
+
+        const results = await Promise.all([
+
+            database
+                .ref("serverLinks/public")
+                .once("value"),
+
+            database
+                .ref("serverLinks/media")
+                .once("value")
+
+        ]);
+
+        const publicConfig = results[0].val();
+        const mediaConfig = results[1].val();
+
+        return {
+            name: "SERVER LINKS",
+            state: "online",
+            detail:
+                "Configured server-link endpoints are accessible. " +
+                "Public: " + (publicConfig ? "available" : "not configured") +
+                " // Media: " + (mediaConfig ? "available" : "not configured")
+        };
+
+    } catch (error) {
+
+        return {
+            name: "SERVER LINKS",
+            state: "offline",
+            detail:
+                error.message ||
+                "Server-link configuration access failed."
+        };
+    }
+}
+
 async function loadSystemStatus() {
 
     if (currentUserRole !== "admin") {
@@ -5614,10 +5662,7 @@ async function loadSystemStatus() {
                     "securityAudit"
                 ),
 
-                checkSystemPath(
-                    "SERVER LINKS",
-                    "serverLinks"
-                )
+                checkServerLinksStatus()
             ]);
 
 
