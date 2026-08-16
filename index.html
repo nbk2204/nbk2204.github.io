@@ -562,6 +562,71 @@ header h1 {
     border: 1px solid var(--neon-cyan);
 }
 
+/* ==========================================================
+   USER MATRIX — SYNCHRONIZATION AUDIT
+   ========================================================== */
+
+.role-verified {
+    color: #7cff9a;
+    background: rgba(0,255,100,0.08);
+    border: 1px solid rgba(0,255,100,0.55);
+}
+
+.role-unverified {
+    color: #ffcc66;
+    background: rgba(255,180,0,0.08);
+    border: 1px solid rgba(255,180,0,0.55);
+}
+
+.sync-badge {
+    display: inline-block;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.62rem;
+    letter-spacing: 0.8px;
+    font-weight: bold;
+    white-space: nowrap;
+}
+
+.sync-ok {
+    color: #7cff9a;
+    background: rgba(0,255,100,0.08);
+    border: 1px solid rgba(0,255,100,0.55);
+}
+
+.sync-mismatch {
+    color: var(--neon-red);
+    background: rgba(255,0,60,0.08);
+    border: 1px solid var(--neon-red);
+}
+
+.sync-pending {
+    color: #ffcc66;
+    background: rgba(255,180,0,0.08);
+    border: 1px solid rgba(255,180,0,0.55);
+}
+
+.user-table {
+    min-width: 1050px;
+}
+
+.user-table td {
+    vertical-align: middle;
+}
+
+.user-id-cell {
+    font-size: 0.65rem;
+    word-break: break-all;
+    max-width: 220px;
+}
+
+.audit-note {
+    margin-top: 7px;
+    color: var(--text-muted);
+    font-size: 0.68rem;
+    line-height: 1.4;
+}
+
 .role-guest {
     color: var(--neon-purple);
     background: rgba(188,19,254,0.08);
@@ -918,6 +983,13 @@ header h1 {
 
             </div>
 
+            <div class="audit-note">
+                DB ROLE is the role stored in Realtime Database.
+                AUTH ROLE is the latest custom-claim role synchronized
+                by the server-side Admin SDK audit script.
+                SYNCED means both roles match.
+            </div>
+
             <div class="table-wrap">
 
                 <table class="user-table">
@@ -929,7 +1001,10 @@ header h1 {
                             <th>NAME</th>
                             <th>USER ID</th>
                             <th>EMAIL</th>
-                            <th>CURRENT ROLE</th>
+                            <th>VERIFIED</th>
+                            <th>DB ROLE</th>
+                            <th>AUTH ROLE</th>
+                            <th>SYNC</th>
 
                         </tr>
 
@@ -938,7 +1013,7 @@ header h1 {
                     <tbody id="security-users-body">
 
                         <tr>
-                            <td colspan="4">
+                            <td colspan="7">
                                 Loading...
                             </td>
                         </tr>
@@ -2385,13 +2460,8 @@ function loadSecurityUsers() {
     }
 
     /*
-     * IMPORTANT:
-     *
-     * If the live listener is already active, do NOT reset
-     * the table to "LOADING..." when Sentinel is opened again.
-     *
-     * The existing live data remains on screen and Firebase
-     * continues updating it automatically.
+     * Keep the existing live listener.
+     * Do not reset the table when Sentinel is opened again.
      */
     if (usersListenerStarted) {
         return;
@@ -2402,7 +2472,7 @@ function loadSecurityUsers() {
 
     body.innerHTML = `
         <tr>
-            <td colspan="4">
+            <td colspan="7">
                 LOADING USER RECORDS...
             </td>
         </tr>
@@ -2449,9 +2519,49 @@ function loadSecurityUsers() {
                             )
                     );
 
+                let syncedCount = 0;
+                let mismatchCount = 0;
+                let pendingCount = 0;
+
+                rows.forEach(
+                    user => {
+
+                        const dbRole =
+                            String(
+                                user.role ||
+                                "guest"
+                            ).toLowerCase();
+
+                        const authRole =
+                            String(
+                                user.authRole ||
+                                ""
+                            ).toLowerCase();
+
+                        if (
+                            !authRole
+                        ) {
+                            pendingCount++;
+                        } else if (
+                            dbRole ===
+                            authRole
+                        ) {
+                            syncedCount++;
+                        } else {
+                            mismatchCount++;
+                        }
+                    }
+                );
+
                 status.innerText =
                     rows.length +
-                    " USER RECORD(S) // LIVE AUTHORIZATION MATRIX";
+                    " USER RECORD(S) // " +
+                    syncedCount +
+                    " SYNCED // " +
+                    mismatchCount +
+                    " MISMATCH // " +
+                    pendingCount +
+                    " PENDING AUTH AUDIT";
 
                 if (
                     rows.length ===
@@ -2460,7 +2570,7 @@ function loadSecurityUsers() {
 
                     body.innerHTML = `
                         <tr>
-                            <td colspan="4">
+                            <td colspan="7">
                                 NO USER RECORDS FOUND
                             </td>
                         </tr>
@@ -2474,27 +2584,83 @@ function loadSecurityUsers() {
                         .map(
                             user => {
 
-                                const role =
+                                const dbRole =
                                     String(
                                         user.role ||
                                         "guest"
                                     ).toLowerCase();
 
+                                const authRole =
+                                    String(
+                                        user.authRole ||
+                                        ""
+                                    ).toLowerCase();
+
+                                const verified =
+                                    user.emailVerified === true;
+
                                 const roleClass =
-                                    role ===
+                                    dbRole ===
                                     "admin"
 
                                     ? "role-admin"
 
-                                    : role ===
+                                    : dbRole ===
                                       "friend"
 
                                       ? "role-friend"
 
                                       : "role-guest";
 
+                                let syncClass =
+                                    "sync-pending";
+
+                                let syncText =
+                                    "AUDIT PENDING";
+
+                                if (
+                                    authRole &&
+                                    dbRole ===
+                                    authRole
+                                ) {
+
+                                    syncClass =
+                                        "sync-ok";
+
+                                    syncText =
+                                        "SYNCED";
+
+                                } else if (
+                                    authRole &&
+                                    dbRole !==
+                                    authRole
+                                ) {
+
+                                    syncClass =
+                                        "sync-mismatch";
+
+                                    syncText =
+                                        "MISMATCH";
+                                }
+
+                                const verifiedClass =
+                                    verified
+                                        ? "role-verified"
+                                        : "role-unverified";
+
+                                const verifiedText =
+                                    verified
+                                        ? "VERIFIED"
+                                        : "NOT VERIFIED";
+
+                                const disabledText =
+                                    user.authDisabled === true
+                                        ? " // DISABLED"
+                                        : "";
+
                                 return `
                                     <tr>
+
                                         <td>
                                             ${escapeHtml(
                                                 user.name ||
@@ -2502,7 +2668,7 @@ function loadSecurityUsers() {
                                             )}
                                         </td>
 
-                                        <td>
+                                        <td class="user-id-cell">
                                             ${escapeHtml(
                                                 user.uid ||
                                                 "—"
@@ -2518,12 +2684,45 @@ function loadSecurityUsers() {
 
                                         <td>
                                             <span
+                                                class="role-badge ${verifiedClass}">
+                                                ${verifiedText}
+                                            </span>
+                                            ${disabledText}
+                                        </td>
+
+                                        <td>
+                                            <span
                                                 class="role-badge ${roleClass}">
                                                 ${escapeHtml(
-                                                    role.toUpperCase()
+                                                    dbRole.toUpperCase()
                                                 )}
                                             </span>
                                         </td>
+
+                                        <td>
+                                            <span
+                                                class="role-badge ${
+                                                    authRole === "admin"
+                                                        ? "role-admin"
+                                                        : authRole === "friend"
+                                                            ? "role-friend"
+                                                            : "role-guest"
+                                                }">
+                                                ${escapeHtml(
+                                                    authRole
+                                                        ? authRole.toUpperCase()
+                                                        : "NOT SYNCED"
+                                                )}
+                                            </span>
+                                        </td>
+
+                                        <td>
+                                            <span
+                                                class="sync-badge ${syncClass}">
+                                                ${syncText}
+                                            </span>
+                                        </td>
+
                                     </tr>
                                 `;
                             }
@@ -2548,7 +2747,7 @@ function loadSecurityUsers() {
 
                 body.innerHTML = `
                     <tr>
-                        <td colspan="4">
+                        <td colspan="7">
                             USER MATRIX OFFLINE
                         </td>
                     </tr>
