@@ -597,7 +597,8 @@ header h1 {
 #dashboard.security-page-active > header,
 #dashboard.security-page-active > #admin-panel,
 #dashboard.security-page-active > #server-grid,
-#dashboard.security-page-active > #dashboard-system-status {
+#dashboard.security-page-active > #dashboard-system-status,
+#dashboard.security-page-active > #nexus-media-page {
     display: none !important;
 }
 
@@ -1446,6 +1447,50 @@ document
         flex-direction: column;
     }
 }
+
+/* =========================================================
+   NEXUS MEDIA — INTERNAL PAGE
+   ========================================================= */
+#dashboard.media-page-active { max-width:none; margin:0; padding:0; }
+#dashboard.media-page-active > header,
+#dashboard.media-page-active > #admin-panel,
+#dashboard.media-page-active > #server-grid,
+#dashboard.media-page-active > #dashboard-system-status,
+#dashboard.media-page-active > #security-ops { display:none !important; }
+#dashboard.media-page-active #nexus-media-page { display:flex !important; min-height:100vh; }
+.nexus-media-page { display:none; flex-direction:column; background:var(--bg-color); }
+.nexus-media-header { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:18px 24px; border-bottom:1px solid rgba(0,243,255,.18); background:rgba(8,8,16,.92); position:sticky; top:0; z-index:20; backdrop-filter:blur(12px); }
+.nexus-media-title { margin:0; color:var(--neon-cyan); font-size:1.05rem; letter-spacing:2px; text-transform:uppercase; }
+.nexus-media-subtitle { margin-top:5px; color:var(--text-muted); font-family:monospace; font-size:.68rem; letter-spacing:1px; }
+.nexus-media-back { border:1px solid rgba(0,243,255,.45); background:rgba(0,243,255,.05); color:var(--neon-cyan); padding:10px 14px; border-radius:6px; font-family:monospace; font-weight:bold; letter-spacing:1px; cursor:pointer; transition:all .2s ease; }
+.nexus-media-back:hover { background:var(--neon-cyan); color:var(--bg-color); box-shadow:0 0 18px rgba(0,243,255,.35); transform:translateY(-1px); }
+.nexus-media-stage { position:relative; flex:1 1 auto; min-height:calc(100vh - 76px); padding:14px; }
+.nexus-media-frame-wrap { position:relative; width:100%; height:calc(100vh - 104px); min-height:520px; border:1px solid rgba(188,19,254,.35); border-radius:10px; overflow:hidden; background:#050509; box-shadow:0 0 28px rgba(188,19,254,.08); }
+.nexus-media-frame { display:block; width:100%; height:100%; border:0; background:#050509; }
+.nexus-media-loading, .nexus-media-error { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px; padding:24px; text-align:center; background:#050509; z-index:2; }
+.nexus-media-loading-title, .nexus-media-error-title { color:var(--neon-cyan); font-family:monospace; font-weight:bold; letter-spacing:2px; }
+.nexus-media-loading-detail, .nexus-media-error-detail { max-width:620px; color:var(--text-muted); font-family:monospace; font-size:.76rem; line-height:1.5; }
+.nexus-media-spinner { width:28px; height:28px; border:2px solid rgba(0,243,255,.18); border-top-color:var(--neon-cyan); border-radius:50%; animation:nexusMediaSpin .9s linear infinite; }
+@keyframes nexusMediaSpin { to { transform:rotate(360deg); } }
+.nexus-media-retry { border:1px solid var(--neon-cyan); background:rgba(0,243,255,.06); color:var(--neon-cyan); padding:10px 18px; border-radius:6px; font-family:monospace; font-weight:bold; cursor:pointer; }
+.nexus-media-retry:hover { background:var(--neon-cyan); color:var(--bg-color); }
+.server-management-panel { padding:20px; }
+.server-management-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.server-management-card { border:1px solid rgba(188,19,254,.28); border-radius:10px; padding:20px; background:rgba(255,255,255,.018); }
+.server-management-card:hover { border-color:rgba(0,243,255,.4); box-shadow:0 0 18px rgba(0,243,255,.06); }
+.server-management-card h3 { margin:0 0 5px; color:var(--neon-cyan); letter-spacing:1.5px; }
+.server-management-card p { margin:0 0 16px; color:var(--text-muted); font-size:.78rem; line-height:1.45; }
+.server-management-url { width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid rgba(255,255,255,.12); border-radius:6px; background:rgba(0,0,0,.28); color:#d9d2e8; font-family:monospace; font-size:.78rem; outline:none; }
+.server-management-url:focus { border-color:var(--neon-cyan); box-shadow:0 0 12px rgba(0,243,255,.1); }
+.server-management-access { display:flex; gap:16px; flex-wrap:wrap; margin:14px 0; color:var(--text-muted); font-family:monospace; font-size:.75rem; }
+.server-management-access label { display:flex; align-items:center; gap:6px; }
+.server-management-save { width:100%; border:1px solid var(--neon-cyan); background:rgba(0,243,255,.06); color:var(--neon-cyan); padding:10px 14px; border-radius:6px; font-family:monospace; font-weight:bold; letter-spacing:1px; cursor:pointer; transition:all .2s ease; }
+.server-management-save:hover { background:var(--neon-cyan); color:var(--bg-color); }
+.server-management-save:disabled { opacity:.5; cursor:wait; }
+.server-management-note { margin-top:16px; color:var(--text-muted); font-family:monospace; font-size:.7rem; line-height:1.5; }
+@media (max-width:800px) { .server-management-grid{grid-template-columns:1fr;} .nexus-media-header{padding:14px;} .nexus-media-stage{padding:8px;} .nexus-media-frame-wrap{height:calc(100vh - 78px);min-height:420px;border-radius:7px;} }
+@media (max-width:500px) { .nexus-media-header{align-items:flex-start;flex-direction:column;} .nexus-media-back{width:100%;} .nexus-media-frame-wrap{height:calc(100vh - 125px);min-height:360px;} }
+
 </style>
 </head>
 
@@ -1651,8 +1696,38 @@ document
 
 
     <!-- ===================================================
+         NEXUS MEDIA — INTERNAL PAGE
+         =================================================== -->
+    <section id="nexus-media-page" class="nexus-media-page" aria-label="Nexus Media">
+        <header class="nexus-media-header">
+            <div>
+                <h1 class="nexus-media-title">NEXUS MEDIA</h1>
+                <div class="nexus-media-subtitle">AUTHORIZED MEDIA NODE // EMBEDDED SESSION</div>
+            </div>
+            <button type="button" id="nexus-media-back-btn" class="nexus-media-back">← BACK TO NEXUS</button>
+        </header>
+        <div class="nexus-media-stage">
+            <div class="nexus-media-frame-wrap">
+                <div id="nexus-media-loading" class="nexus-media-loading">
+                    <div class="nexus-media-spinner"></div>
+                    <div class="nexus-media-loading-title">CONNECTING TO NEXUS MEDIA...</div>
+                    <div class="nexus-media-loading-detail">Resolving the authorized media endpoint.</div>
+                </div>
+                <div id="nexus-media-error" class="nexus-media-error" style="display:none;">
+                    <div class="nexus-media-error-title">MEDIA SERVER UNAVAILABLE</div>
+                    <div id="nexus-media-error-detail" class="nexus-media-error-detail">The authorized media service could not be loaded.</div>
+                    <button type="button" id="nexus-media-retry" class="nexus-media-retry">↻ RETRY</button>
+                </div>
+                <iframe id="nexus-media-frame" class="nexus-media-frame" title="Nexus Media" allow="autoplay; fullscreen; picture-in-picture" referrerpolicy="strict-origin-when-cross-origin" style="visibility:hidden;"></iframe>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ===================================================
          SECURITY OPS
          =================================================== -->
+
 
     <section id="security-ops" style="display:none;">
 
@@ -1718,6 +1793,15 @@ document
                 type="button">
 
                 SYSTEM STATUS
+
+            </button>
+
+            <button
+                class="security-tab"
+                data-security-tab="servers"
+                type="button">
+
+                SERVER LINKS
 
             </button>
 
@@ -1906,6 +1990,36 @@ document
 
             </div>
 
+        </div>
+
+        <!-- SERVER LINK MANAGEMENT -->
+        <div class="security-panel" id="security-servers-panel" style="display:none;">
+            <div class="ops-status" id="server-management-status">LOADING SERVER LINK CONFIGURATION...</div>
+            <div class="server-management-panel">
+                <div class="server-management-grid">
+                    <div class="server-management-card">
+                        <h3>PUBLIC</h3>
+                        <p>Guest, Friend and Admin accessible server endpoint.</p>
+                        <input type="url" id="server-management-public-url" class="server-management-url" placeholder="https://..." autocomplete="off">
+                        <div class="server-management-access">
+                            <label><input type="checkbox" id="server-management-public-guest"> Guest</label>
+                            <label><input type="checkbox" id="server-management-public-friend"> Friend</label>
+                        </div>
+                        <button type="button" class="server-management-save" data-server-management-id="public">SAVE PUBLIC LINK</button>
+                    </div>
+                    <div class="server-management-card">
+                        <h3>MEDIA</h3>
+                        <p>Friend and Admin accessible media endpoint. URL is resolved dynamically and is not hard-coded in HTML.</p>
+                        <input type="url" id="server-management-media-url" class="server-management-url" placeholder="https://..." autocomplete="off">
+                        <div class="server-management-access">
+                            <label><input type="checkbox" id="server-management-media-guest"> Guest</label>
+                            <label><input type="checkbox" id="server-management-media-friend"> Friend</label>
+                        </div>
+                        <button type="button" class="server-management-save" data-server-management-id="media">SAVE MEDIA LINK</button>
+                    </div>
+                </div>
+                <div class="server-management-note">Admin access is always retained by Firebase Rules. URLs are stored in Realtime Database under /serverLinks and are not embedded in the HTML source.</div>
+            </div>
         </div>
 
     </section>
@@ -3367,9 +3481,15 @@ document
 
 
                 /*
-                 * Open destination.
+                 * NEXUS MEDIA is an internal page. Load the authorized
+                 * endpoint inside Nexus instead of opening a new tab.
                  */
+                if (serverId === "media") {
+                    openMediaPage(data.url);
+                    return;
+                }
 
+                /* Other destinations continue to open normally. */
                 window.open(
                     data.url,
                     "_blank",
@@ -3402,6 +3522,158 @@ document
 
         }
     );
+
+
+/* ==========================================================
+   NEXUS MEDIA — INTERNAL PAGE NAVIGATION
+   ========================================================== */
+
+let mediaPageLoading = false;
+
+function openMediaPage(urlFromDatabase = null) {
+
+    if (currentUserRole !== "admin" && currentUserRole !== "friend") {
+        return;
+    }
+
+    const dashboard = document.getElementById("dashboard");
+    const mediaPage = document.getElementById("nexus-media-page");
+    const securityOps = document.getElementById("security-ops");
+
+    if (!dashboard || !mediaPage) return;
+
+    dashboard.classList.add("media-page-active");
+    dashboard.classList.remove("security-page-active");
+
+    if (securityOps) securityOps.style.display = "none";
+    mediaPage.style.display = "flex";
+
+    if (window.location.hash !== "#media") {
+        history.pushState({view:"media"}, "", "#media");
+    }
+
+    if (urlFromDatabase) {
+        loadMediaFrame(urlFromDatabase);
+    } else {
+        resolveAndLoadMediaEndpoint();
+    }
+}
+
+async function resolveAndLoadMediaEndpoint() {
+
+    if (mediaPageLoading) return;
+    if (currentUserRole !== "admin" && currentUserRole !== "friend") return;
+
+    mediaPageLoading = true;
+    setMediaLoadingState(true, "Resolving the authorized media endpoint.");
+
+    try {
+        const snapshot = await database.ref("serverLinks/media").once("value");
+        const data = snapshot.val();
+
+        if (!data || typeof data.url !== "string" || !data.url.trim()) {
+            throw new Error("MEDIA SERVER LINK IS NOT CONFIGURED");
+        }
+
+        const url = data.url.trim();
+
+        if (!/^https:\/\//i.test(url)) {
+            throw new Error("MEDIA SERVER LINK MUST USE HTTPS");
+        }
+
+        if (currentUserRole === "guest" && data.allowGuest !== true) {
+            throw new Error("MEDIA ACCESS IS NOT ENABLED FOR GUEST USERS");
+        }
+
+        if (currentUserRole === "friend" && data.allowFriend !== true) {
+            throw new Error("MEDIA ACCESS IS NOT ENABLED FOR FRIEND USERS");
+        }
+
+        loadMediaFrame(url);
+
+    } catch (error) {
+        console.error("Media endpoint resolution failed:", error);
+        setMediaErrorState(error.message || "MEDIA SERVER UNAVAILABLE");
+    } finally {
+        mediaPageLoading = false;
+    }
+}
+
+function loadMediaFrame(url) {
+
+    const frame = document.getElementById("nexus-media-frame");
+    if (!frame) return;
+
+    if (!/^https:\/\//i.test(url)) {
+        setMediaErrorState("INVALID MEDIA SERVER LINK");
+        return;
+    }
+
+    setMediaLoadingState(true, "Loading the authorized media application.");
+    frame.style.visibility = "hidden";
+    frame.src = url;
+}
+
+function setMediaLoadingState(visible, detail) {
+
+    const loading = document.getElementById("nexus-media-loading");
+    const error = document.getElementById("nexus-media-error");
+    const frame = document.getElementById("nexus-media-frame");
+    const loadingDetail = loading?.querySelector(".nexus-media-loading-detail");
+
+    if (loadingDetail && detail) loadingDetail.innerText = detail;
+    if (loading) loading.style.display = visible ? "flex" : "none";
+    if (error) error.style.display = "none";
+    if (frame && visible) frame.style.visibility = "hidden";
+}
+
+function setMediaErrorState(message) {
+
+    const loading = document.getElementById("nexus-media-loading");
+    const error = document.getElementById("nexus-media-error");
+    const detail = document.getElementById("nexus-media-error-detail");
+    const frame = document.getElementById("nexus-media-frame");
+
+    if (loading) loading.style.display = "none";
+    if (detail) detail.innerText = message;
+    if (error) error.style.display = "flex";
+    if (frame) frame.style.visibility = "hidden";
+}
+
+function handleMediaFrameLoad() {
+
+    const loading = document.getElementById("nexus-media-loading");
+    const error = document.getElementById("nexus-media-error");
+    const frame = document.getElementById("nexus-media-frame");
+
+    if (loading) loading.style.display = "none";
+    if (error) error.style.display = "none";
+    if (frame) frame.style.visibility = "visible";
+}
+
+function closeMediaPage(updateHistory = true) {
+
+    const dashboard = document.getElementById("dashboard");
+    const mediaPage = document.getElementById("nexus-media-page");
+    if (!dashboard || !mediaPage) return;
+
+    dashboard.classList.remove("media-page-active");
+    mediaPage.style.display = "none";
+
+    if (updateHistory && window.location.hash === "#media") {
+        history.pushState({}, "", window.location.pathname + window.location.search);
+    }
+
+    const frame = document.getElementById("nexus-media-frame");
+    if (frame) {
+        frame.src = "about:blank";
+        frame.style.visibility = "hidden";
+    }
+}
+
+document.getElementById("nexus-media-frame")?.addEventListener("load", handleMediaFrameLoad);
+document.getElementById("nexus-media-back-btn")?.addEventListener("click", () => closeMediaPage(true));
+document.getElementById("nexus-media-retry")?.addEventListener("click", () => resolveAndLoadMediaEndpoint());
 
 
 /* ==========================================================
@@ -3502,15 +3774,16 @@ function closeSecurityPage(
 window.addEventListener(
     "popstate",
     () => {
-
-        if (
-            window.location.hash !==
-            "#sentinel"
-        ) {
-            closeSecurityPage(
-                false
-            );
+        if (window.location.hash === "#sentinel") {
+            openSecurityPage();
+            return;
         }
+        if (window.location.hash === "#media") {
+            openMediaPage();
+            return;
+        }
+        closeSecurityPage(false);
+        closeMediaPage(false);
     }
 );
 
@@ -6000,6 +6273,11 @@ document
                         .style.display =
                             selected === "status" ? "block" : "none";
 
+                    document
+                        .getElementById("security-servers-panel")
+                        .style.display =
+                            selected === "servers" ? "block" : "none";
+
                     if (selected === "audit") {
                         loadSecurityAudit();
                     }
@@ -6008,11 +6286,114 @@ document
                         loadSystemStatus();
                     }
 
+                    if (selected === "servers") {
+                        loadServerManagement();
+                    }
+
                 }
             );
 
         }
     );
+
+
+/* ==========================================================
+   SENTINEL — SERVER LINK MANAGEMENT
+   ========================================================== */
+
+const managedServerIds = ["public", "media"];
+
+function validateHttpsUrl(value) {
+    try {
+        return new URL(value).protocol === "https:";
+    } catch (error) {
+        return false;
+    }
+}
+
+async function loadServerManagement() {
+
+    if (currentUserRole !== "admin") return;
+
+    const status = document.getElementById("server-management-status");
+    if (status) status.innerText = "LOADING SERVER LINK CONFIGURATION...";
+
+    try {
+        const snapshots = await Promise.all(
+            managedServerIds.map(id => database.ref("serverLinks/" + id).once("value"))
+        );
+
+        const data = {};
+        managedServerIds.forEach((id, index) => data[id] = snapshots[index].val() || {});
+
+        document.getElementById("server-management-public-url").value = data.public.url || "";
+        document.getElementById("server-management-public-guest").checked = data.public.allowGuest === true;
+        document.getElementById("server-management-public-friend").checked = data.public.allowFriend === true;
+
+        document.getElementById("server-management-media-url").value = data.media.url || "";
+        document.getElementById("server-management-media-guest").checked = data.media.allowGuest === true;
+        document.getElementById("server-management-media-friend").checked = data.media.allowFriend === true;
+
+        if (status) status.innerText = "SERVER LINK CONFIGURATION ONLINE // ADMIN ACCESS";
+
+    } catch (error) {
+        console.error("Server management load failed:", error);
+        if (status) status.innerText = "SERVER LINK MANAGEMENT OFFLINE: " + (error.message || "ACCESS FAILED");
+    }
+}
+
+async function saveManagedServer(serverId) {
+
+    if (currentUserRole !== "admin") return;
+
+    const urlInput = document.getElementById("server-management-" + serverId + "-url");
+    const guestInput = document.getElementById("server-management-" + serverId + "-guest");
+    const friendInput = document.getElementById("server-management-" + serverId + "-friend");
+    const status = document.getElementById("server-management-status");
+    const button = document.querySelector('[data-server-management-id="' + serverId + '"]');
+
+    if (!urlInput || !guestInput || !friendInput) return;
+
+    const url = urlInput.value.trim();
+
+    if (!validateHttpsUrl(url)) {
+        if (status) status.innerText = "INVALID URL: HTTPS URL REQUIRED";
+        urlInput.focus();
+        return;
+    }
+
+    if (!window.confirm("SAVE " + serverId.toUpperCase() + " SERVER LINK?\n\n" + url)) return;
+
+    if (button) {
+        button.disabled = true;
+        button.innerText = "SAVING...";
+    }
+
+    try {
+        await database.ref("serverLinks/" + serverId).update({
+            url: url,
+            allowGuest: guestInput.checked,
+            allowFriend: friendInput.checked
+        });
+
+        if (status) status.innerText = serverId.toUpperCase() + " SERVER LINK SAVED SUCCESSFULLY.";
+        renderServerCards(currentUserRole);
+
+    } catch (error) {
+        console.error("Server link save failed:", error);
+        if (status) status.innerText = "SERVER LINK SAVE FAILED: " + (error.message || "PERMISSION DENIED");
+
+    } finally {
+        if (button) {
+            button.disabled = false;
+            button.innerText = "SAVE " + serverId.toUpperCase() + " LINK";
+        }
+    }
+}
+
+document.querySelectorAll(".server-management-save").forEach(button => {
+    button.addEventListener("click", () => saveManagedServer(button.dataset.serverManagementId));
+});
 
 
 /* ==========================================================
