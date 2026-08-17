@@ -1720,6 +1720,414 @@ document
 }
 @media (max-width:500px) { .nexus-media-header{align-items:flex-start;flex-direction:column;} .nexus-media-back{width:100%;} .nexus-media-frame-wrap{height:calc(100vh - 125px);min-height:360px;} }
 
+
+/* ==========================================================
+   NEXUS FRONTEND MOTION SYSTEM
+   Smooth, lightweight, mobile-safe, accessibility-aware.
+   ========================================================== */
+
+:root {
+    --motion-fast: 160ms;
+    --motion-med: 280ms;
+    --motion-slow: 520ms;
+    --ease-nexus: cubic-bezier(0.22, 1, 0.36, 1);
+    --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Page boot */
+body {
+    opacity: 0;
+    animation: nexusPageIn 700ms var(--ease-nexus) forwards;
+}
+
+@keyframes nexusPageIn {
+    from {
+        opacity: 0;
+        filter: brightness(.72);
+    }
+    to {
+        opacity: 1;
+        filter: brightness(1);
+    }
+}
+
+/* Login / overlays */
+.login-box {
+    animation:
+        nexusPanelIn 650ms var(--ease-nexus) both;
+}
+
+@keyframes nexusPanelIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px) scale(.985);
+        filter: blur(5px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+/* Dashboard header */
+#dashboard > header {
+    animation: nexusHeaderIn 700ms var(--ease-nexus) both;
+}
+
+@keyframes nexusHeaderIn {
+    from {
+        opacity: 0;
+        transform: translateY(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Server cards */
+.card {
+    animation:
+        nexusCardIn 600ms var(--ease-nexus) both;
+    transition:
+        transform var(--motion-med) var(--ease-nexus),
+        border-color var(--motion-med) ease,
+        box-shadow var(--motion-med) ease,
+        background var(--motion-med) ease,
+        filter var(--motion-med) ease;
+}
+
+.card:nth-child(1) { animation-delay: 60ms; }
+.card:nth-child(2) { animation-delay: 120ms; }
+.card:nth-child(3) { animation-delay: 180ms; }
+.card:nth-child(4) { animation-delay: 240ms; }
+
+@keyframes nexusCardIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(.985);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.card.unlocked:hover {
+    transform: translateY(-5px) scale(1.008);
+}
+
+/* Buttons */
+button,
+.nexus-btn,
+.server-link,
+.security-tab,
+.server-management-save,
+.server-management-refresh,
+.security-audit-filter,
+.security-back-btn {
+    transition:
+        transform var(--motion-fast) var(--ease-nexus),
+        box-shadow var(--motion-med) ease,
+        border-color var(--motion-med) ease,
+        background-color var(--motion-med) ease,
+        color var(--motion-med) ease,
+        opacity var(--motion-fast) ease;
+}
+
+button:not(:disabled):active,
+.nexus-btn:not(:disabled):active,
+.server-link:not(:disabled):active {
+    transform: scale(.975);
+}
+
+button:not(:disabled):hover,
+.nexus-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+}
+
+/* Soft rolling cyan highlight on interactive primary controls */
+.server-link.dynamic-server-button::after,
+.server-management-save::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            115deg,
+            transparent 0%,
+            rgba(255,255,255,0) 38%,
+            rgba(255,255,255,.10) 50%,
+            rgba(255,255,255,0) 62%,
+            transparent 100%
+        );
+    transform: translateX(-120%);
+    transition: transform 700ms var(--ease-nexus);
+}
+
+.server-link.dynamic-server-button:hover::after,
+.server-management-save:hover::after {
+    transform: translateX(120%);
+}
+
+/* These elements need positioning for the sheen */
+.server-link.dynamic-server-button,
+.server-management-save {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Security panel transitions */
+.security-panel {
+    animation: nexusPanelReveal 420ms var(--ease-nexus) both;
+}
+
+@keyframes nexusPanelReveal {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Security tabs */
+.security-tab {
+    position: relative;
+    overflow: hidden;
+}
+
+.security-tab::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--neon-cyan);
+    box-shadow: 0 0 10px var(--neon-cyan);
+    transform: translateX(-50%);
+    transition: width var(--motion-med) var(--ease-nexus);
+}
+
+.security-tab.active::after {
+    width: 72%;
+}
+
+/* Audit cards */
+.security-audit-card,
+.server-management-request-card,
+.role-change-card,
+.request-card {
+    transition:
+        transform var(--motion-med) var(--ease-nexus),
+        border-color var(--motion-med) ease,
+        box-shadow var(--motion-med) ease,
+        background var(--motion-med) ease;
+}
+
+.security-audit-card:hover,
+.server-management-request-card:hover,
+.role-change-card:hover,
+.request-card:hover {
+    transform: translateY(-2px);
+}
+
+/* Server management cards */
+.server-management-card {
+    transition:
+        transform var(--motion-med) var(--ease-nexus),
+        border-color var(--motion-med) ease,
+        box-shadow var(--motion-med) ease,
+        background var(--motion-med) ease;
+}
+
+.server-management-card:hover {
+    transform: translateY(-3px);
+}
+
+/* Status badges */
+.server-management-badge,
+.system-status-badge,
+.request-status,
+.role-badge {
+    transition:
+        opacity var(--motion-med) ease,
+        box-shadow var(--motion-med) ease,
+        transform var(--motion-med) var(--ease-nexus);
+}
+
+.server-management-badge {
+    animation: nexusStatusPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes nexusStatusPulse {
+    0%, 100% {
+        opacity: .78;
+    }
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 10px rgba(0,243,255,.18);
+    }
+}
+
+/* Loading shimmer */
+.nexus-loading-shimmer {
+    position: relative;
+    overflow: hidden;
+}
+
+.nexus-loading-shimmer::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,.045),
+            transparent
+        );
+    animation: nexusShimmer 1.35s linear infinite;
+}
+
+@keyframes nexusShimmer {
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* Toast notifications */
+.nexus-toast-stack {
+    position: fixed;
+    right: 18px;
+    bottom: 18px;
+    z-index: 100000;
+    width: min(390px, calc(100vw - 36px));
+    display: grid;
+    gap: 10px;
+    pointer-events: none;
+}
+
+.nexus-toast {
+    pointer-events: auto;
+    padding: 13px 15px;
+    border: 1px solid rgba(0,243,255,.35);
+    border-radius: 9px;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(11,7,24,.96),
+            rgba(18,10,35,.96)
+        );
+    color: var(--text-main);
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.35),
+        0 0 18px rgba(0,243,255,.08);
+    font-family: monospace;
+    font-size: .72rem;
+    line-height: 1.45;
+    animation: nexusToastIn 360ms var(--ease-nexus) both;
+}
+
+.nexus-toast.success {
+    border-color: rgba(0,255,136,.4);
+}
+
+.nexus-toast.error {
+    border-color: rgba(255,0,60,.45);
+}
+
+.nexus-toast.warning {
+    border-color: rgba(255,209,102,.45);
+}
+
+.nexus-toast.removing {
+    animation: nexusToastOut 280ms var(--ease-nexus) both;
+}
+
+@keyframes nexusToastIn {
+    from {
+        opacity: 0;
+        transform: translateY(14px) translateX(8px) scale(.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) translateX(0) scale(1);
+    }
+}
+
+@keyframes nexusToastOut {
+    to {
+        opacity: 0;
+        transform: translateY(8px) translateX(8px) scale(.98);
+    }
+}
+
+/* Mobile ergonomics */
+@media (max-width: 700px) {
+
+    .security-tabs {
+        scroll-snap-type: x proximity;
+        overscroll-behavior-x: contain;
+        mask-image:
+            linear-gradient(
+                90deg,
+                transparent 0,
+                #000 14px,
+                #000 calc(100% - 14px),
+                transparent 100%
+            );
+    }
+
+    .security-tab {
+        scroll-snap-align: start;
+        min-width: max-content;
+    }
+
+    .nexus-toast-stack {
+        right: 12px;
+        bottom: 12px;
+        width: calc(100vw - 24px);
+    }
+
+    .server-management-card {
+        padding: 16px;
+    }
+
+    .server-management-current {
+        font-size: .64rem;
+    }
+
+    .security-audit-card,
+    .server-management-request-card {
+        padding: 12px;
+    }
+}
+
+/* Accessibility: never force motion on users who request reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    body {
+        opacity: 1;
+    }
+}
+
 </style>
 </head>
 
@@ -7686,6 +8094,266 @@ document
 
         }
     );
+
+
+
+/* ==========================================================
+   NEXUS FRONTEND EXPERIENCE LAYER
+   Presentation-only enhancements.
+   ========================================================== */
+
+(function initNexusFrontendExperience() {
+
+    function ensureToastStack() {
+
+        let stack =
+            document.getElementById(
+                "nexus-toast-stack"
+            );
+
+        if (!stack) {
+
+            stack =
+                document.createElement(
+                    "div"
+                );
+
+            stack.id =
+                "nexus-toast-stack";
+
+            stack.className =
+                "nexus-toast-stack";
+
+            document.body.appendChild(
+                stack
+            );
+        }
+
+        return stack;
+    }
+
+
+    window.nexusToast =
+        function nexusToast(
+            message,
+            type = "success",
+            duration = 3600
+        ) {
+
+            const stack =
+                ensureToastStack();
+
+            const toast =
+                document.createElement(
+                    "div"
+                );
+
+            toast.className =
+                "nexus-toast " +
+                (
+                    type ||
+                    "success"
+                );
+
+            toast.textContent =
+                String(
+                    message ||
+                    ""
+                );
+
+            stack.appendChild(
+                toast
+            );
+
+            window.setTimeout(
+                () => {
+
+                    toast.classList.add(
+                        "removing"
+                    );
+
+                    window.setTimeout(
+                        () => {
+
+                            toast.remove();
+
+                        },
+                        280
+                    );
+
+                },
+                Math.max(
+                    1200,
+                    Number(
+                        duration
+                    ) || 3600
+                )
+            );
+        };
+
+
+    /*
+     * Make the active Sentinel tab automatically visible
+     * after switching tabs on a narrow screen.
+     */
+    document.addEventListener(
+        "click",
+        event => {
+
+            const tab =
+                event.target.closest(
+                    ".security-tab"
+                );
+
+            if (!tab) {
+                return;
+            }
+
+            window.requestAnimationFrame(
+                () => {
+
+                    try {
+
+                        tab.scrollIntoView({
+                            behavior:
+                                window.matchMedia(
+                                    "(prefers-reduced-motion: reduce)"
+                                ).matches
+                                    ? "auto"
+                                    : "smooth",
+                            block: "nearest",
+                            inline: "center"
+                        });
+
+                    } catch (error) {
+
+                        console.debug(
+                            "Tab scroll assist unavailable:",
+                            error
+                        );
+
+                    }
+
+                }
+            );
+
+        }
+    );
+
+
+    /*
+     * Add a subtle reveal class to dynamically generated
+     * operational cards without touching their data.
+     */
+    const revealSelectors = [
+        ".card",
+        ".security-audit-card",
+        ".server-management-card",
+        ".server-management-request-card",
+        ".role-change-card",
+        ".request-card"
+    ];
+
+
+    function markNewDynamicCards() {
+
+        revealSelectors.forEach(
+            selector => {
+
+                document
+                    .querySelectorAll(
+                        selector
+                    )
+                    .forEach(
+                        element => {
+
+                            if (
+                                element.dataset.nexusMotionReady ===
+                                "1"
+                            ) {
+                                return;
+                            }
+
+                            element.dataset.nexusMotionReady =
+                                "1";
+
+                            element.style.willChange =
+                                "transform, opacity";
+
+                            window.setTimeout(
+                                () => {
+
+                                    element.style.willChange =
+                                        "auto";
+
+                                },
+                                750
+                            );
+
+                        }
+                    );
+
+            }
+        );
+
+    }
+
+
+    if (
+        window.MutationObserver
+    ) {
+
+        const observer =
+            new MutationObserver(
+                () => {
+
+                    window.requestAnimationFrame(
+                        markNewDynamicCards
+                    );
+
+                }
+            );
+
+        observer.observe(
+            document.body,
+            {
+                childList: true,
+                subtree: true
+            }
+        );
+
+    }
+
+
+    window.addEventListener(
+        "load",
+        () => {
+
+            markNewDynamicCards();
+
+        },
+        {
+            once: true
+        }
+    );
+
+
+    /*
+     * Keep the UI from appearing frozen while the first
+     * Firebase state is being resolved.
+     */
+    window.setTimeout(
+        () => {
+
+            document.body.classList.add(
+                "nexus-ui-ready"
+            );
+
+        },
+        900
+    );
+
+})();
 
 
 /* ==========================================================
