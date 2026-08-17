@@ -4897,303 +4897,81 @@ let roleChangeRequestListenerStarted =
 let roleChangeRequestMap =
     {};
 
-function loadRoleChangeRequests() {
+async function loadRoleChangeRequests() {
 
-    if (
-        currentUserRole !==
-        "admin"
-    ) {
-        return;
-    }
-
-    if (
-        roleChangeRequestListenerStarted
-    ) {
-        return;
-    }
-
-    roleChangeRequestListenerStarted =
-        true;
-
-    const list =
-        document.getElementById(
-            "role-change-request-list"
-        );
+    if (currentUserRole !== "admin") return;
 
     const status =
         document.getElementById(
             "role-change-status"
         );
 
+    const list =
+        document.getElementById(
+            "role-change-list"
+        );
+
+    try {
+
+        const usersSnapshot =
+            await database
+                .ref("users")
+                .once("value");
+
+        roleChangeUsers =
+            usersSnapshot.val() || {};
+
+    } catch (error) {
+
+        console.warn(
+            "Role-change user lookup unavailable:",
+            error
+        );
+
+        roleChangeUsers = {};
+    }
+
+    if (roleChangeRequestListenerStarted) {
+        renderRoleChangeRequests();
+        return;
+    }
+
+    roleChangeRequestListenerStarted = true;
+
     database
         .ref("roleChangeRequests")
         .on(
             "value",
-
             snapshot => {
 
                 roleChangeRequestMap =
-                    snapshot.val() ||
-                    {};
+                    snapshot.val() || {};
 
-                /*
-                 * Resolve requester + target identities from /users.
-                 *
-                 * roleChangeRequests intentionally stores UIDs rather than
-                 * duplicating user profile data. The UI resolves those UIDs
-                 * against the existing /users records.
-                 */
-                database
-                    .ref("users")
-                    .once("value")
-                    .then(usersSnapshot => {
-
-                        const users =
-                            usersSnapshot.val() || {};
-
-                        const entries =
-                            Object.entries(
-                                roleChangeRequestMap
-                            )
-                            .map(
-                                ([uid, request]) => {
-
-                                    const record =
-                                        request || {};
-
-                                    const targetUser =
-                                        users[uid] || {};
-
-                                    const requesterUid =
-                                        record.requestedBy || "";
-
-                                    const requesterUser =
-                                        users[requesterUid] || {};
-
-                                    return {
-                                        uid,
-                                        ...record,
-
-                                        targetName:
-                                            targetUser.name ||
-                                            targetUser.displayName ||
-                                            "UNKNOWN USER",
-
-                                        targetEmail:
-                                            targetUser.email ||
-                                            "NO EMAIL",
-
-                                        requesterName:
-                                            requesterUser.name ||
-                                            requesterUser.displayName ||
-                                            "UNKNOWN OPERATOR",
-
-                                        requesterEmail:
-                                            requesterUser.email ||
-                                            "NO EMAIL"
-                                    };
-                                }
-                            )
-                            .sort(
-                                (a, b) => {
-
-                                    const aPending =
-                                        String(
-                                            a.status || ""
-                                        ).toLowerCase() === "pending";
-
-                                    const bPending =
-                                        String(
-                                            b.status || ""
-                                        ).toLowerCase() === "pending";
-
-                                    if (aPending !== bPending) {
-                                        return bPending - aPending;
-                                    }
-
-                                    return (
-                                        Number(
-                                            b.requestedAt || 0
-                                        ) -
-                                        Number(
-                                            a.requestedAt || 0
-                                        )
-                                    );
-                                }
-                            );
-
-                        const pendingCount =
-                            entries.filter(
-                                request =>
-                                    String(
-                                        request.status ||
-                                        ""
-                                    ).toLowerCase() ===
-                                    "pending"
-                            ).length;
-
-                        status.innerText =
-                            entries.length +
-                            " ROLE CHANGE REQUEST(S) // " +
-                            pendingCount +
-                            " PENDING";
-
-                        if (
-                            entries.length ===
-                            0
-                        ) {
-
-                            list.innerHTML = `
-                                <div class="empty-message">
-                                    NO ROLE CHANGE REQUESTS FOUND
-                                </div>
-                            `;
-
-                        } else {
-
-                            list.innerHTML =
-                                entries
-                                    .map(
-                                        request =>
-                                            renderRoleChangeRequestCard(
-                                                request
-                                            )
-                                    )
-                                    .join("");
-                        }
-
-                        /*
-                         * Re-render User Matrix so REQUEST PENDING /
-                         * REQUEST controls stay synchronized.
-                         */
-                        if (
-                            usersListenerStarted
-                        ) {
-                            database
-                                .ref("users")
-                                .once(
-                                    "value"
-                                )
-                                .then(
-                                    snapshot => {
-
-                                        renderSecurityUsersFromSnapshot(
-                                            snapshot
-                                        );
-                                    }
-                                )
-                                .catch(
-                                    error =>
-                                        console.error(
-                                            "User matrix refresh failed:",
-                                            error
-                                        )
-                                );
-                        }
-
-                    })
-                    .catch(error => {
-
-                        console.error(
-                            "Role change user-resolution failed:",
-                            error
-                        );
-
-                        status.innerText =
-                            "ROLE CHANGE MATRIX OFFLINE: " +
-                            error.message;
-                    });
-
-                const pendingCount =
-                    entries.filter(
-                        request =>
-                            String(
-                                request.status ||
-                                ""
-                            ).toLowerCase() ===
-                            "pending"
-                    ).length;
-
-                status.innerText =
-                    entries.length +
-                    " ROLE CHANGE REQUEST(S) // " +
-                    pendingCount +
-                    " PENDING";
-
-                if (
-                    entries.length ===
-                    0
-                ) {
-
-                    list.innerHTML = `
-                        <div class="empty-message">
-                            NO ROLE CHANGE REQUESTS FOUND
-                        </div>
-                    `;
-
-                } else {
-
-                    list.innerHTML =
-                        entries
-                            .map(
-                                request =>
-                                    renderRoleChangeRequestCard(
-                                        request
-                                    )
-                            )
-                            .join("");
-                }
-
-                /*
-                 * Re-render User Matrix so REQUEST PENDING /
-                 * REQUEST controls stay synchronized.
-                 */
-                if (
-                    usersListenerStarted
-                ) {
-                    database
-                        .ref("users")
-                        .once(
-                            "value"
-                        )
-                        .then(
-                            snapshot => {
-
-                                /*
-                                 * The main users listener is
-                                 * still authoritative. Trigger
-                                 * its callback safely by updating
-                                 * only if the current data exists.
-                                 */
-                                renderSecurityUsersFromSnapshot(
-                                    snapshot
-                                );
-                            }
-                        )
-                        .catch(
-                            error =>
-                                console.error(
-                                    "User matrix refresh failed:",
-                                    error
-                                )
-                        );
-                }
+                renderRoleChangeRequests();
 
             },
-
             error => {
 
                 roleChangeRequestListenerStarted =
                     false;
 
                 console.error(
-                    "Role change requests failed:",
+                    "Role-change request load failed:",
                     error
                 );
 
-                status.innerText =
-                    "ROLE CHANGE MATRIX OFFLINE: " +
-                    error.message;
+                if (status) {
+                    status.innerText =
+                        "ROLE CHANGE REQUESTS OFFLINE: " +
+                        error.message;
+                }
+
+                if (list) {
+                    list.innerHTML =
+                        `<div class="empty-message">
+                            ROLE CHANGE REQUESTS OFFLINE
+                        </div>`;
+                }
             }
         );
 }
