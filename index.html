@@ -683,9 +683,25 @@ header h1 {
     gap: 8px;
     padding: 15px 20px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+}
+
+.security-tabs::-webkit-scrollbar {
+    height: 5px;
+}
+
+.security-tabs::-webkit-scrollbar-thumb {
+    background: rgba(0,243,255,0.35);
+    border-radius: 10px;
 }
 
 .security-tab {
+    flex: 0 0 auto;
+    white-space: nowrap;
     padding: 10px 15px;
     background: rgba(255,255,255,0.03);
     color: var(--text-muted);
@@ -1422,6 +1438,35 @@ document
 
 @media(max-width:700px) {
 
+    .security-tabs {
+        padding: 12px;
+        gap: 7px;
+        justify-content: flex-start;
+    }
+
+    .security-tab {
+        min-height: 42px;
+        padding: 10px 13px;
+        font-size: 0.68rem;
+    }
+
+    .security-audit-toolbar {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 4px;
+    }
+
+    .security-audit-filter {
+        flex: 0 0 auto;
+        white-space: nowrap;
+        min-height: 40px;
+    }
+
+    .security-audit-grid {
+        grid-template-columns: 1fr;
+    }
+
     #dashboard {
         padding: 25px 12px;
     }
@@ -1933,6 +1978,7 @@ document
                 <button type="button" class="security-audit-filter" data-audit-filter="signup">SIGNUPS</button>
                 <button type="button" class="security-audit-filter" data-audit-filter="role">ROLE CHANGES</button>
                 <button type="button" class="security-audit-filter" data-audit-filter="blocked">BLOCKED</button>
+                <button type="button" class="security-audit-filter" data-audit-filter="server">SERVER LINKS</button>
                 <button type="button" class="security-audit-filter" data-audit-filter="error">ERRORS</button>
             </div>
 
@@ -6280,9 +6326,29 @@ document
 let securityAuditListenerStarted = false;
 let securityAuditRecords = [];
 let securityAuditFilter = "all";
+let securityAuditUsers = {};
 
-function loadSecurityAudit() {
+async function loadSecurityAudit() {
     if (currentUserRole !== "admin") return;
+
+    const status =
+        document.getElementById("security-audit-status");
+
+    try {
+        const usersSnapshot =
+            await database
+                .ref("users")
+                .once("value");
+
+        securityAuditUsers =
+            usersSnapshot.val() || {};
+    } catch (error) {
+        console.warn(
+            "Security audit user resolution unavailable:",
+            error
+        );
+        securityAuditUsers = {};
+    }
 
     if (securityAuditListenerStarted) {
         renderSecurityAudit();
@@ -6291,23 +6357,44 @@ function loadSecurityAudit() {
 
     securityAuditListenerStarted = true;
 
-    const status = document.getElementById("security-audit-status");
+    database
+        .ref("securityAudit")
+        .on(
+            "value",
+            snapshot => {
+                const records =
+                    snapshot.val() || {};
 
-    database.ref("securityAudit").on("value", snapshot => {
-        const records = snapshot.val() || {};
+                securityAuditRecords =
+                    Object.entries(records)
+                        .map(
+                            ([id, record]) => ({
+                                id,
+                                ...(record || {})
+                            })
+                        )
+                        .sort(
+                            (a, b) =>
+                                Number(b.timestamp || 0) -
+                                Number(a.timestamp || 0)
+                        );
 
-        securityAuditRecords = Object.entries(records)
-            .map(([id, record]) => ({ id, ...(record || {}) }))
-            .sort((a, b) => Number(b.timestamp || 0) - Number(a.timestamp || 0));
+                renderSecurityAudit();
+            },
+            error => {
+                securityAuditListenerStarted = false;
+                console.error(
+                    "Security audit failed:",
+                    error
+                );
 
-        renderSecurityAudit();
-    }, error => {
-        securityAuditListenerStarted = false;
-        console.error("Security audit failed:", error);
-        if (status) {
-            status.innerText = "SECURITY AUDIT OFFLINE: " + error.message;
-        }
-    });
+                if (status) {
+                    status.innerText =
+                        "SECURITY AUDIT OFFLINE: " +
+                        error.message;
+                }
+            }
+        );
 }
 
 function auditCategory(record) {
@@ -6316,6 +6403,7 @@ function auditCategory(record) {
 
     if (result === "blocked" || action.includes("BLOCKED")) return "blocked";
     if (result === "error" || action.includes("ERROR")) return "error";
+    if (action.startsWith("SERVER_LINK_")) return "server";
     if (action.startsWith("ROLE_")) return "role";
     if (action.startsWith("SIGNUP_")) return "signup";
     return "other";
@@ -6345,53 +6433,261 @@ function renderSecurityAudit() {
 }
 
 function renderSecurityAuditCard(record) {
-    const action = String(record.action || "UNKNOWN").toUpperCase();
-    const result = String(record.result || "unknown").toLowerCase();
+
+    const action =
+        String(
+            record.action ||
+            "UNKNOWN"
+        ).toUpperCase();
+
+    const result =
+        String(
+            record.result ||
+            "unknown"
+        ).toLowerCase();
+
     const resultClass =
-        result === "success" ? "audit-result-success" :
-        result === "blocked" ? "audit-result-blocked" :
-        result === "error" ? "audit-result-error" :
-        "audit-result-unknown";
+        result === "success"
+            ? "audit-result-success"
+            : result === "blocked"
+                ? "audit-result-blocked"
+                : result === "error"
+                    ? "audit-result-error"
+                    : "audit-result-unknown";
 
-    const timestamp = record.timestamp
-        ? new Date(Number(record.timestamp)).toLocaleString()
-        : "UNKNOWN";
+    const timestamp =
+        record.timestamp
+            ? new Date(
+                Number(record.timestamp)
+            ).toLocaleString()
+            : "UNKNOWN";
 
-    const actor = record.actorEmail
-        ? record.actorEmail + " / " + (record.actorUid || "UNKNOWN")
-        : (record.actorUid || "SYSTEM");
+    const actorUser =
+        securityAuditUsers[
+            record.actorUid
+        ] || {};
 
-    const target = record.targetEmail
-        ? record.targetEmail + " / " + (record.targetUid || "UNKNOWN")
-        : (record.targetUid || "NONE");
+    const actorName =
+        actorUser.name ||
+        actorUser.displayName ||
+        record.actorEmail ||
+        "SYSTEM";
 
-    const roleChange = (record.previousRole || record.newRole)
-        ? (record.previousRole || "NONE").toUpperCase() +
-          " → " +
-          (record.newRole || "NONE").toUpperCase()
-        : "N/A";
+    const actorEmail =
+        actorUser.email ||
+        record.actorEmail ||
+        "NO EMAIL";
+
+    const targetUser =
+        securityAuditUsers[
+            record.targetUid
+        ] || {};
+
+    const targetName =
+        record.targetName ||
+        targetUser.name ||
+        targetUser.displayName ||
+        record.targetEmail ||
+        "NONE";
+
+    const targetEmail =
+        record.targetEmail ||
+        targetUser.email ||
+        "NO EMAIL";
+
+    const requesterUser =
+        securityAuditUsers[
+            record.requestedBy
+        ] || {};
+
+    const requesterName =
+        requesterUser.name ||
+        requesterUser.displayName ||
+        record.requestedBy ||
+        "SYSTEM";
+
+    const requesterEmail =
+        requesterUser.email ||
+        "NO EMAIL";
+
+    const roleChange =
+        (
+            record.previousRole ||
+            record.newRole
+        )
+            ? (
+                record.previousRole ||
+                "NONE"
+            ).toUpperCase() +
+            " → " +
+            (
+                record.newRole ||
+                "NONE"
+            ).toUpperCase()
+            : "N/A";
+
+    const serverId =
+        record.serverId
+            ? String(
+                record.serverId
+            ).toUpperCase()
+            : "";
 
     return `
         <div class="security-audit-card">
+
             <div class="security-audit-header">
-                <div class="security-audit-action">${escapeHtml(action)}</div>
-                <div class="security-audit-time">${escapeHtml(timestamp)}</div>
+
+                <div class="security-audit-action">
+                    ${escapeHtml(action)}
+                </div>
+
+                <div class="security-audit-time">
+                    ${escapeHtml(timestamp)}
+                </div>
+
             </div>
 
             <div class="security-audit-grid">
-                <div class="security-audit-field"><span class="security-audit-label">ACTOR:</span> ${escapeHtml(actor)}</div>
-                <div class="security-audit-field"><span class="security-audit-label">TARGET:</span> ${escapeHtml(target)}</div>
-                <div class="security-audit-field"><span class="security-audit-label">ROLE:</span> ${escapeHtml(roleChange)}</div>
-                <div class="security-audit-field"><span class="security-audit-label">REQUESTED BY:</span> ${escapeHtml(record.requestedBy || "NONE")}</div>
-                <div class="security-audit-field"><span class="security-audit-label">RESULT:</span> <span class="${resultClass}">${escapeHtml(result.toUpperCase())}</span></div>
-                <div class="security-audit-field"><span class="security-audit-label">EVENT ID:</span> ${escapeHtml(record.id || "UNKNOWN")}</div>
+
+                <div class="security-audit-field">
+                    <span class="security-audit-label">
+                        ACTOR:
+                    </span>
+                    ${escapeHtml(actorName)}
+                    // ${escapeHtml(actorEmail)}
+                </div>
+
+                ${
+                    record.actorUid
+                        ? `
+                            <div class="security-audit-field">
+                                <span class="security-audit-label">
+                                    ACTOR UID:
+                                </span>
+                                ${escapeHtml(record.actorUid)}
+                            </div>
+                        `
+                        : ""
+                }
+
+                <div class="security-audit-field">
+                    <span class="security-audit-label">
+                        TARGET:
+                    </span>
+                    ${escapeHtml(targetName)}
+                    // ${escapeHtml(targetEmail)}
+                </div>
+
+                ${
+                    record.targetUid
+                        ? `
+                            <div class="security-audit-field">
+                                <span class="security-audit-label">
+                                    TARGET UID:
+                                </span>
+                                ${escapeHtml(record.targetUid)}
+                            </div>
+                        `
+                        : ""
+                }
+
+                ${
+                    serverId
+                        ? `
+                            <div class="security-audit-field">
+                                <span class="security-audit-label">
+                                    SERVER:
+                                </span>
+                                ${escapeHtml(serverId)}
+                            </div>
+                        `
+                        : ""
+                }
+
+                <div class="security-audit-field">
+                    <span class="security-audit-label">
+                        ROLE:
+                    </span>
+                    ${escapeHtml(roleChange)}
+                </div>
+
+                ${
+                    record.requestedBy
+                        ? `
+                            <div class="security-audit-field">
+                                <span class="security-audit-label">
+                                    REQUESTED BY:
+                                </span>
+                                ${escapeHtml(requesterName)}
+                                // ${escapeHtml(requesterEmail)}
+                            </div>
+                        `
+                        : ""
+                }
+
+                ${
+                    record.previousUrl || record.newUrl
+                        ? `
+                            <div class="security-audit-field">
+                                <span class="security-audit-label">
+                                    URL:
+                                </span>
+                                ${escapeHtml(
+                                    record.previousUrl ||
+                                    "NONE"
+                                )}
+                                →
+                                ${escapeHtml(
+                                    record.newUrl ||
+                                    "NONE"
+                                )}
+                            </div>
+                        `
+                        : ""
+                }
+
+                <div class="security-audit-field">
+                    <span class="security-audit-label">
+                        RESULT:
+                    </span>
+
+                    <span class="${resultClass}">
+                        ${escapeHtml(
+                            result.toUpperCase()
+                        )}
+                    </span>
+                </div>
+
+                <div class="security-audit-field">
+                    <span class="security-audit-label">
+                        EVENT ID:
+                    </span>
+                    ${escapeHtml(
+                        record.id ||
+                        "UNKNOWN"
+                    )}
+                </div>
+
             </div>
 
-            ${record.targetName ? `<div class="audit-note">TARGET NAME: ${escapeHtml(record.targetName)}</div>` : ""}
-            ${record.details ? `<div class="audit-note">DETAILS: ${escapeHtml(record.details)}</div>` : ""}
+            ${
+                record.details
+                    ? `
+                        <div class="audit-note">
+                            DETAILS:
+                            ${escapeHtml(
+                                record.details
+                            )}
+                        </div>
+                    `
+                    : ""
+            }
+
         </div>
     `;
 }
+
 
 /* ==========================================================
    SECURITY AUDIT FILTERS
