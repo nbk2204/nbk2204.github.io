@@ -1524,6 +1524,169 @@ document
 .server-management-card { border:1px solid rgba(188,19,254,.28); border-radius:10px; padding:20px; background:rgba(255,255,255,.018); }
 .server-management-card:hover { border-color:rgba(0,243,255,.4); box-shadow:0 0 18px rgba(0,243,255,.06); }
 .server-management-card h3 { margin:0 0 5px; color:var(--neon-cyan); letter-spacing:1.5px; }
+.server-management-card-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.server-management-card-header h3 {
+    margin:0;
+}
+
+.server-management-badge {
+    display:inline-flex;
+    align-items:center;
+    padding:4px 8px;
+    border:1px solid rgba(0,243,255,.35);
+    border-radius:999px;
+    color:var(--neon-cyan);
+    font-family:monospace;
+    font-size:.62rem;
+    letter-spacing:1px;
+}
+
+.server-management-current {
+    margin:0 0 12px;
+    padding:10px;
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:6px;
+    background:rgba(0,0,0,.2);
+    color:var(--text-muted);
+    font-family:monospace;
+    font-size:.68rem;
+    line-height:1.5;
+    overflow-wrap:anywhere;
+}
+
+.server-management-current span {
+    display:block;
+    margin-top:4px;
+    color:#d9d2e8;
+}
+
+.server-management-disabled-option {
+    opacity:.45;
+}
+
+.server-management-requests {
+    margin-top:24px;
+    border-top:1px solid rgba(255,255,255,.08);
+    padding-top:20px;
+}
+
+.server-management-requests-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    margin-bottom:14px;
+}
+
+.server-management-requests-header h3 {
+    margin:0 0 4px;
+    font-size:.95rem;
+    letter-spacing:1px;
+}
+
+.server-management-request-summary {
+    color:var(--text-muted);
+    font-family:monospace;
+    font-size:.68rem;
+}
+
+.server-management-refresh {
+    border:1px solid rgba(0,243,255,.35);
+    background:rgba(0,243,255,.05);
+    color:var(--neon-cyan);
+    padding:8px 12px;
+    border-radius:6px;
+    font-family:monospace;
+    font-size:.68rem;
+    cursor:pointer;
+}
+
+.server-management-refresh:hover {
+    background:rgba(0,243,255,.12);
+}
+
+.server-management-request-list {
+    display:grid;
+    gap:10px;
+}
+
+.server-management-request-card {
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:8px;
+    padding:13px;
+    background:rgba(0,0,0,.18);
+}
+
+.server-management-request-card.pending {
+    border-color:rgba(0,243,255,.35);
+}
+
+.server-management-request-header {
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+}
+
+.server-management-request-server {
+    font-family:monospace;
+    font-weight:bold;
+    letter-spacing:1px;
+}
+
+.server-management-request-status {
+    font-family:monospace;
+    font-size:.62rem;
+    letter-spacing:1px;
+}
+
+.server-management-request-status.pending {
+    color:var(--neon-cyan);
+}
+
+.server-management-request-status.completed,
+.server-management-request-status.approved {
+    color:#7dff9b;
+}
+
+.server-management-request-status.rejected,
+.server-management-request-status.blocked,
+.server-management-request-status.error {
+    color:#ff6b8a;
+}
+
+.server-management-request-grid {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px 18px;
+    margin-top:10px;
+}
+
+.server-management-request-field {
+    color:#d9d2e8;
+    font-family:monospace;
+    font-size:.68rem;
+    line-height:1.45;
+    overflow-wrap:anywhere;
+}
+
+.server-management-request-field span {
+    color:var(--text-muted);
+}
+
+.server-management-request-empty {
+    color:var(--text-muted);
+    font-family:monospace;
+    font-size:.7rem;
+    padding:12px 0;
+}
+
 .server-management-card p { margin:0 0 16px; color:var(--text-muted); font-size:.78rem; line-height:1.45; }
 .server-management-url { width:100%; box-sizing:border-box; padding:11px 12px; border:1px solid rgba(255,255,255,.12); border-radius:6px; background:rgba(0,0,0,.28); color:#d9d2e8; font-family:monospace; font-size:.78rem; outline:none; }
 .server-management-url:focus { border-color:var(--neon-cyan); box-shadow:0 0 12px rgba(0,243,255,.1); }
@@ -1533,7 +1696,28 @@ document
 .server-management-save:hover { background:var(--neon-cyan); color:var(--bg-color); }
 .server-management-save:disabled { opacity:.5; cursor:wait; }
 .server-management-note { margin-top:16px; color:var(--text-muted); font-family:monospace; font-size:.7rem; line-height:1.5; }
-@media (max-width:800px) { .server-management-grid{grid-template-columns:1fr;} .nexus-media-header{padding:14px;} .nexus-media-stage{padding:8px;} .nexus-media-frame-wrap{height:calc(100vh - 78px);min-height:420px;border-radius:7px;} }
+@media (max-width:800px) {
+    .server-management-grid {
+        grid-template-columns:1fr;
+    }
+
+    .server-management-request-grid {
+        grid-template-columns:1fr;
+    }
+
+    .server-management-requests-header {
+        align-items:flex-start;
+        flex-direction:column;
+    }
+
+    .server-management-refresh {
+        width:100%;
+    }
+
+    .nexus-media-header{padding:14px;}
+    .nexus-media-stage{padding:8px;}
+    .nexus-media-frame-wrap{height:calc(100vh - 78px);min-height:420px;border-radius:7px;}
+}
 @media (max-width:500px) { .nexus-media-header{align-items:flex-start;flex-direction:column;} .nexus-media-back{width:100%;} .nexus-media-frame-wrap{height:calc(100vh - 125px);min-height:360px;} }
 
 </style>
@@ -2040,31 +2224,157 @@ document
 
         <!-- SERVER LINK MANAGEMENT -->
         <div class="security-panel" id="security-servers-panel" style="display:none;">
-            <div class="ops-status" id="server-management-status">LOADING SERVER LINK CONFIGURATION...</div>
+
+            <div class="ops-status" id="server-management-status">
+                LOADING SERVER LINK CONFIGURATION...
+            </div>
+
             <div class="server-management-panel">
+
                 <div class="server-management-grid">
+
                     <div class="server-management-card">
-                        <h3>PUBLIC</h3>
-                        <p>Guest, Friend and Admin accessible server endpoint.</p>
-                        <input type="url" id="server-management-public-url" class="server-management-url" placeholder="https://..." autocomplete="off">
-                        <div class="server-management-access">
-                            <label><input type="checkbox" id="server-management-public-guest"> Guest</label>
-                            <label><input type="checkbox" id="server-management-public-friend"> Friend</label>
+                        <div class="server-management-card-header">
+                            <h3>PUBLIC</h3>
+                            <span class="server-management-badge" id="server-management-public-state">
+                                CHECKING
+                            </span>
                         </div>
-                        <button type="button" class="server-management-save" data-server-management-id="public">SAVE PUBLIC LINK</button>
+
+                        <p>
+                            Guest, Friend and Admin accessible server endpoint.
+                        </p>
+
+                        <div class="server-management-current">
+                            CURRENT URL:
+                            <span id="server-management-public-current">
+                                LOADING...
+                            </span>
+                        </div>
+
+                        <input
+                            type="url"
+                            id="server-management-public-url"
+                            class="server-management-url"
+                            placeholder="https://..."
+                            autocomplete="off">
+
+                        <div class="server-management-access">
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    id="server-management-public-guest">
+                                Guest
+                            </label>
+
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    id="server-management-public-friend">
+                                Friend
+                            </label>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="server-management-save"
+                            data-server-management-id="public">
+                            REQUEST PUBLIC LINK CHANGE
+                        </button>
                     </div>
+
+
                     <div class="server-management-card">
-                        <h3>MEDIA</h3>
-                        <p>Friend and Admin accessible media endpoint. URL is resolved dynamically and is not hard-coded in HTML.</p>
-                        <input type="url" id="server-management-media-url" class="server-management-url" placeholder="https://..." autocomplete="off">
-                        <div class="server-management-access">
-                            <label><input type="checkbox" id="server-management-media-guest"> Guest</label>
-                            <label><input type="checkbox" id="server-management-media-friend"> Friend</label>
+
+                        <div class="server-management-card-header">
+                            <h3>MEDIA</h3>
+                            <span class="server-management-badge" id="server-management-media-state">
+                                CHECKING
+                            </span>
                         </div>
-                        <button type="button" class="server-management-save" data-server-management-id="media">SAVE MEDIA LINK</button>
+
+                        <p>
+                            Friend and Admin accessible media endpoint.
+                            Guest access is permanently disabled.
+                        </p>
+
+                        <div class="server-management-current">
+                            CURRENT URL:
+                            <span id="server-management-media-current">
+                                LOADING...
+                            </span>
+                        </div>
+
+                        <input
+                            type="url"
+                            id="server-management-media-url"
+                            class="server-management-url"
+                            placeholder="https://..."
+                            autocomplete="off">
+
+                        <div class="server-management-access">
+                            <label class="server-management-disabled-option">
+                                <input
+                                    type="checkbox"
+                                    id="server-management-media-guest"
+                                    disabled>
+                                Guest
+                            </label>
+
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    id="server-management-media-friend">
+                                Friend
+                            </label>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="server-management-save"
+                            data-server-management-id="media">
+                            REQUEST MEDIA LINK CHANGE
+                        </button>
                     </div>
+
                 </div>
-                <div class="server-management-note">Admin access is always retained by Firebase Rules. URLs are stored in Realtime Database under /serverLinks and are not embedded in the HTML source.</div>
+
+
+                <div class="server-management-note">
+                    Direct browser writes to /serverLinks are disabled.
+                    Changes are submitted as pending requests and must be
+                    approved before process-approvals.js applies them.
+                </div>
+
+
+                <div class="server-management-requests">
+
+                    <div class="server-management-requests-header">
+                        <div>
+                            <h3>SERVER LINK REQUESTS</h3>
+                            <div
+                                class="server-management-request-summary"
+                                id="server-management-request-summary">
+                                CHECKING REQUESTS...
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="server-management-refresh"
+                            id="server-management-refresh">
+                            ↻ REFRESH
+                        </button>
+                    </div>
+
+                    <div
+                        id="server-management-request-list"
+                        class="server-management-request-list">
+                        LOADING REQUESTS...
+                    </div>
+
+                </div>
+
             </div>
         </div>
 
@@ -6570,96 +6880,812 @@ document
 const managedServerIds = ["public", "media"];
 
 function validateHttpsUrl(value) {
+
     try {
-        return new URL(value).protocol === "https:";
+        const parsed =
+            new URL(
+                String(value || "").trim()
+            );
+
+        return parsed.protocol === "https:";
+
     } catch (error) {
+
         return false;
+
     }
 }
 
+
+/*
+ * Load the currently applied server configuration.
+ *
+ * The browser is allowed to READ individual server children.
+ * It is NOT allowed to write /serverLinks directly.
+ */
 async function loadServerManagement() {
 
-    if (currentUserRole !== "admin") return;
-
-    const status = document.getElementById("server-management-status");
-    if (status) status.innerText = "LOADING SERVER LINK CONFIGURATION...";
-
-    try {
-        const snapshots = await Promise.all(
-            managedServerIds.map(id => database.ref("serverLinks/" + id).once("value"))
-        );
-
-        const data = {};
-        managedServerIds.forEach((id, index) => data[id] = snapshots[index].val() || {});
-
-        document.getElementById("server-management-public-url").value = data.public.url || "";
-        document.getElementById("server-management-public-guest").checked = data.public.allowGuest === true;
-        document.getElementById("server-management-public-friend").checked = data.public.allowFriend === true;
-
-        document.getElementById("server-management-media-url").value = data.media.url || "";
-        document.getElementById("server-management-media-guest").checked = data.media.allowGuest === true;
-        document.getElementById("server-management-media-friend").checked = data.media.allowFriend === true;
-
-        if (status) status.innerText = "SERVER LINK CONFIGURATION ONLINE // ADMIN ACCESS";
-
-    } catch (error) {
-        console.error("Server management load failed:", error);
-        if (status) status.innerText = "SERVER LINK MANAGEMENT OFFLINE: " + (error.message || "ACCESS FAILED");
-    }
-}
-
-async function saveManagedServer(serverId) {
-
-    if (currentUserRole !== "admin") return;
-
-    const urlInput = document.getElementById("server-management-" + serverId + "-url");
-    const guestInput = document.getElementById("server-management-" + serverId + "-guest");
-    const friendInput = document.getElementById("server-management-" + serverId + "-friend");
-    const status = document.getElementById("server-management-status");
-    const button = document.querySelector('[data-server-management-id="' + serverId + '"]');
-
-    if (!urlInput || !guestInput || !friendInput) return;
-
-    const url = urlInput.value.trim();
-
-    if (!validateHttpsUrl(url)) {
-        if (status) status.innerText = "INVALID URL: HTTPS URL REQUIRED";
-        urlInput.focus();
+    if (currentUserRole !== "admin") {
         return;
     }
 
-    if (!window.confirm("SAVE " + serverId.toUpperCase() + " SERVER LINK?\n\n" + url)) return;
+    const status =
+        document.getElementById(
+            "server-management-status"
+        );
 
-    if (button) {
-        button.disabled = true;
-        button.innerText = "SAVING...";
+    if (status) {
+        status.innerText =
+            "LOADING SERVER LINK CONFIGURATION...";
     }
 
     try {
-        await database.ref("serverLinks/" + serverId).update({
-            url: url,
-            allowGuest: guestInput.checked,
-            allowFriend: friendInput.checked
-        });
 
-        if (status) status.innerText = serverId.toUpperCase() + " SERVER LINK SAVED SUCCESSFULLY.";
-        renderServerCards(currentUserRole);
+        const snapshots =
+            await Promise.all(
+                managedServerIds.map(
+                    id =>
+                        database
+                            .ref(
+                                "serverLinks/" +
+                                id
+                            )
+                            .once("value")
+                )
+            );
+
+
+        const data = {};
+
+        managedServerIds.forEach(
+            (id, index) => {
+
+                data[id] =
+                    snapshots[index].val() ||
+                    {};
+
+            }
+        );
+
+
+        updateServerManagementCard(
+            "public",
+            data.public
+        );
+
+        updateServerManagementCard(
+            "media",
+            data.media
+        );
+
+
+        if (status) {
+
+            status.innerText =
+                "SERVER LINK CONFIGURATION ONLINE // REQUEST WORKFLOW ACTIVE";
+
+        }
+
+
+        await loadServerLinkChangeRequests();
 
     } catch (error) {
-        console.error("Server link save failed:", error);
-        if (status) status.innerText = "SERVER LINK SAVE FAILED: " + (error.message || "PERMISSION DENIED");
 
-    } finally {
-        if (button) {
-            button.disabled = false;
-            button.innerText = "SAVE " + serverId.toUpperCase() + " LINK";
+        console.error(
+            "Server management load failed:",
+            error
+        );
+
+        if (status) {
+
+            status.innerText =
+                "SERVER LINK MANAGEMENT OFFLINE: " +
+                (
+                    error.message ||
+                    "ACCESS FAILED"
+                );
+
         }
+
     }
+
 }
 
-document.querySelectorAll(".server-management-save").forEach(button => {
-    button.addEventListener("click", () => saveManagedServer(button.dataset.serverManagementId));
-});
+
+function updateServerManagementCard(
+    serverId,
+    data
+) {
+
+    data =
+        data ||
+        {};
+
+
+    const urlInput =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-url"
+        );
+
+    const currentLabel =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-current"
+        );
+
+    const guestInput =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-guest"
+        );
+
+    const friendInput =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-friend"
+        );
+
+    const state =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-state"
+        );
+
+
+    const url =
+        typeof data.url ===
+        "string"
+            ? data.url.trim()
+            : "";
+
+
+    if (urlInput) {
+        urlInput.value = url;
+    }
+
+
+    if (currentLabel) {
+
+        currentLabel.innerText =
+            url ||
+            "NOT CONFIGURED";
+
+    }
+
+
+    if (guestInput) {
+
+        guestInput.checked =
+            serverId === "media"
+                ? false
+                : data.allowGuest === true;
+
+    }
+
+
+    if (friendInput) {
+
+        friendInput.checked =
+            data.allowFriend === true;
+
+    }
+
+
+    if (state) {
+
+        state.innerText =
+            url
+                ? "CONFIGURED"
+                : "NOT CONFIGURED";
+
+    }
+
+}
+
+
+/*
+ * Create a pending server-link change request.
+ *
+ * This replaces the old direct /serverLinks write.
+ */
+async function requestManagedServerChange(
+    serverId
+) {
+
+    if (currentUserRole !== "admin") {
+        return;
+    }
+
+
+    const urlInput =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-url"
+        );
+
+    const guestInput =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-guest"
+        );
+
+    const friendInput =
+        document.getElementById(
+            "server-management-" +
+            serverId +
+            "-friend"
+        );
+
+    const status =
+        document.getElementById(
+            "server-management-status"
+        );
+
+    const button =
+        document.querySelector(
+            '[data-server-management-id="' +
+            serverId +
+            '"]'
+        );
+
+
+    if (
+        !urlInput ||
+        !guestInput ||
+        !friendInput
+    ) {
+
+        return;
+
+    }
+
+
+    const url =
+        urlInput.value.trim();
+
+
+    if (
+        !validateHttpsUrl(
+            url
+        )
+    ) {
+
+        if (status) {
+
+            status.innerText =
+                "INVALID URL: HTTPS URL REQUIRED";
+
+        }
+
+        urlInput.focus();
+
+        return;
+
+    }
+
+
+    /*
+     * Firebase Rules also enforce this.
+     * We enforce it in the UI so the administrator
+     * cannot accidentally request Guest media access.
+     */
+    const allowGuest =
+        serverId === "media"
+            ? false
+            : guestInput.checked;
+
+
+    const allowFriend =
+        friendInput.checked;
+
+
+    const currentUser =
+        auth.currentUser;
+
+
+    if (!currentUser) {
+
+        if (status) {
+
+            status.innerText =
+                "REQUEST FAILED: ADMIN SESSION NOT FOUND";
+
+        }
+
+        return;
+
+    }
+
+
+    const confirmation =
+        [
+            "SUBMIT " +
+            serverId.toUpperCase() +
+            " SERVER LINK CHANGE REQUEST?",
+            "",
+            "REQUESTED URL:",
+            url,
+            "",
+            "GUEST:",
+            allowGuest
+                ? "ALLOWED"
+                : "BLOCKED",
+            "",
+            "FRIEND:",
+            allowFriend
+                ? "ALLOWED"
+                : "BLOCKED",
+            "",
+            "The change will remain PENDING until an Admin approves it."
+        ].join("\n");
+
+
+    if (
+        !window.confirm(
+            confirmation
+        )
+    ) {
+
+        return;
+
+    }
+
+
+    if (button) {
+
+        button.disabled =
+            true;
+
+        button.innerText =
+            "SUBMITTING...";
+
+    }
+
+
+    try {
+
+        const requestRef =
+            database
+                .ref(
+                    "serverLinkChangeRequests"
+                )
+                .push();
+
+
+        await requestRef.set({
+
+            serverId,
+
+            requestedUrl:
+                url,
+
+            allowGuest,
+
+            allowFriend,
+
+            status:
+                "pending",
+
+            requestedBy:
+                currentUser.uid,
+
+            requestedAt:
+                firebase.database.ServerValue.TIMESTAMP
+
+        });
+
+
+        if (status) {
+
+            status.innerText =
+                serverId.toUpperCase() +
+                " CHANGE REQUEST CREATED // PENDING APPROVAL";
+
+        }
+
+
+        await loadServerLinkChangeRequests();
+
+
+    } catch (error) {
+
+        console.error(
+            "Server link request failed:",
+            error
+        );
+
+        if (status) {
+
+            status.innerText =
+                "SERVER LINK REQUEST FAILED: " +
+                (
+                    error.message ||
+                    "PERMISSION DENIED"
+                );
+
+        }
+
+    } finally {
+
+        if (button) {
+
+            button.disabled =
+                false;
+
+            button.innerText =
+                "REQUEST " +
+                serverId.toUpperCase() +
+                " LINK CHANGE";
+
+        }
+
+    }
+
+}
+
+
+/*
+ * Load the request history separately from /serverLinks.
+ */
+async function loadServerLinkChangeRequests() {
+
+    const summary =
+        document.getElementById(
+            "server-management-request-summary"
+        );
+
+    const list =
+        document.getElementById(
+            "server-management-request-list"
+        );
+
+
+    if (
+        !summary ||
+        !list
+    ) {
+
+        return;
+
+    }
+
+
+    try {
+
+        const snapshot =
+            await database
+                .ref(
+                    "serverLinkChangeRequests"
+                )
+                .once(
+                    "value"
+                );
+
+
+        const requests =
+            snapshot.val() ||
+            {};
+
+
+        const entries =
+            Object.entries(
+                requests
+            )
+            .map(
+                ([id, request]) => ({
+                    id,
+                    ...(request || {})
+                })
+            )
+            .sort(
+                (a, b) => {
+
+                    const aPending =
+                        String(
+                            a.status ||
+                            ""
+                        ).toLowerCase() ===
+                        "pending";
+
+                    const bPending =
+                        String(
+                            b.status ||
+                            ""
+                        ).toLowerCase() ===
+                        "pending";
+
+
+                    if (
+                        aPending !==
+                        bPending
+                    ) {
+
+                        return (
+                            bPending -
+                            aPending
+                        );
+
+                    }
+
+
+                    return (
+                        Number(
+                            b.requestedAt ||
+                            0
+                        ) -
+                        Number(
+                            a.requestedAt ||
+                            0
+                        )
+                    );
+
+                }
+            );
+
+
+        const pendingCount =
+            entries.filter(
+                request =>
+                    String(
+                        request.status ||
+                        ""
+                    ).toLowerCase() ===
+                    "pending"
+            ).length;
+
+
+        summary.innerText =
+            entries.length +
+            " REQUEST(S) // " +
+            pendingCount +
+            " PENDING";
+
+
+        if (
+            entries.length ===
+            0
+        ) {
+
+            list.innerHTML =
+                `
+                <div class="server-management-request-empty">
+                    NO SERVER LINK REQUESTS FOUND
+                </div>
+                `;
+
+            return;
+
+        }
+
+
+        list.innerHTML =
+            entries
+                .map(
+                    renderServerLinkRequestCard
+                )
+                .join("");
+
+
+    } catch (error) {
+
+        console.error(
+            "Server link request load failed:",
+            error
+        );
+
+        summary.innerText =
+            "REQUEST ACCESS OFFLINE";
+
+        list.innerHTML =
+            `
+            <div class="server-management-request-empty">
+                ${escapeHtml(
+                    error.message ||
+                    "Unable to load requests."
+                )}
+            </div>
+            `;
+
+    }
+
+}
+
+
+function renderServerLinkRequestCard(
+    request
+) {
+
+    const server =
+        String(
+            request.serverId ||
+            "UNKNOWN"
+        ).toUpperCase();
+
+
+    const status =
+        String(
+            request.status ||
+            "UNKNOWN"
+        ).toLowerCase();
+
+
+    const requestedAt =
+        request.requestedAt
+            ? new Date(
+                Number(
+                    request.requestedAt
+                )
+            ).toLocaleString()
+            : "UNKNOWN";
+
+
+    const guest =
+        request.allowGuest === true
+            ? "ALLOWED"
+            : "BLOCKED";
+
+
+    const friend =
+        request.allowFriend === true
+            ? "ALLOWED"
+            : "BLOCKED";
+
+
+    return `
+        <div class="server-management-request-card ${escapeHtml(status)}">
+
+            <div class="server-management-request-header">
+
+                <div class="server-management-request-server">
+                    SERVER LINK — ${escapeHtml(server)}
+                </div>
+
+                <div class="server-management-request-status ${escapeHtml(status)}">
+                    ${escapeHtml(
+                        status.toUpperCase()
+                    )}
+                </div>
+
+            </div>
+
+
+            <div class="server-management-request-grid">
+
+                <div class="server-management-request-field">
+                    <span>CURRENT / REQUESTED URL:</span><br>
+                    ${escapeHtml(
+                        request.requestedUrl ||
+                        "NOT PROVIDED"
+                    )}
+                </div>
+
+                <div class="server-management-request-field">
+                    <span>REQUESTED:</span><br>
+                    ${escapeHtml(
+                        requestedAt
+                    )}
+                </div>
+
+                <div class="server-management-request-field">
+                    <span>GUEST:</span>
+                    ${escapeHtml(
+                        guest
+                    )}
+                </div>
+
+                <div class="server-management-request-field">
+                    <span>FRIEND:</span>
+                    ${escapeHtml(
+                        friend
+                    )}
+                </div>
+
+                <div class="server-management-request-field">
+                    <span>REQUEST ID:</span>
+                    ${escapeHtml(
+                        request.id
+                    )}
+                </div>
+
+                <div class="server-management-request-field">
+                    <span>REQUESTED BY UID:</span>
+                    ${escapeHtml(
+                        request.requestedBy ||
+                        "UNKNOWN"
+                    )}
+                </div>
+
+                ${
+                    request.processorStatus
+                        ? `
+                            <div class="server-management-request-field">
+                                <span>PROCESSOR:</span>
+                                ${escapeHtml(
+                                    String(
+                                        request.processorStatus
+                                    ).toUpperCase()
+                                )}
+                            </div>
+                        `
+                        : ""
+                }
+
+                ${
+                    request.processedAt
+                        ? `
+                            <div class="server-management-request-field">
+                                <span>PROCESSED:</span>
+                                ${escapeHtml(
+                                    new Date(
+                                        Number(
+                                            request.processedAt
+                                        )
+                                    ).toLocaleString()
+                                )}
+                            </div>
+                        `
+                        : ""
+                }
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/*
+ * Refresh button.
+ */
+const serverManagementRefresh =
+    document.getElementById(
+        "server-management-refresh"
+    );
+
+
+if (serverManagementRefresh) {
+
+    serverManagementRefresh.addEventListener(
+        "click",
+        () => {
+
+            loadServerManagement();
+
+        }
+    );
+
+}
+
+
+/*
+ * Request buttons.
+ */
+document
+    .querySelectorAll(
+        ".server-management-save"
+    )
+    .forEach(
+        button => {
+
+            button.addEventListener(
+                "click",
+                () =>
+                    requestManagedServerChange(
+                        button.dataset.serverManagementId
+                    )
+            );
+
+        }
+    );
 
 
 /* ==========================================================
