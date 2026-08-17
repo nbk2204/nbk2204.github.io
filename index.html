@@ -1319,156 +1319,912 @@ body{background:#080516;color:var(--text-main);font-family:Inter,"Segoe UI",syst
 
 
 
+
 /* ==========================================================
-   NBK NEXUS // LOGIN PRESENTATION FIX
+   NBK NEXUS // GLASSWORLD VISUAL RESTORE
+   Uses the uploaded Neural Glass template's visual language.
+   This override restores the animated background, animated
+   navigation, glass tiles and responsive layout without
+   changing Firebase/application logic.
    ========================================================== */
+
+/* ---------- Keep the actual template animation visible ---------- */
+
+html,
+body {
+    background: #05030b !important;
+    color: #ffffff !important;
+}
+
+body {
+    overflow-x: hidden;
+}
+
+/* The template's .neural-background is the actual animated canvas.
+   Do NOT replace it with a flat page gradient. */
+.neural-background {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    z-index: -2 !important;
+    animation: backgroundPulse 14s ease-in-out infinite !important;
+}
+
+.geometric-shapes,
+.neural-lines {
+    display: block !important;
+    visibility: visible !important;
+}
+
+/* ---------- Login: glass panel over the real animated background ---------- */
+
 #login-overlay {
-    position: fixed;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 24px !important;
+
+    /* Transparent enough to show the template animation. */
+    background: rgba(3, 1, 10, .12) !important;
+    backdrop-filter: blur(2px) !important;
+    -webkit-backdrop-filter: blur(2px) !important;
+}
+
+#login-overlay::before {
+    content: "";
+    position: absolute;
     inset: 0;
-    z-index: 10000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 24px;
+    pointer-events: none;
     background:
-        radial-gradient(circle at 20% 20%, rgba(188,19,254,.18), transparent 38%),
-        radial-gradient(circle at 80% 75%, rgba(0,243,255,.12), transparent 40%),
-        rgba(4,2,12,.70);
-    backdrop-filter: blur(18px) saturate(125%);
-    -webkit-backdrop-filter: blur(18px) saturate(125%);
+        radial-gradient(
+            circle at 50% 40%,
+            rgba(224,163,255,.08),
+            transparent 42%
+        );
+    animation: nxLoginAtmosphere 8s ease-in-out infinite alternate;
 }
+
+@keyframes nxLoginAtmosphere {
+    from { opacity: .45; transform: scale(1); }
+    to   { opacity: .9; transform: scale(1.08); }
+}
+
 .login-box {
-    width: min(460px, 100%);
-    padding: 34px 30px 28px;
-    position: relative;
-    overflow: hidden;
-    color: #e9e4f4;
+    position: relative !important;
+    z-index: 2 !important;
+    width: min(440px, 100%) !important;
+    padding: 34px !important;
+    margin: auto !important;
+
     background:
-        linear-gradient(145deg, rgba(35,18,55,.82), rgba(9,6,20,.76));
-    border: 1px solid rgba(224,163,255,.28);
-    border-radius: 24px;
+        linear-gradient(
+            145deg,
+            rgba(30, 13, 48, .76),
+            rgba(9, 5, 20, .66)
+        ) !important;
+    border: 1px solid rgba(224,163,255,.34) !important;
+    border-radius: 24px !important;
+
     box-shadow:
-        0 35px 100px rgba(0,0,0,.48),
-        inset 0 1px 0 rgba(255,255,255,.10),
-        0 0 50px rgba(188,19,254,.08);
-    backdrop-filter: blur(28px) saturate(135%);
-    -webkit-backdrop-filter: blur(28px) saturate(135%);
-    animation: nxLoginIn .7s cubic-bezier(.16,1,.3,1) both;
+        0 35px 100px rgba(0,0,0,.52),
+        0 0 45px rgba(224,163,255,.11),
+        inset 0 1px 0 rgba(255,255,255,.12) !important;
+
+    backdrop-filter: blur(24px) saturate(145%) !important;
+    -webkit-backdrop-filter: blur(24px) saturate(145%) !important;
+
+    overflow: hidden !important;
 }
+
 .login-box::before {
     content: "";
     position: absolute;
     top: 0;
     left: -55%;
+    width: 50%;
+    height: 2px;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #00ffff,
+            #e0a3ff,
+            #ff69b4,
+            transparent
+        );
+    filter: drop-shadow(0 0 8px rgba(224,163,255,.75));
+    animation: nxLoginSweep 5s linear infinite;
+}
+
+@keyframes nxLoginSweep {
+    from { transform: translateX(0); }
+    to   { transform: translateX(320%); }
+}
+
+.login-box h2 {
+    color: #ffffff !important;
+    text-align: center !important;
+    font-size: clamp(1.45rem, 5vw, 2rem) !important;
+    letter-spacing: .12em !important;
+    margin-bottom: 22px !important;
+    text-shadow:
+        0 0 22px rgba(224,163,255,.32) !important;
+}
+
+/* Login/signup mode tabs copied from the template's visual language. */
+
+.login-mode {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    margin-bottom: 20px !important;
+    padding: 5px !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 15px !important;
+    background: rgba(255,255,255,.035) !important;
+}
+
+.login-mode button {
+    position: relative !important;
+    min-height: 42px !important;
+    border: 1px solid transparent !important;
+    border-radius: 11px !important;
+    background: transparent !important;
+    color: #a99fb8 !important;
+    box-shadow: none !important;
+    font: 700 .68rem monospace !important;
+    letter-spacing: .1em !important;
+    transition:
+        all .4s cubic-bezier(.4,0,.2,1) !important;
+}
+
+.login-mode button:hover {
+    color: #ffffff !important;
+    background: rgba(224,163,255,.07) !important;
+    transform: translateY(-1px) !important;
+}
+
+.login-mode button.active {
+    color: #e0a3ff !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(224,163,255,.15),
+            rgba(255,105,180,.10)
+        ) !important;
+    border-color: rgba(224,163,255,.30) !important;
+    box-shadow:
+        0 0 20px rgba(224,163,255,.18),
+        inset 0 1px 0 rgba(255,255,255,.10) !important;
+    text-shadow: 0 0 10px rgba(224,163,255,.65) !important;
+}
+
+.login-mode button.active::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 13px;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            45deg,
+            #e0a3ff,
+            #ff69b4,
+            #9370db,
+            #e0a3ff
+        );
+    background-size: 400% 400%;
+    opacity: .28;
+    z-index: -1;
+    animation: borderGlow 3s ease infinite;
+}
+
+/* ---------- Form controls ---------- */
+
+.input-group {
+    margin-bottom: 13px !important;
+}
+
+.input-group input {
+    width: 100% !important;
+    min-height: 48px !important;
+    padding: 0 15px !important;
+    color: #ffffff !important;
+    background: rgba(0,0,0,.24) !important;
+    border: 1px solid rgba(255,255,255,.11) !important;
+    border-radius: 12px !important;
+    outline: none !important;
+    transition:
+        border-color .3s ease,
+        box-shadow .3s ease,
+        background .3s ease !important;
+}
+
+.input-group input::placeholder {
+    color: #847a92 !important;
+}
+
+.input-group input:focus {
+    background: rgba(0,0,0,.34) !important;
+    border-color: rgba(224,163,255,.48) !important;
+    box-shadow:
+        0 0 0 3px rgba(224,163,255,.07),
+        0 0 24px rgba(224,163,255,.08) !important;
+}
+
+/* Primary action keeps template's gradient language. */
+
+.login-box .nexus-btn {
+    position: relative !important;
+    width: 100% !important;
+    min-height: 50px !important;
+    margin-top: 7px !important;
+    overflow: hidden !important;
+    border: 1px solid rgba(224,163,255,.40) !important;
+    border-radius: 12px !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(224,163,255,.15),
+            rgba(255,105,180,.11)
+        ) !important;
+    color: #ffffff !important;
+    box-shadow:
+        0 0 25px rgba(224,163,255,.10),
+        inset 0 1px 0 rgba(255,255,255,.12) !important;
+    transition:
+        transform .35s cubic-bezier(.16,1,.3,1),
+        box-shadow .35s ease,
+        border-color .35s ease !important;
+}
+
+.login-box .nexus-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -45%;
+    width: 28%;
+    transform: skewX(-18deg);
+    background: rgba(255,255,255,.16);
+    filter: blur(4px);
+    transition: left .8s cubic-bezier(.16,1,.3,1);
+}
+
+.login-box .nexus-btn:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(224,163,255,.70) !important;
+    box-shadow:
+        0 12px 35px rgba(0,0,0,.24),
+        0 0 30px rgba(224,163,255,.18),
+        inset 0 1px 0 rgba(255,255,255,.15) !important;
+}
+
+.login-box .nexus-btn:hover::before {
+    left: 125%;
+}
+
+#error-msg {
+    min-height: 22px !important;
+    margin-top: 15px !important;
+    text-align: center !important;
+    font-size: .68rem !important;
+    font-family: monospace !important;
+}
+
+/* ---------- Main navigation: restore template animated nav language ---------- */
+
+#dashboard > header {
+    background:
+        linear-gradient(
+            135deg,
+            rgba(18,8,30,.64),
+            rgba(10,6,22,.56)
+        ) !important;
+    border: 1px solid rgba(224,163,255,.18) !important;
+    box-shadow:
+        0 18px 55px rgba(0,0,0,.25),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+.nx-template-nav {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
+}
+
+.nx-template-nav button {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    min-height: 40px !important;
+    padding: 10px 18px !important;
+    border: 1px solid transparent !important;
+    border-radius: 15px !important;
+    background: transparent !important;
+    color: #ffffff !important;
+    cursor: pointer !important;
+    font:
+        600 .72rem Inter,
+        "Segoe UI",
+        sans-serif !important;
+    letter-spacing: .08em !important;
+    transition:
+        all .4s cubic-bezier(.4,0,.2,1) !important;
+}
+
+.nx-template-nav button:hover {
+    color: #e0a3ff !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(224,163,255,.09),
+            rgba(255,105,180,.06)
+        ) !important;
+    border-color: rgba(224,163,255,.20) !important;
+    transform: translateY(-2px) !important;
+    text-shadow: 0 0 10px rgba(224,163,255,.6) !important;
+}
+
+.nx-template-nav button.active {
+    color: #e0a3ff !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(224,163,255,.15),
+            rgba(255,105,180,.10)
+        ) !important;
+    border-color: rgba(224,163,255,.30) !important;
+    box-shadow:
+        0 0 20px rgba(224,163,255,.25),
+        inset 0 1px 0 rgba(255,255,255,.12),
+        0 4px 15px rgba(224,163,255,.12) !important;
+    text-shadow: 0 0 10px rgba(224,163,255,.75) !important;
+    transform: translateY(-1px) !important;
+}
+
+.nx-template-nav button.active::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    border-radius: 17px;
+    background:
+        linear-gradient(
+            45deg,
+            #e0a3ff,
+            #ff69b4,
+            #9370db,
+            #e0a3ff
+        );
+    background-size: 400% 400%;
+    opacity: .26;
+    animation: borderGlow 3s ease infinite;
+}
+
+/* ---------- System Status: actual six-tile grid ---------- */
+
+.dashboard-system-status {
+    position: relative !important;
+    padding: 22px !important;
+    overflow: hidden !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(20,10,34,.68),
+            rgba(9,6,20,.54)
+        ) !important;
+}
+
+.dashboard-system-status::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -70%;
     width: 55%;
     height: 2px;
-    background: linear-gradient(90deg, transparent, #00f3ff, #bc13fe, transparent);
-    filter: drop-shadow(0 0 8px rgba(0,243,255,.55));
-    animation: nxLoginSweep 4.8s linear infinite;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #00ffff,
+            #e0a3ff,
+            #ff69b4,
+            transparent
+        );
+    filter: drop-shadow(0 0 8px rgba(0,255,255,.6));
+    animation: nxStatusSweep 5.5s linear infinite;
+    pointer-events: none;
 }
-.login-box h2 {
-    margin: 0 0 22px;
-    color: #fff;
-    font-size: clamp(1.25rem, 4vw, 1.65rem);
-    letter-spacing: .08em;
-    text-transform: uppercase;
+
+@keyframes nxStatusSweep {
+    from { left: -70%; }
+    to   { left: 125%; }
 }
-.login-mode {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 18px;
+
+.dashboard-system-status-header {
+    display: flex !important;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 18px !important;
+    margin-bottom: 18px !important;
 }
-.login-mode button {
-    min-height: 42px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 10px;
-    background: rgba(255,255,255,.045);
-    color: #aaa0b9;
-    font: 700 .68rem monospace;
-    letter-spacing: .10em;
-    cursor: pointer;
-    transition: .3s ease;
+
+.dashboard-system-status-title {
+    color: #ffffff !important;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem) !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
 }
-.login-mode button.active,
-.login-mode button:hover {
-    color: #fff;
-    border-color: rgba(0,243,255,.34);
-    background: rgba(0,243,255,.08);
-    box-shadow: 0 0 20px rgba(0,243,255,.07);
+
+.dashboard-system-status-summary {
+    margin-top: 5px !important;
+    color: #aaa0b9 !important;
+    font-size: .72rem !important;
+    font-family: monospace !important;
 }
-.input-group {
-    margin-bottom: 12px;
+
+.dashboard-system-status-actions {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 7px !important;
+    justify-content: flex-end !important;
 }
-.input-group input {
-    display: block;
-    width: 100%;
-    min-height: 48px;
-    padding: 0 14px;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 11px;
-    outline: none;
-    background: rgba(0,0,0,.22);
-    color: #fff;
-    font: 600 .76rem monospace;
-    letter-spacing: .04em;
-    transition: .3s ease;
+
+.dashboard-system-status-btn {
+    min-height: 34px !important;
+    padding: 7px 11px !important;
+    border: 1px solid rgba(224,163,255,.22) !important;
+    border-radius: 10px !important;
+    background: rgba(255,255,255,.035) !important;
+    color: #d8cde2 !important;
+    font: 700 .59rem monospace !important;
+    letter-spacing: .06em !important;
+    cursor: pointer !important;
+    transition: all .3s ease !important;
 }
-.input-group input::placeholder {
-    color: #7f758e;
+
+.dashboard-system-status-btn:hover {
+    color: #ffffff !important;
+    border-color: rgba(224,163,255,.45) !important;
+    background: rgba(224,163,255,.08) !important;
+    box-shadow: 0 0 18px rgba(224,163,255,.10) !important;
+    transform: translateY(-1px) !important;
 }
-.input-group input:focus {
-    border-color: rgba(0,243,255,.45);
-    box-shadow: 0 0 0 3px rgba(0,243,255,.06), 0 0 24px rgba(0,243,255,.08);
+
+.dashboard-system-status-grid {
+    display: grid !important;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr)) !important;
+    gap: 12px !important;
 }
-.nexus-btn#login-trigger {
-    width: 100%;
-    min-height: 50px;
-    margin-top: 4px;
-    border: 1px solid rgba(0,243,255,.45);
-    border-radius: 11px;
-    background: linear-gradient(135deg, rgba(0,243,255,.12), rgba(188,19,254,.12));
-    color: #fff;
-    font: 800 .70rem monospace;
-    letter-spacing: .13em;
-    cursor: pointer;
-    box-shadow: 0 0 24px rgba(0,243,255,.06);
-    transition: .35s cubic-bezier(.16,1,.3,1);
+
+.dashboard-system-status-card {
+    position: relative !important;
+    min-height: 112px !important;
+    padding: 17px !important;
+    overflow: hidden !important;
+
+    background:
+        linear-gradient(
+            145deg,
+            rgba(255,255,255,.065),
+            rgba(255,255,255,.018)
+        ) !important;
+    border: 1px solid rgba(255,255,255,.09) !important;
+    border-radius: 14px !important;
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.06),
+        0 14px 35px rgba(0,0,0,.16) !important;
+
+    backdrop-filter: blur(14px) saturate(135%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(135%) !important;
+
+    opacity: 0;
+    transform: translateY(10px) scale(.992);
+    animation:
+        nxStatusCardIn .55s cubic-bezier(.16,1,.3,1) forwards;
 }
-.nexus-btn#login-trigger:hover:not(:disabled) {
-    transform: translateY(-2px);
-    border-color: rgba(0,243,255,.72);
-    box-shadow: 0 12px 35px rgba(0,0,0,.25), 0 0 28px rgba(0,243,255,.12);
+
+.dashboard-system-status-card:nth-child(1) { animation-delay: .04s; }
+.dashboard-system-status-card:nth-child(2) { animation-delay: .09s; }
+.dashboard-system-status-card:nth-child(3) { animation-delay: .14s; }
+.dashboard-system-status-card:nth-child(4) { animation-delay: .19s; }
+.dashboard-system-status-card:nth-child(5) { animation-delay: .24s; }
+.dashboard-system-status-card:nth-child(6) { animation-delay: .29s; }
+
+@keyframes nxStatusCardIn {
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
-.nexus-btn#login-trigger:disabled {
-    opacity: .55;
-    cursor: wait;
+
+.dashboard-system-status-card::before {
+    content: "";
+    position: absolute;
+    left: -65%;
+    top: 0;
+    width: 55%;
+    height: 1px;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #00ffff,
+            #e0a3ff,
+            #ff69b4,
+            transparent
+        );
+    filter: drop-shadow(0 0 7px rgba(224,163,255,.45));
+    animation: nxStatusCardSweep 4.2s linear infinite;
 }
-#error-msg {
-    min-height: 22px;
-    margin: 16px 2px 0;
-    color: #7a6e95;
-    font: 600 .67rem/1.5 monospace;
-    letter-spacing: .03em;
+
+.dashboard-system-status-card:nth-child(2)::before { animation-delay: -.7s; }
+.dashboard-system-status-card:nth-child(3)::before { animation-delay: -1.4s; }
+.dashboard-system-status-card:nth-child(4)::before { animation-delay: -2.1s; }
+.dashboard-system-status-card:nth-child(5)::before { animation-delay: -2.8s; }
+.dashboard-system-status-card:nth-child(6)::before { animation-delay: -3.5s; }
+
+@keyframes nxStatusCardSweep {
+    from { left: -65%; }
+    to   { left: 125%; }
 }
-.hidden {
-    display: none !important;
+
+.dashboard-system-status-card:hover {
+    transform: translateY(-4px) scale(1.008) !important;
+    border-color: rgba(224,163,255,.23) !important;
+    box-shadow:
+        0 22px 50px rgba(0,0,0,.25),
+        0 0 24px rgba(224,163,255,.07),
+        inset 0 1px 0 rgba(255,255,255,.10) !important;
 }
-@keyframes nxLoginIn {
-    from { opacity: 0; transform: translateY(18px) scale(.97); filter: blur(6px); }
-    to { opacity: 1; transform: none; filter: blur(0); }
+
+.dashboard-system-status-card-top {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
 }
-@keyframes nxLoginSweep {
-    from { left: -60%; }
-    to { left: 120%; }
+
+.dashboard-system-status-name {
+    color: #ffffff !important;
+    font:
+        700 .68rem monospace !important;
+    letter-spacing: .10em !important;
 }
-@media (max-width: 560px) {
-    #login-overlay { padding: 16px; }
-    .login-box { padding: 26px 20px 22px; border-radius: 19px; }
+
+.dashboard-system-status-detail {
+    margin-top: 13px !important;
+    color: #a99fb6 !important;
+    font-size: .75rem !important;
+    line-height: 1.55 !important;
 }
+
+.dashboard-system-status-indicator {
+    flex: 0 0 auto !important;
+    width: 9px !important;
+    height: 9px !important;
+    border-radius: 50% !important;
+}
+
+.dashboard-status-online {
+    background: #39ff88 !important;
+    box-shadow:
+        0 0 7px #39ff88,
+        0 0 16px rgba(57,255,136,.45) !important;
+    animation: nxStatusPulse 2s ease-in-out infinite !important;
+}
+
+.dashboard-status-offline {
+    background: #ff3d71 !important;
+    box-shadow:
+        0 0 7px #ff3d71 !important;
+}
+
+.dashboard-status-checking {
+    background: #e0a3ff !important;
+    box-shadow:
+        0 0 7px #e0a3ff,
+        0 0 16px rgba(224,163,255,.4) !important;
+    animation: nxStatusPulse 1.1s ease-in-out infinite !important;
+}
+
+@keyframes nxStatusPulse {
+    0%, 100% {
+        transform: scale(.85);
+        opacity: .55;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 1;
+    }
+}
+
+/* ---------- Server tiles: restore strong template glass cards ---------- */
+
+#server-grid {
+    display: grid !important;
+    grid-template-columns:
+        repeat(3, minmax(0, 1fr)) !important;
+    gap: 18px !important;
+    margin-top: 20px !important;
+}
+
+.server-card {
+    min-height: 190px !important;
+    padding: 24px !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background:
+        linear-gradient(
+            145deg,
+            rgba(18,9,32,.70),
+            rgba(9,6,20,.55)
+        ) !important;
+    border: 1px solid rgba(255,255,255,.10) !important;
+    border-radius: 18px !important;
+    box-shadow:
+        0 18px 60px rgba(0,0,0,.20),
+        inset 0 1px 0 rgba(255,255,255,.06) !important;
+    transition:
+        transform .45s cubic-bezier(.16,1,.3,1),
+        border-color .35s ease,
+        box-shadow .45s ease !important;
+}
+
+.server-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -80%;
+    width: 62%;
+    height: 2px;
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #00ffff,
+            #bc13fe,
+            #ff69b4,
+            transparent
+        );
+    filter: drop-shadow(0 0 8px rgba(0,243,255,.5));
+    animation: nxServerSweep 4.8s linear infinite;
+}
+
+.server-card:nth-child(2)::before { animation-delay: -1.2s; }
+.server-card:nth-child(3)::before { animation-delay: -2.4s; }
+.server-card:nth-child(4)::before { animation-delay: -3.6s; }
+
+@keyframes nxServerSweep {
+    from { left: -80%; }
+    to   { left: 125%; }
+}
+
+.server-card:hover {
+    transform: translateY(-7px) !important;
+    border-color: rgba(224,163,255,.28) !important;
+    box-shadow:
+        0 28px 75px rgba(0,0,0,.30),
+        0 0 30px rgba(224,163,255,.08),
+        inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+
+/* ---------- Sentinel internal tabs: same template animation ---------- */
+
+.security-tabs {
+    display: flex !important;
+    gap: 8px !important;
+    overflow-x: auto !important;
+    flex-wrap: nowrap !important;
+    padding: 10px 2px 12px !important;
+    scrollbar-width: thin !important;
+    background:
+        rgba(8,5,22,.58) !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 16px !important;
+    backdrop-filter: blur(18px) !important;
+    -webkit-backdrop-filter: blur(18px) !important;
+}
+
+.security-tab {
+    position: relative !important;
+    flex: 0 0 auto !important;
+    min-height: 42px !important;
+    padding: 10px 16px !important;
+    border: 1px solid rgba(255,255,255,.08) !important;
+    border-radius: 15px !important;
+    background: rgba(255,255,255,.025) !important;
+    color: #a99fc0 !important;
+    font: 700 .65rem monospace !important;
+    letter-spacing: .08em !important;
+    transition: all .4s cubic-bezier(.4,0,.2,1) !important;
+}
+
+.security-tab:hover,
+.security-tab.active {
+    color: #e0a3ff !important;
+    background:
+        linear-gradient(
+            135deg,
+            rgba(224,163,255,.15),
+            rgba(255,105,180,.10)
+        ) !important;
+    border-color: rgba(224,163,255,.30) !important;
+    box-shadow:
+        0 0 20px rgba(224,163,255,.20),
+        inset 0 1px 0 rgba(255,255,255,.10) !important;
+    transform: translateY(-1px) !important;
+    text-shadow: 0 0 10px rgba(224,163,255,.65) !important;
+}
+
+.security-tab.active::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border-radius: 17px;
+    pointer-events: none;
+    background:
+        linear-gradient(
+            45deg,
+            #e0a3ff,
+            #ff69b4,
+            #9370db,
+            #e0a3ff
+        );
+    background-size: 400% 400%;
+    opacity: .25;
+    z-index: -1;
+    animation: borderGlow 3s ease infinite;
+}
+
+/* ---------- Existing request/audit cards ---------- */
+
+.security-panel,
+.server-management-card,
+.request-card,
+.security-audit-card {
+    background:
+        linear-gradient(
+            145deg,
+            rgba(20,10,34,.66),
+            rgba(9,6,20,.52)
+        ) !important;
+    border-color: rgba(255,255,255,.09) !important;
+    box-shadow:
+        0 18px 60px rgba(0,0,0,.18),
+        inset 0 1px 0 rgba(255,255,255,.06) !important;
+}
+
+.security-panel,
+.server-management-card,
+.request-card,
+.security-audit-card {
+    transition:
+        transform .45s cubic-bezier(.16,1,.3,1),
+        border-color .35s ease,
+        box-shadow .45s ease !important;
+}
+
+.security-panel:hover,
+.server-management-card:hover,
+.request-card:hover,
+.security-audit-card:hover {
+    border-color: rgba(224,163,255,.20) !important;
+    box-shadow:
+        0 25px 65px rgba(0,0,0,.25),
+        0 0 22px rgba(224,163,255,.05),
+        inset 0 1px 0 rgba(255,255,255,.08) !important;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1000px) {
+    #server-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .dashboard-system-status-grid {
+        grid-template-columns:
+            repeat(2, minmax(0, 1fr)) !important;
+    }
+
+    .nx-template-nav {
+        overflow-x: auto !important;
+        justify-content: flex-start !important;
+        scrollbar-width: none !important;
+    }
+
+    .nx-template-nav::-webkit-scrollbar {
+        display: none !important;
+    }
+}
+
+@media (max-width: 700px) {
+    #login-overlay {
+        padding: 15px !important;
+    }
+
+    .login-box {
+        width: min(430px, 100%) !important;
+        padding: 25px 19px !important;
+        border-radius: 20px !important;
+    }
+
+    #dashboard > header {
+        gap: 9px !important;
+        padding: 12px !important;
+    }
+
+    .nx-template-nav {
+        order: 3 !important;
+        width: 100% !important;
+        padding-top: 4px !important;
+        border-top: 1px solid rgba(255,255,255,.06) !important;
+    }
+
+    .nx-template-nav button {
+        padding: 9px 14px !important;
+        min-width: max-content !important;
+    }
+
+    .dashboard-system-status {
+        padding: 15px !important;
+    }
+
+    .dashboard-system-status-header {
+        flex-direction: column !important;
+    }
+
+    .dashboard-system-status-actions {
+        width: 100% !important;
+        justify-content: flex-start !important;
+    }
+
+    .dashboard-system-status-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    #server-grid {
+        grid-template-columns: 1fr !important;
+        gap: 13px !important;
+    }
+
+    .server-card {
+        min-height: 165px !important;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
-    .login-box, .login-box::before { animation: none !important; }
+    .neural-background,
+    .shape,
+    .neural-line,
+    .login-box::before,
+    #login-overlay::before,
+    .nx-template-nav button.active::after,
+    .dashboard-system-status::before,
+    .dashboard-system-status-card::before,
+    .dashboard-status-online,
+    .dashboard-status-checking,
+    .server-card::before,
+    .security-tab.active::after {
+        animation: none !important;
+    }
+
+    .dashboard-system-status-card {
+        opacity: 1 !important;
+        transform: none !important;
+    }
 }
+
 </style>
 </head>
 
@@ -2122,14 +2878,15 @@ body{background:#080516;color:var(--text-main);font-family:Inter,"Segoe UI",syst
    ========================================================== */
 
 const firebaseConfig = {
-    apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
-    authDomain: "nbk-nexus.firebaseapp.com",
-    projectId: "nbk-nexus",
-    storageBucket: "nbk-nexus.firebasestorage.app",
-    messagingSenderId: "324577021220",
-    appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
-    measurementId: "G-FPVH852M59",
-    databaseURL: "https://nbk-nexus-default-rtdb.firebaseio.com"
+
+            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
+            authDomain: "nbk-nexus.firebaseapp.com",
+            projectId: "nbk-nexus",
+            storageBucket: "nbk-nexus.firebasestorage.app",
+            messagingSenderId: "324577021220",
+            appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
+            measurementId: "G-FPVH852M59"
+
 };
 
 
@@ -7154,6 +7911,65 @@ document.querySelectorAll('[data-nx-nav]').forEach(button => {
         }
     });
 });
+
+
+
+/* ==========================================================
+   NBK NEXUS // TEMPLATE NAV MOTION STATE
+   ========================================================== */
+(function nexusTemplateNavigationMotion() {
+
+    const navButtons =
+        Array.from(
+            document.querySelectorAll("[data-nx-nav]")
+        );
+
+    function setActive(target) {
+        navButtons.forEach(button => {
+            button.classList.toggle(
+                "active",
+                button.dataset.nxNav === target
+            );
+        });
+    }
+
+    navButtons.forEach(button => {
+
+        button.addEventListener(
+            "click",
+            () => {
+                setActive(button.dataset.nxNav);
+            }
+        );
+
+    });
+
+    /* Nexus is the initial page. */
+    setActive("home");
+
+    /* Keep the active state correct when application code
+       opens Sentinel or Media through other controls. */
+    const securityBack =
+        document.getElementById("security-back-btn");
+
+    if (securityBack) {
+        securityBack.addEventListener(
+            "click",
+            () => setActive("home")
+        );
+    }
+
+    const mediaBack =
+        document.getElementById("nexus-media-back-btn");
+
+    if (mediaBack) {
+        mediaBack.addEventListener(
+            "click",
+            () => setActive("home")
+        );
+    }
+
+})();
 
 
 /* ==========================================================
