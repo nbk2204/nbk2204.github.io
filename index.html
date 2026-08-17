@@ -1318,6 +1318,157 @@ body{background:#080516;color:var(--text-main);font-family:Inter,"Segoe UI",syst
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important;scroll-behavior:auto!important}}
 
 
+
+/* ==========================================================
+   NBK NEXUS // LOGIN PRESENTATION FIX
+   ========================================================== */
+#login-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(188,19,254,.18), transparent 38%),
+        radial-gradient(circle at 80% 75%, rgba(0,243,255,.12), transparent 40%),
+        rgba(4,2,12,.70);
+    backdrop-filter: blur(18px) saturate(125%);
+    -webkit-backdrop-filter: blur(18px) saturate(125%);
+}
+.login-box {
+    width: min(460px, 100%);
+    padding: 34px 30px 28px;
+    position: relative;
+    overflow: hidden;
+    color: #e9e4f4;
+    background:
+        linear-gradient(145deg, rgba(35,18,55,.82), rgba(9,6,20,.76));
+    border: 1px solid rgba(224,163,255,.28);
+    border-radius: 24px;
+    box-shadow:
+        0 35px 100px rgba(0,0,0,.48),
+        inset 0 1px 0 rgba(255,255,255,.10),
+        0 0 50px rgba(188,19,254,.08);
+    backdrop-filter: blur(28px) saturate(135%);
+    -webkit-backdrop-filter: blur(28px) saturate(135%);
+    animation: nxLoginIn .7s cubic-bezier(.16,1,.3,1) both;
+}
+.login-box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -55%;
+    width: 55%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #00f3ff, #bc13fe, transparent);
+    filter: drop-shadow(0 0 8px rgba(0,243,255,.55));
+    animation: nxLoginSweep 4.8s linear infinite;
+}
+.login-box h2 {
+    margin: 0 0 22px;
+    color: #fff;
+    font-size: clamp(1.25rem, 4vw, 1.65rem);
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+.login-mode {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 18px;
+}
+.login-mode button {
+    min-height: 42px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px;
+    background: rgba(255,255,255,.045);
+    color: #aaa0b9;
+    font: 700 .68rem monospace;
+    letter-spacing: .10em;
+    cursor: pointer;
+    transition: .3s ease;
+}
+.login-mode button.active,
+.login-mode button:hover {
+    color: #fff;
+    border-color: rgba(0,243,255,.34);
+    background: rgba(0,243,255,.08);
+    box-shadow: 0 0 20px rgba(0,243,255,.07);
+}
+.input-group {
+    margin-bottom: 12px;
+}
+.input-group input {
+    display: block;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 14px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 11px;
+    outline: none;
+    background: rgba(0,0,0,.22);
+    color: #fff;
+    font: 600 .76rem monospace;
+    letter-spacing: .04em;
+    transition: .3s ease;
+}
+.input-group input::placeholder {
+    color: #7f758e;
+}
+.input-group input:focus {
+    border-color: rgba(0,243,255,.45);
+    box-shadow: 0 0 0 3px rgba(0,243,255,.06), 0 0 24px rgba(0,243,255,.08);
+}
+.nexus-btn#login-trigger {
+    width: 100%;
+    min-height: 50px;
+    margin-top: 4px;
+    border: 1px solid rgba(0,243,255,.45);
+    border-radius: 11px;
+    background: linear-gradient(135deg, rgba(0,243,255,.12), rgba(188,19,254,.12));
+    color: #fff;
+    font: 800 .70rem monospace;
+    letter-spacing: .13em;
+    cursor: pointer;
+    box-shadow: 0 0 24px rgba(0,243,255,.06);
+    transition: .35s cubic-bezier(.16,1,.3,1);
+}
+.nexus-btn#login-trigger:hover:not(:disabled) {
+    transform: translateY(-2px);
+    border-color: rgba(0,243,255,.72);
+    box-shadow: 0 12px 35px rgba(0,0,0,.25), 0 0 28px rgba(0,243,255,.12);
+}
+.nexus-btn#login-trigger:disabled {
+    opacity: .55;
+    cursor: wait;
+}
+#error-msg {
+    min-height: 22px;
+    margin: 16px 2px 0;
+    color: #7a6e95;
+    font: 600 .67rem/1.5 monospace;
+    letter-spacing: .03em;
+}
+.hidden {
+    display: none !important;
+}
+@keyframes nxLoginIn {
+    from { opacity: 0; transform: translateY(18px) scale(.97); filter: blur(6px); }
+    to { opacity: 1; transform: none; filter: blur(0); }
+}
+@keyframes nxLoginSweep {
+    from { left: -60%; }
+    to { left: 120%; }
+}
+@media (max-width: 560px) {
+    #login-overlay { padding: 16px; }
+    .login-box { padding: 26px 20px 22px; border-radius: 19px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .login-box, .login-box::before { animation: none !important; }
+}
 </style>
 </head>
 
@@ -1971,15 +2122,14 @@ body{background:#080516;color:var(--text-main);font-family:Inter,"Segoe UI",syst
    ========================================================== */
 
 const firebaseConfig = {
-
-            apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
-            authDomain: "nbk-nexus.firebaseapp.com",
-            projectId: "nbk-nexus",
-            storageBucket: "nbk-nexus.firebasestorage.app",
-            messagingSenderId: "324577021220",
-            appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
-            measurementId: "G-FPVH852M59"
-
+    apiKey: "AIzaSyDnJUgPBsVxnteisxR6CZQ1_XZCHbp_s34",
+    authDomain: "nbk-nexus.firebaseapp.com",
+    projectId: "nbk-nexus",
+    storageBucket: "nbk-nexus.firebasestorage.app",
+    messagingSenderId: "324577021220",
+    appId: "1:324577021220:web:99b0ed6f9f0831acf1f7b1",
+    measurementId: "G-FPVH852M59",
+    databaseURL: "https://nbk-nexus-default-rtdb.firebaseio.com"
 };
 
 
